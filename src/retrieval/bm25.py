@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 
@@ -5,6 +6,7 @@ from datasets import load_dataset
 from rank_bm25 import BM25Okapi
 
 from src.chunking import Chunk, chunk_python_repository
+from src.evaluation.retrieval_metrics import evaluate_retrieval
 
 
 DATASET_NAME = "Contextbench/ContextBench"
@@ -14,6 +16,7 @@ REPOSITORY = "astropy/astropy"
 REPO_ROOT = Path("repos/astropy")
 
 TOP_K = 20
+EVALUATION_K_VALUES = (5, 10, 20)
 
 
 def chunk_to_text(chunk: Chunk) -> str:
@@ -59,15 +62,49 @@ def load_task():
     return matches[0]
 
 
+def print_evaluation(
+    ranked_chunks: list[Chunk],
+    gold_context: list[dict],
+) -> None:
+    """
+    Evalúa BM25 para distintos valores de K.
+    """
+
+    print("\n=== EVALUACIÓN BM25 ===")
+
+    print(
+        f"{'K':<5}"
+        f"{'Nivel':<10}"
+        f"{'Coverage':>12}"
+        f"{'Precision':>12}"
+        f"{'F1':>10}"
+    )
+
+    print("-" * 49)
+
+    for k in EVALUATION_K_VALUES:
+        metrics = evaluate_retrieval(
+            predicted_chunks=ranked_chunks[:k],
+            gold_context=gold_context,
+        )
+
+        for level in ("file", "line"):
+            values = metrics[level]
+
+            print(
+                f"{k:<5}"
+                f"{level:<10}"
+                f"{values['coverage']:>12.4f}"
+                f"{values['precision']:>12.4f}"
+                f"{values['f1']:>10.4f}"
+            )
+
+
 def main():
-    # 1. Cargar la tarea
     task = load_task()
-
-    # La consulta de recuperación es exclusivamente
-    # el problem_statement de ContextBench.
     query = task["problem_statement"]
+    gold_context = json.loads(task["gold_context"])
 
-    # 2. Construir el corpus
     print("Construyendo corpus de chunks...")
 
     chunks = chunk_python_repository(
@@ -77,34 +114,35 @@ def main():
 
     print(f"Chunks indexados: {len(chunks)}")
 
-    # 3. Preparar los documentos para BM25
     documents = [
         tokenize(chunk_to_text(chunk))
         for chunk in chunks
     ]
 
-    # 4. Construir BM25
     print("Construyendo índice BM25...")
 
     bm25 = BM25Okapi(documents)
 
-    # 5. Tokenizar la consulta
     query_tokens = tokenize(query)
-
-    # 6. Calcular puntuaciones BM25
     scores = bm25.get_scores(query_tokens)
 
-    # 7. Obtener los TOP-K chunks
     ranked_indices = sorted(
         range(len(chunks)),
         key=lambda index: scores[index],
         reverse=True,
-    )[:TOP_K]
+    )
 
-    # 8. Mostrar ranking
+    ranked_chunks = [
+        chunks[index]
+        for index in ranked_indices
+    ]
+
     print(f"\n=== BM25 TOP-{TOP_K} ===")
 
-    for rank, index in enumerate(ranked_indices, start=1):
+    for rank, index in enumerate(
+        ranked_indices[:TOP_K],
+        start=1,
+    ):
         chunk = chunks[index]
 
         print(
@@ -114,6 +152,11 @@ def main():
             f"{chunk.start_line}-{chunk.end_line} | "
             f"{chunk.symbol}"
         )
+
+    print_evaluation(
+        ranked_chunks=ranked_chunks,
+        gold_context=gold_context,
+    )
 
 
 if __name__ == "__main__":

@@ -211,3 +211,70 @@ Versión utilizada:
 Se fija explícitamente el commit para garantizar que la definición e
 implementación de las métricas utilizadas durante el experimento sea
 reproducible.
+
+## Evaluación de recuperación BM25
+
+Se implementó la evaluación del ranking generado por BM25 para los valores
+K = 5, 10 y 20.
+
+La evaluación se realiza inicialmente a dos niveles:
+
+- **File-level:** compara los ficheros recuperados con los ficheros presentes
+  en el gold context.
+- **Line-level:** compara los intervalos de líneas de los chunks recuperados
+  con los intervalos de líneas del gold context.
+
+Los intervalos solapados o adyacentes de un mismo fichero se fusionan antes
+de calcular las métricas, evitando contar una misma línea varias veces.
+
+Se utilizan las siguientes métricas:
+
+- **Coverage (Recall):** proporción del contexto gold que ha sido recuperado.
+- **Precision:** proporción del contexto recuperado que pertenece al gold.
+- **F1:** media armónica de Coverage y Precision.
+
+### Resultados del piloto BM25
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   1.0000 |    0.2500 | 0.4000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   1.0000 |    0.1250 | 0.2222 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   1.0000 |    0.0714 | 0.1333 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+### Observación
+
+BM25 recupera `astropy/modeling/separable.py` desde las primeras posiciones
+del ranking, por lo que el Coverage a nivel de fichero es 1.0 para todos los
+valores de K evaluados.
+
+Sin embargo, los chunks recuperados de dicho fichero dentro del Top-20
+(`separability_matrix`, líneas 66-102, e `is_separable`, líneas 27-63)
+no se solapan con las regiones del gold context (líneas 200-248,
+242-248 y 290-317).
+
+Por ello, las métricas line-level son 0 para K = 5, 10 y 20.
+
+Al aumentar K, la precisión a nivel de fichero disminuye porque se recuperan
+más ficheros que no pertenecen al gold context, sin aumentar la cobertura
+para esta tarea piloto.
+
+Captura asociada:
+`docs/screenshots/06-bm25-retrieval-metrics.png`
+
+### Validación de la implementación de métricas
+
+La implementación de las métricas de recuperación se verificó mediante
+tests unitarios con tres casos controlados:
+
+- coincidencia completa entre predicción y gold;
+- fichero correcto sin solapamiento de líneas;
+- solapamiento parcial de líneas.
+
+Los tres tests finalizaron correctamente.
+
+Comando de validación:
+
+`python -m unittest tests.test_retrieval_metrics -v`

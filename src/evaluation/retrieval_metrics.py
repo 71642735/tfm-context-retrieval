@@ -1,4 +1,8 @@
 from collections import defaultdict
+from pathlib import Path
+
+from contextbench.core.fileio import line_to_byte
+from contextbench.extractors import extract_def_set_in_spans
 
 from src.chunking import Chunk
 
@@ -176,13 +180,100 @@ def f1_score(
     )
 
 
+def line_map_to_byte_spans(
+    line_map: LineMap,
+    repo_root: Path,
+) -> dict:
+    """
+    Convierte intervalos de líneas en intervalos de bytes
+    usando la misma utilidad que ContextBench.
+    """
+
+    byte_spans = {}
+
+    for file_path, intervals in line_map.items():
+        absolute_path = repo_root / file_path
+
+        for start_line, end_line in intervals:
+            span = line_to_byte(
+                str(absolute_path),
+                start_line,
+                end_line,
+            )
+
+            if span:
+                byte_spans.setdefault(
+                    file_path,
+                    [],
+                ).append(span)
+
+    return byte_spans
+
+
+def evaluate_symbols(
+    predicted_chunks: list[Chunk],
+    gold_context: list[dict],
+    repo_root: Path,
+) -> dict:
+    """
+    Evalúa la recuperación a nivel de símbolo
+    usando la extracción estructural de ContextBench.
+    """
+
+    predicted_lines = build_predicted_line_map(
+        predicted_chunks
+    )
+
+    gold_lines = build_gold_line_map(
+        gold_context
+    )
+
+    predicted_byte_spans = line_map_to_byte_spans(
+        predicted_lines,
+        repo_root,
+    )
+
+    gold_byte_spans = line_map_to_byte_spans(
+        gold_lines,
+        repo_root,
+    )
+
+    predicted_symbols = extract_def_set_in_spans(
+        predicted_byte_spans,
+        str(repo_root),
+    )
+
+    gold_symbols = extract_def_set_in_spans(
+        gold_byte_spans,
+        str(repo_root),
+    )
+
+    common_symbols = predicted_symbols & gold_symbols
+
+    symbol_coverage, symbol_precision = coverage_precision(
+        predicted_size=len(predicted_symbols),
+        gold_size=len(gold_symbols),
+        intersection_size=len(common_symbols),
+    )
+
+    return {
+        "coverage": symbol_coverage,
+        "precision": symbol_precision,
+        "f1": f1_score(
+            symbol_coverage,
+            symbol_precision,
+        ),
+    }
+
+
 def evaluate_retrieval(
     predicted_chunks: list[Chunk],
     gold_context: list[dict],
+    repo_root: Path | None = None,
 ) -> dict:
     """
-    Evalúa una recuperación a nivel de fichero
-    y a nivel de líneas.
+    Evalúa una recuperación a nivel de fichero,
+    símbolo y líneas.
     """
 
     # ---------- File-level ----------
@@ -234,7 +325,7 @@ def evaluate_retrieval(
         intersection_size=intersection_line_count,
     )
 
-    return {
+    result = {
         "file": {
             "coverage": file_coverage,
             "precision": file_precision,
@@ -252,3 +343,14 @@ def evaluate_retrieval(
             ),
         },
     }
+
+    # ---------- Symbol-level ----------
+
+    if repo_root is not None:
+        result["symbol"] = evaluate_symbols(
+            predicted_chunks,
+            gold_context,
+            repo_root,
+        )
+
+    return result

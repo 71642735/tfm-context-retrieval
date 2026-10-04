@@ -278,3 +278,44 @@ Los tres tests finalizaron correctamente.
 Comando de validación:
 
 `python -m unittest tests.test_retrieval_metrics -v`
+
+## Evaluación BM25 a nivel de fichero, símbolo y línea
+
+Se amplió la evaluación del baseline BM25 para incluir la granularidad
+de símbolo, además de fichero y línea.
+
+La evaluación de símbolos utiliza la extracción estructural de ContextBench.
+Para la tarea piloto `astropy__astropy-12907`, ContextBench identifica
+3 símbolos gold.
+
+Resultados:
+
+| K   | Nivel  | Coverage | Precision |     F1 |
+| --- | ------ | -------: | --------: | -----: |
+| 5   | file   |   1.0000 |    0.2500 | 0.4000 |
+| 5   | symbol |   0.0000 |    0.0000 | 0.0000 |
+| 5   | line   |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file   |   1.0000 |    0.1250 | 0.2222 |
+| 10  | symbol |   0.0000 |    0.0000 | 0.0000 |
+| 10  | line   |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file   |   1.0000 |    0.0714 | 0.1333 |
+| 20  | symbol |   0.0000 |    0.0000 | 0.0000 |
+| 20  | line   |   0.0000 |    0.0000 | 0.0000 |
+
+Interpretación preliminar:
+
+BM25 recupera correctamente el fichero gold
+`astropy/modeling/separable.py` desde K=5, por lo que alcanza una
+cobertura de fichero de 1.0. Sin embargo, los chunks recuperados dentro
+de dicho fichero no corresponden a los símbolos gold ni solapan con las
+líneas gold, por lo que las coberturas de símbolo y línea son 0.0.
+
+Al aumentar K se mantiene la cobertura de fichero, pero disminuye su
+precisión debido a la incorporación de más ficheros no pertenecientes
+al gold.
+
+Este resultado corresponde únicamente a una tarea piloto y no permite
+extraer todavía conclusiones generales sobre el rendimiento de BM25.
+
+Captura:
+`docs/screenshots/07-bm25-file-symbol-line.png`

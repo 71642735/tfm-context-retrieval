@@ -67,7 +67,8 @@ def print_evaluation(
     gold_context: list[dict],
 ) -> None:
     """
-    Evalúa BM25 para distintos valores de K.
+    Evalúa BM25 para distintos valores de K
+    a nivel de fichero, símbolo y línea.
     """
 
     print("\n=== EVALUACIÓN BM25 ===")
@@ -86,9 +87,10 @@ def print_evaluation(
         metrics = evaluate_retrieval(
             predicted_chunks=ranked_chunks[:k],
             gold_context=gold_context,
+            repo_root=REPO_ROOT,
         )
 
-        for level in ("file", "line"):
+        for level in ("file", "symbol", "line"):
             values = metrics[level]
 
             print(

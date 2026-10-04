@@ -151,38 +151,25 @@ La versión inicial no genera chunks independientes para:
 - código a nivel de módulo;
 - clases completas.
 
-Estas limitaciones se mantienen inicialmente para evitar convertir el TFM en
-una comparación de estrategias de chunking. Se revisarán únicamente si el
-piloto demuestra que impiden realizar adecuadamente el experimento.
-
----
-
-## Próximo paso
-
-Implementar la recuperación léxica mediante BM25 sobre el corpus generado.
-
-La consulta de retrieval será el `problem_statement` proporcionado por
-ContextBench.
-
-El `gold_context`, `patch` y `test_patch` no se utilizarán para realizar la
-recuperación. El `gold_context` se utilizará posteriormente para evaluar los
-resultados obtenidos.
+Estas limitaciones se mantienen para evitar convertir el TFM en una
+comparación de estrategias de chunking. Solo se modificarán si se identifica
+un problema general que impida ejecutar correctamente el experimento.
 
 ## Recuperación léxica: BM25
 
-Se implementó una primera estrategia de recuperación léxica mediante BM25.
+Se implementó la estrategia de recuperación léxica mediante BM25.
 
-Configuración inicial:
+Configuración:
 
 - Corpus: 15.765 chunks.
 - Consulta: `problem_statement` de ContextBench.
 - Representación de cada documento: `file_path + symbol + code`.
 - Tokenización: extracción mediante la expresión regular `[A-Za-z0-9_]+`
   y conversión a minúsculas.
-- Número de resultados inspeccionados inicialmente: Top-20.
+- Valores de evaluación: K = 5, 10 y 20.
 - No se utiliza `gold_context`, `patch` ni `test_patch` durante la recuperación.
 
-Primeros resultados para la tarea piloto:
+Para la tarea piloto, los dos primeros resultados del ranking fueron:
 
 1. `astropy/modeling/separable.py:66-102` — `separability_matrix`
    — score 330.4252.
@@ -191,17 +178,12 @@ Primeros resultados para la tarea piloto:
 
 El resto del Top-20 contiene principalmente funciones de tests y otros módulos.
 
-Estos resultados todavía no se interpretan como éxito o fracaso del retrieval.
-La evaluación se realizará posteriormente comparando los chunks recuperados
-con el contexto gold mediante un procedimiento definido de forma general para
-todas las tareas.
-
 ---
 
-## Evaluación con ContextBench
+## Evaluación de recuperación
 
-Para estudiar y reutilizar las métricas oficiales de ContextBench se obtuvo
-una copia del repositorio oficial.
+Para estudiar las métricas de ContextBench se obtuvo una copia del
+repositorio oficial.
 
 Versión utilizada:
 
@@ -212,22 +194,31 @@ Se fija explícitamente el commit para garantizar que la definición e
 implementación de las métricas utilizadas durante el experimento sea
 reproducible.
 
-## Evaluación de recuperación BM25
+### Granularidades utilizadas
 
-Se implementó la evaluación del ranking generado por BM25 para los valores
-K = 5, 10 y 20.
+Para la evaluación principal se utilizan dos granularidades:
 
-La evaluación se realiza inicialmente a dos niveles:
+- **File-level:** permite comprobar si el recuperador identifica los
+  ficheros relevantes.
+- **Line-level:** permite medir cuánto del contexto gold concreto está
+  cubierto por los chunks recuperados.
 
-- **File-level:** compara los ficheros recuperados con los ficheros presentes
-  en el gold context.
-- **Line-level:** compara los intervalos de líneas de los chunks recuperados
-  con los intervalos de líneas del gold context.
+Durante el piloto se exploró también la evaluación a nivel de símbolo
+proporcionada por ContextBench. Finalmente no se incluyó como métrica
+principal debido a que el chunking empleado está basado principalmente
+en funciones y métodos, por lo que esta granularidad está estrechamente
+relacionada con la propia unidad de recuperación.
 
-Los intervalos solapados o adyacentes de un mismo fichero se fusionan antes
-de calcular las métricas, evitando contar una misma línea varias veces.
+Se optó por mantener fichero como granularidad gruesa y líneas como
+granularidad fina para simplificar el diseño experimental.
 
-Se utilizan las siguientes métricas:
+Los intervalos de líneas solapados o adyacentes de un mismo fichero se
+fusionan antes de calcular las métricas, evitando contar una misma línea
+varias veces.
+
+### Métricas
+
+Se utilizan:
 
 - **Coverage (Recall):** proporción del contexto gold que ha sido recuperado.
 - **Precision:** proporción del contexto recuperado que pertenece al gold.
@@ -246,9 +237,9 @@ Se utilizan las siguientes métricas:
 
 ### Observación
 
-BM25 recupera `astropy/modeling/separable.py` desde las primeras posiciones
-del ranking, por lo que el Coverage a nivel de fichero es 1.0 para todos los
-valores de K evaluados.
+BM25 recupera `astropy/modeling/separable.py` desde las primeras
+posiciones del ranking, por lo que el Coverage a nivel de fichero es
+1.0 para todos los valores de K evaluados.
 
 Sin embargo, los chunks recuperados de dicho fichero dentro del Top-20
 (`separability_matrix`, líneas 66-102, e `is_separable`, líneas 27-63)
@@ -257,65 +248,31 @@ no se solapan con las regiones del gold context (líneas 200-248,
 
 Por ello, las métricas line-level son 0 para K = 5, 10 y 20.
 
-Al aumentar K, la precisión a nivel de fichero disminuye porque se recuperan
-más ficheros que no pertenecen al gold context, sin aumentar la cobertura
-para esta tarea piloto.
+Al aumentar K, la precisión a nivel de fichero disminuye porque se
+recuperan más ficheros que no pertenecen al gold context, sin aumentar
+la cobertura para esta tarea piloto.
+
+Este resultado corresponde únicamente a una tarea piloto y no permite
+extraer conclusiones generales sobre el rendimiento de BM25.
 
 Captura asociada:
-`docs/screenshots/06-bm25-retrieval-metrics.png`
 
-### Validación de la implementación de métricas
+`docs/screenshots/07-bm25-file-line.png`
 
-La implementación de las métricas de recuperación se verificó mediante
-tests unitarios con tres casos controlados:
+### Validación de la implementación
+
+La implementación de las métricas se verificó mediante tests unitarios.
+
+Se comprobaron casos de:
 
 - coincidencia completa entre predicción y gold;
 - fichero correcto sin solapamiento de líneas;
-- solapamiento parcial de líneas.
+- solapamiento parcial de líneas;
+- coincidencia de símbolos durante la exploración de la granularidad
+  symbol-level.
 
-Los tres tests finalizaron correctamente.
+Los cuatro tests finalizaron correctamente.
 
 Comando de validación:
 
 `python -m unittest tests.test_retrieval_metrics -v`
-
-## Evaluación BM25 a nivel de fichero, símbolo y línea
-
-Se amplió la evaluación del baseline BM25 para incluir la granularidad
-de símbolo, además de fichero y línea.
-
-La evaluación de símbolos utiliza la extracción estructural de ContextBench.
-Para la tarea piloto `astropy__astropy-12907`, ContextBench identifica
-3 símbolos gold.
-
-Resultados:
-
-| K   | Nivel  | Coverage | Precision |     F1 |
-| --- | ------ | -------: | --------: | -----: |
-| 5   | file   |   1.0000 |    0.2500 | 0.4000 |
-| 5   | symbol |   0.0000 |    0.0000 | 0.0000 |
-| 5   | line   |   0.0000 |    0.0000 | 0.0000 |
-| 10  | file   |   1.0000 |    0.1250 | 0.2222 |
-| 10  | symbol |   0.0000 |    0.0000 | 0.0000 |
-| 10  | line   |   0.0000 |    0.0000 | 0.0000 |
-| 20  | file   |   1.0000 |    0.0714 | 0.1333 |
-| 20  | symbol |   0.0000 |    0.0000 | 0.0000 |
-| 20  | line   |   0.0000 |    0.0000 | 0.0000 |
-
-Interpretación preliminar:
-
-BM25 recupera correctamente el fichero gold
-`astropy/modeling/separable.py` desde K=5, por lo que alcanza una
-cobertura de fichero de 1.0. Sin embargo, los chunks recuperados dentro
-de dicho fichero no corresponden a los símbolos gold ni solapan con las
-líneas gold, por lo que las coberturas de símbolo y línea son 0.0.
-
-Al aumentar K se mantiene la cobertura de fichero, pero disminuye su
-precisión debido a la incorporación de más ficheros no pertenecientes
-al gold.
-
-Este resultado corresponde únicamente a una tarea piloto y no permite
-extraer todavía conclusiones generales sobre el rendimiento de BM25.
-
-Captura:
-`docs/screenshots/07-bm25-file-symbol-line.png`

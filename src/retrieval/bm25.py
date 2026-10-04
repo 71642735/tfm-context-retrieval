@@ -90,7 +90,7 @@ def print_evaluation(
             repo_root=REPO_ROOT,
         )
 
-        for level in ("file", "symbol", "line"):
+        for level in ("file", "line"):
             values = metrics[level]
 
             print(

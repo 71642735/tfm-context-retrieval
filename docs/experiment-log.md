@@ -276,3 +276,65 @@ Los cuatro tests finalizaron correctamente.
 Comando de validación:
 
 `python -m unittest tests.test_retrieval_metrics -v`
+
+## Recuperación semántica
+
+### Modelo de embeddings
+
+Para la recuperación semántica se utiliza `microsoft/unixcoder-base` (UniXcoder),
+un modelo orientado a la representación y búsqueda de código.
+
+El modelo se ejecuta localmente sobre CPU. Los embeddings generados tienen
+una dimensión de 768.
+
+### Benchmark inicial
+
+Antes de generar los embeddings del repositorio completo se realizó una prueba
+de rendimiento sobre 100 chunks de Astropy, utilizando los mismos chunks
+empleados en la recuperación BM25.
+
+Resultados:
+
+- Chunks totales del repositorio: 15.765
+- Chunks procesados en el benchmark: 100
+- Dimensión del embedding: 768
+- Tiempo total: 45,98 s
+- Tiempo medio por chunk: 0,460 s
+- Tiempo estimado para los 15.765 chunks: 120,8 min
+
+La generación completa de embeddings es computacionalmente más costosa que
+la recuperación léxica. Sin embargo, los embeddings pueden almacenarse y
+reutilizarse, evitando su recálculo para consultas posteriores sobre el mismo
+estado del repositorio.
+
+Se mantiene la ejecución local como opción principal. El uso de GPU se
+considerará únicamente si, al escalar el experimento a la muestra final,
+el tiempo total de generación de embeddings resulta poco práctico.
+
+### Configuración definitiva
+
+La recuperación semántica utiliza `microsoft/unixcoder-base` (UniXcoder).
+
+La representación del corpus mantiene los mismos chunks utilizados por BM25,
+de forma que la estrategia de recuperación sea la principal variable que
+cambia entre ambos métodos.
+
+Para cada chunk se construye una representación textual formada por:
+
+- ruta del fichero,
+- símbolo,
+- código del chunk.
+
+La codificación utiliza el modo `encoder-only` de UniXcoder, con una longitud
+máxima de 512 tokens. Las representaciones de los tokens válidos se agregan
+mediante mean pooling y el vector resultante se normaliza mediante norma L2.
+
+Para el repositorio Astropy en el commit
+`d16bfe05a744909de4b27f5875fe0d4ed41ce607` se generaron:
+
+- 15.765 embeddings,
+- 768 dimensiones por embedding.
+
+Los embeddings del corpus se almacenan en caché y pueden reutilizarse para
+distintas consultas mientras se mantengan constantes el repositorio, commit,
+modelo y procedimiento de codificación.

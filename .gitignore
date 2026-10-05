@@ -1,5 +1,6 @@
 .venv/
 repos/
+cache/
 __pycache__/
 *.pyc
 external/

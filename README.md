@@ -146,3 +146,23 @@ Lo que podemos afirmar es que, para esta tarea concreta, BM25 consiguió localiz
 Para comparar correctamente BM25 con la recuperación semántica y la recuperación híbrida necesitamos repetir el experimento sobre una muestra mayor de tareas y mantener constantes el resto de variables experimentales.
 
 El objetivo del experimento no es demostrar de antemano que un método es mejor que otro, sino **medir y comparar su comportamiento bajo las mismas condiciones**.
+
+### ¿Cuál es la diferencia fundamental entre BM25 y la recuperación semántica?
+
+BM25 es una estrategia de recuperación léxica que prioriza los chunks según la coincidencia y relevancia de los términos de la consulta. La recuperación semántica, en cambio, utiliza representaciones vectoriales para recuperar código relacionado por su significado, aunque no utilice exactamente los mismos términos que aparecen en la consulta.
+
+### ¿Qué es un embedding?
+
+Un embedding es una representación numérica o vectorial de un contenido, como un texto o un fragmento de código. En este trabajo se generan embeddings tanto para la consulta como para los chunks de código. La similitud entre estos vectores permite estimar qué chunks están semánticamente más relacionados con el problema planteado.
+
+### ¿Por qué no es necesario generar de nuevo los embeddings de todos los chunks para cada consulta?
+
+Los embeddings de los chunks pueden calcularse una vez y almacenarse. Para una nueva consulta sobre el mismo estado del repositorio únicamente es necesario generar el embedding de la consulta y compararlo con los embeddings previamente calculados. Esto permite reutilizar el trabajo computacional realizado.
+
+### ¿Por qué se utiliza el mismo chunking para BM25 y para la recuperación semántica?
+
+Se utiliza el mismo chunking para controlar las variables del experimento. Si cada estrategia utilizara una división diferente del código, sería difícil determinar si las diferencias observadas se deben al método de recuperación o al propio chunking. Mantener las mismas unidades de recuperación permite realizar una comparación más controlada entre las estrategias.
+
+### Si la recuperación semántica obtiene mejores métricas de recuperación que BM25, ¿podemos concluir que es mejor para resolver issues con un LLM?
+
+No necesariamente. Una mayor calidad de recuperación no implica automáticamente una mayor capacidad del LLM para resolver correctamente el issue. Por este motivo, el trabajo evalúa de forma separada la calidad del contexto recuperado y el resultado posterior del LLM al intentar resolver el problema. Uno de los objetivos es precisamente analizar la relación entre ambas etapas.

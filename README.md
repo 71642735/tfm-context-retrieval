@@ -166,3 +166,203 @@ Se utiliza el mismo chunking para controlar las variables del experimento. Si ca
 ### Si la recuperación semántica obtiene mejores métricas de recuperación que BM25, ¿podemos concluir que es mejor para resolver issues con un LLM?
 
 No necesariamente. Una mayor calidad de recuperación no implica automáticamente una mayor capacidad del LLM para resolver correctamente el issue. Por este motivo, el trabajo evalúa de forma separada la calidad del contexto recuperado y el resultado posterior del LLM al intentar resolver el problema. Uno de los objetivos es precisamente analizar la relación entre ambas etapas.
+
+### ¿Qué hace UniXcoder con los chunks del repositorio?
+
+UniXcoder transforma cada chunk de código en una representación vectorial o embedding. En nuestro experimento, cada embedding tiene 768 dimensiones.
+
+Estos embeddings permiten representar numéricamente los chunks para posteriormente compararlos con el embedding generado a partir del issue.
+
+### ¿Cómo se realiza una consulta en la recuperación semántica?
+
+El texto del issue no se compara directamente con los embeddings de los chunks. Primero, el issue se procesa con el mismo modelo de embeddings, UniXcoder, para obtener su propia representación vectorial.
+
+Después se calcula la similitud entre el embedding del issue y los embeddings de los chunks del repositorio. Los chunks se ordenan según esta similitud y se seleccionan los primeros resultados del ranking, utilizando en el experimento Top-5, Top-10 y Top-20.
+
+### ¿Por qué pueden reutilizarse los embeddings de los chunks?
+
+Los embeddings de los chunks no dependen del issue concreto que se esté consultando. Por ello, pueden generarse una vez, almacenarse y reutilizarse para diferentes consultas sobre el mismo estado del repositorio.
+
+Para cada nuevo issue únicamente es necesario generar el embedding de la consulta y compararlo con los embeddings previamente almacenados.
+
+### ¿Cuándo sería necesario regenerar los embeddings del corpus?
+
+Los embeddings deben regenerarse cuando cambie alguna de las condiciones que determinan su representación, por ejemplo:
+
+- el estado del código o `base_commit` evaluado;
+- el chunking o la representación textual de los chunks;
+- el modelo utilizado para generar los embeddings;
+- el procedimiento de codificación utilizado para generar los vectores.
+
+Mientras estas condiciones permanezcan constantes, los embeddings del corpus pueden reutilizarse.
+
+### ¿Es necesario regenerar los embeddings si se cambia el LLM que intenta resolver el issue?
+
+No. Es importante distinguir entre el modelo utilizado para generar embeddings y el LLM utilizado posteriormente para intentar resolver el issue.
+
+UniXcoder se utiliza durante la etapa de recuperación para representar el issue y los chunks mediante embeddings. El LLM interviene posteriormente, cuando recibe el issue y el contexto recuperado e intenta generar una solución.
+
+Por tanto, cambiar el LLM encargado de resolver el issue no obliga a regenerar los embeddings del corpus.
+
+### ¿Por qué hay que utilizar el mismo modelo de embeddings para el issue y para los chunks?
+
+Los embeddings del issue y de los chunks deben pertenecer al mismo espacio vectorial para que su similitud pueda compararse de forma coherente.
+
+Por ello, si los embeddings de los chunks se generan con UniXcoder, el embedding del issue también debe generarse con UniXcoder y con el mismo procedimiento de codificación.
+
+Si se sustituyera UniXcoder por otro modelo de embeddings, sería necesario regenerar tanto las representaciones del corpus como las de las consultas.
+
+### ¿Por qué se utiliza el mismo chunking para BM25 y para la recuperación semántica?
+
+Se utiliza el mismo chunking para controlar las variables del experimento.
+
+Si BM25 y la recuperación semántica utilizaran divisiones diferentes del repositorio, no podríamos determinar con claridad si las diferencias observadas se deben a la estrategia de recuperación o al propio chunking.
+
+Mantener las mismas unidades de recuperación permite atribuir las diferencias principalmente al método de recuperación utilizado.
+
+### ¿Recuperar el fichero correcto significa que se ha recuperado correctamente el contexto?
+
+No necesariamente. Una estrategia puede recuperar un chunk perteneciente al fichero correcto pero que no contenga las líneas relevantes para resolver el issue.
+
+Por este motivo se evalúa la recuperación a dos niveles:
+
+- fichero, como granularidad más gruesa;
+- líneas, como granularidad más fina.
+
+Esto permite distinguir entre localizar correctamente la zona general del repositorio y recuperar realmente el contexto relevante indicado por el gold de ContextBench.
+
+### Si UniXcoder es más sofisticado que BM25, ¿por qué no asumir directamente que la recuperación semántica será mejor?
+
+Una mayor sofisticación del método no garantiza un mejor resultado para la tarea evaluada. Precisamente uno de los objetivos del experimento es medir empíricamente el comportamiento de las distintas estrategias de recuperación.
+
+Por ello se comparan BM25, recuperación semántica y recuperación híbrida utilizando las mismas tareas, los mismos chunks y las mismas métricas.
+
+### Si una estrategia obtiene mejores métricas de recuperación, ¿significa que el LLM resolverá mejor los issues?
+
+No necesariamente. Una mejor recuperación del contexto no implica automáticamente que el LLM sea capaz de generar una solución correcta.
+
+Por este motivo el trabajo separa dos etapas de evaluación:
+
+1. la calidad del contexto recuperado;
+2. la capacidad posterior del LLM para resolver el issue utilizando dicho contexto.
+
+Esto permite estudiar no solo qué estrategia recupera mejor el contexto gold, sino también la relación entre la calidad de recuperación y el resultado final del LLM.
+
+## Preguntas de repaso — Recuperación híbrida con RRF
+
+### ¿Por qué utilizamos RRF en lugar de sumar directamente los scores de BM25 y UniXcoder?
+
+Los scores de BM25 y de la recuperación semántica representan cosas diferentes
+y se encuentran en escalas distintas, por lo que no tiene sentido sumarlos
+directamente.
+
+RRF (Reciprocal Rank Fusion) evita este problema utilizando la posición que
+ocupa cada chunk en los rankings generados por cada método, en lugar de utilizar
+sus scores originales.
+
+### ¿Qué ocurre si un chunk aparece en posiciones altas tanto en BM25 como en la recuperación semántica?
+
+El chunk recibe contribución de ambos rankings y, por tanto, normalmente obtiene
+una puntuación RRF mayor.
+
+Esto permite que RRF favorezca chunks sobre los que existe cierto consenso entre
+la recuperación léxica y la recuperación semántica.
+
+### ¿Qué diferencia existe entre `FUSION_DEPTH = 100` y los valores `K = 5, 10, 20`?
+
+`FUSION_DEPTH = 100` indica cuántos resultados de cada ranking individual
+utilizamos como entrada para construir el ranking híbrido mediante RRF.
+
+En nuestro caso:
+
+- los primeros 100 resultados de BM25;
+- los primeros 100 resultados de UniXcoder.
+
+En cambio, `K = 5, 10, 20` indica cuántos resultados del ranking resultante
+evaluamos contra el contexto gold de ContextBench.
+
+Por tanto:
+
+- `FUSION_DEPTH` pertenece al proceso de fusión;
+- `K` pertenece a los puntos de corte utilizados para evaluar la recuperación.
+
+En una fase posterior, los chunks recuperados podrán utilizarse también como
+contexto proporcionado al LLM, pero actualmente estamos evaluando primero la
+calidad de la recuperación de forma independiente.
+
+### El híbrido ha obtenido peores métricas que el método semántico en K=10 para el issue piloto. ¿Deberíamos modificar RRF hasta conseguir que mejore?
+
+No.
+
+El objetivo del experimento es comparar las estrategias de recuperación y
+observar empíricamente su comportamiento, no modificar los métodos hasta
+conseguir que una estrategia determinada sea la mejor.
+
+Modificar los parámetros después de observar el resultado de una única tarea
+podría introducir un ajuste específico al piloto y reducir la validez de la
+comparación.
+
+Por ello mantenemos fija la configuración y evaluaremos las estrategias sobre
+una muestra mayor de tareas antes de extraer conclusiones.
+
+### ¿Qué significa obtener `file coverage = 1` pero `line coverage = 0`?
+
+Significa que la estrategia de recuperación ha localizado el fichero que
+contiene el contexto relevante, pero los chunks recuperados no solapan con las
+líneas identificadas como gold por ContextBench.
+
+Por tanto, encontrar el fichero correcto no implica necesariamente haber
+recuperado el fragmento de código correcto.
+
+### ¿Qué estrategias de recuperación estamos comparando?
+
+El experimento compara tres estrategias principales:
+
+1. **BM25**: recuperación léxica basada en coincidencia de términos.
+2. **UniXcoder**: recuperación semántica mediante embeddings de código.
+3. **BM25 + UniXcoder mediante RRF**: estrategia híbrida que combina los
+   rankings léxico y semántico.
+
+Las tres estrategias utilizan el mismo corpus y el mismo chunking para controlar
+variables y aislar, en la medida de lo posible, el efecto de la estrategia de
+recuperación.
+
+### ¿Cómo funciona conceptualmente la estrategia híbrida?
+
+El flujo puede resumirse de la siguiente forma:
+
+    Issue
+      │
+      ├── BM25 ────────────┐
+      │                    │
+      └── UniXcoder ───────┤
+                           │
+                           ▼
+                          RRF
+                           │
+                           ▼
+                    Ranking híbrido
+                           │
+                           ▼
+                     Top-5/10/20
+                           │
+                           ▼
+                 Evaluación file/line
+
+RRF combina las posiciones obtenidas por los chunks en los dos rankings sin
+necesidad de comparar directamente los scores de BM25 y UniXcoder.
+
+### ¿Una mejor recuperación implica necesariamente que el LLM resolverá mejor el issue?
+
+No necesariamente.
+
+El experimento distingue dos etapas:
+
+1. **Calidad de recuperación**: evaluamos si las estrategias recuperan el
+   contexto relevante utilizando el gold de ContextBench.
+2. **Resolución del issue**: posteriormente evaluaremos si el contexto
+   recuperado permite al LLM generar una solución correcta.
+
+Una de las cuestiones que queremos analizar es precisamente si una mejor
+recuperación de contexto se traduce en una mayor capacidad del LLM para resolver
+los issues.

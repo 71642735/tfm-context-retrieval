@@ -338,3 +338,61 @@ Para el repositorio Astropy en el commit
 Los embeddings del corpus se almacenan en caché y pueden reutilizarse para
 distintas consultas mientras se mantengan constantes el repositorio, commit,
 modelo y procedimiento de codificación.
+
+### Resultados del piloto semántico
+
+La recuperación semántica se evaluó sobre la tarea piloto
+`astropy__astropy-12907` utilizando los mismos chunks y las mismas métricas
+empleadas para BM25.
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   1.0000 |    0.2500 | 0.4000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   1.0000 |    0.1667 | 0.2857 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   1.0000 |    0.0714 | 0.1333 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+En este caso piloto, la recuperación semántica localiza el fichero que
+contiene el contexto gold, pero los chunks recuperados en los primeros
+20 resultados no solapan con las líneas gold de ContextBench.
+
+A nivel de fichero, BM25 y la recuperación semántica presentan resultados
+similares, aunque la recuperación semántica obtiene mayor precisión y F1
+en K=10 para esta tarea concreta.
+
+Este resultado corresponde únicamente a una tarea piloto y no permite
+extraer conclusiones generales sobre el rendimiento relativo de ambas
+estrategias.
+
+Captura: `docs/screenshots/08-semantic-file-line.png`
+
+### Resultados del piloto híbrido
+
+La estrategia híbrida combina los rankings obtenidos mediante BM25 y
+recuperación semántica utilizando Reciprocal Rank Fusion (RRF).
+
+Para la fusión se utilizan los primeros 100 resultados de cada estrategia
+y una constante RRF de 60. La evaluación final se mantiene en K=5, K=10
+y K=20.
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   1.0000 |    0.2500 | 0.4000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   1.0000 |    0.1111 | 0.2000 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   1.0000 |    0.0667 | 0.1250 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+En esta tarea piloto, la estrategia híbrida recupera el fichero que contiene
+el contexto gold, pero ninguno de los chunks recuperados en los primeros
+20 resultados solapa con las líneas gold de ContextBench.
+
+La combinación mediante RRF no mejora los resultados respecto a las
+estrategias individuales en esta tarea concreta. Este resultado no permite
+extraer conclusiones generales, ya que corresponde únicamente a una tarea
+piloto.
+
+Captura: `docs/screenshots/09-hybrid-file-line.png`

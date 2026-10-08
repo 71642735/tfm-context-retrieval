@@ -593,3 +593,123 @@ Estos resultados corresponden a una única tarea y no permiten todavía
 extraer conclusiones generales sobre las estrategias.
 
 **Evidencia:** `docs/screenshots/14-hybrid-django-generalization.png`
+
+### BM25 sobre AutoGPT
+
+Se ejecutó BM25 sobre la tarea
+`Significant-Gravitas__AutoGPT-4652`, utilizando el `base_commit`
+`9150f32f8b8602395534795ddd2d930a1684e419`.
+
+El corpus resultante contiene 741 chunks.
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   0.0000 |    0.0000 | 0.0000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+BM25 no recuperó contexto gold dentro de los primeros 20 resultados
+para esta tarea. El resultado se conserva como parte del mini-piloto
+sin extraer todavía conclusiones generales.
+
+### Recuperación semántica sobre AutoGPT
+
+Se ejecutó la recuperación semántica sobre la tarea
+`Significant-Gravitas__AutoGPT-4652`.
+
+El corpus contiene 741 chunks, cuyos embeddings fueron generados mediante
+UniXcoder y almacenados en caché para su reutilización posterior.
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   0.0000 |    0.0000 | 0.0000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+La estrategia semántica no recuperó contexto gold dentro de los primeros
+20 resultados para esta tarea. Al igual que en BM25, el resultado se
+conserva como parte del mini-piloto sin extraer todavía conclusiones
+generales.
+
+### Comprobación de cobertura del gold en AutoGPT
+
+Debido a que BM25 y la recuperación semántica obtuvieron métricas nulas
+hasta K=20 en la tarea `Significant-Gravitas__AutoGPT-4652`, se comprobó
+si el contexto gold estaba representado en el corpus generado por el
+chunking.
+
+El contexto gold contiene 89 líneas distintas en
+`autogpt/memory/message_history.py`. De ellas, 82 están cubiertas por al
+menos un chunk del corpus, lo que supone una cobertura máxima posible de
+0,9213.
+
+Las líneas 14-20 no están representadas por ningún chunk, mientras que
+las regiones comprendidas entre las líneas 123-204 sí están completamente
+cubiertas.
+
+Por tanto, las métricas nulas obtenidas por BM25 y recuperación semántica
+en K=5, K=10 y K=20 no pueden atribuirse únicamente a la ausencia del
+contexto relevante en el corpus. La mayor parte del gold era recuperable,
+pero no apareció entre los primeros 20 resultados de estas estrategias.
+
+La ausencia de las líneas 14-20 es coherente con las limitaciones conocidas
+del chunking estructural utilizado, que no genera chunks independientes
+para imports o código a nivel de módulo.
+
+**Evidencia:** `docs/screenshots/16-autogpt-gold-coverage.png`
+
+### Recuperación BM25 sobre LangChain
+
+Se ejecutó la estrategia BM25 sobre la tarea
+`langchain-ai__langchain-6765`, correspondiente al repositorio
+`langchain-ai/langchain` en el commit
+`ba622764cb7ccf4667878289f959857348ef8c19`.
+
+El corpus generado mediante el chunking estructural contiene 5.751 chunks.
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   1.0000 |    0.3333 | 0.5000 |
+| 5   | line  |   1.0000 |    0.0976 | 0.1778 |
+| 10  | file  |   1.0000 |    0.1429 | 0.2500 |
+| 10  | line  |   1.0000 |    0.0476 | 0.0909 |
+| 20  | file  |   1.0000 |    0.0909 | 0.1667 |
+| 20  | line  |   1.0000 |    0.0249 | 0.0486 |
+
+BM25 recuperó todo el contexto gold ya en K=5, tanto a nivel de fichero
+como de línea. Al aumentar K, la cobertura se mantuvo en 1.0000, mientras
+que la precisión y el F1 disminuyeron debido a la incorporación de
+resultados adicionales no pertenecientes al contexto gold.
+
+Este resultado ilustra la utilidad de evaluar distintos valores de K:
+aumentar el número de chunks recuperados no implica necesariamente una
+selección más precisa del contexto relevante.
+
+### Recuperación BM25 sobre scikit-learn
+
+Se ejecutó la estrategia BM25 sobre la tarea
+`scikit-learn__scikit-learn-25931`, correspondiente al repositorio
+`scikit-learn/scikit-learn` en el commit
+`e3d1f9ac39e4bf0f31430e779acc50fb05fe1b64`.
+
+El corpus generado mediante el chunking estructural contiene 9.685 chunks.
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   0.0000 |    0.0000 | 0.0000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+BM25 no recuperó contexto gold dentro de los primeros 20 resultados para
+esta tarea. El resultado se conserva como parte del mini-piloto y no se
+utiliza de forma aislada para extraer conclusiones generales sobre el
+rendimiento de la estrategia.

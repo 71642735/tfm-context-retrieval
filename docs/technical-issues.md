@@ -185,3 +185,50 @@ automáticamente al estado del repositorio requerido por cada tarea.
 La generalización permite ejecutar posteriormente el mismo procedimiento sobre
 múltiples tareas y repositorios sin modificar manualmente la configuración para
 cada incidencia, mejorando la reproducibilidad del experimento.
+
+## TI-005 — Fallo de checkout de AutoGPT por rutas largas en Windows
+
+**Problema:**  
+El clonado de `Significant-Gravitas/AutoGPT` finalizó la descarga de los
+objetos, pero Git no pudo completar el checkout.
+
+**Error principal:**
+
+`fatal: cannot create directory ... Filename too long`
+
+**Causa:**  
+El repositorio contiene rutas cuya longitud supera la configuración
+admitida por defecto por Git en Windows.
+
+**Impacto:**  
+El pipeline no podía preparar el repositorio de AutoGPT y, por tanto,
+no podía ejecutar las estrategias de recuperación sobre esta tarea.
+
+**Solución adoptada:**  
+Se habilitó el soporte de rutas largas de Git para el repositorio de
+trabajo mediante:
+
+`git config core.longpaths true`
+
+Posteriormente se eliminó el clon incompleto y se repitió la preparación
+del repositorio.
+
+**Estado:**  
+Pendiente de validar mediante una nueva ejecución sobre AutoGPT.
+
+**Solución adoptada:**  
+Inicialmente se habilitó `core.longpaths=true` únicamente en la
+configuración local del repositorio del TFM. Esta configuración no se
+aplicaba al checkout realizado durante el clonado de un nuevo repositorio.
+
+Se habilitó posteriormente el soporte de rutas largas a nivel global:
+
+`git config --global core.longpaths true`
+
+Tras eliminar el clon incompleto y repetir la ejecución, AutoGPT se clonó
+correctamente y se realizó checkout del `base_commit` requerido por
+ContextBench.
+
+**Estado:**  
+Resuelto y validado mediante la ejecución de BM25 sobre
+`Significant-Gravitas__AutoGPT-4652`.

@@ -1,6 +1,6 @@
+import argparse
 import json
 import re
-import argparse
 
 from rank_bm25 import BM25Okapi
 
@@ -37,6 +37,116 @@ def tokenize(text: str) -> list[str]:
     return re.findall(r"[A-Za-z0-9_]+", text.lower())
 
 
+def rank_bm25(
+    chunks: list[Chunk],
+    query: str,
+) -> tuple[list[Chunk], list[float], list[int]]:
+    """
+    Ordena los chunks mediante BM25 según su relevancia
+    respecto a la consulta.
+
+    Devuelve:
+    - chunks ordenados por relevancia
+    - scores BM25
+    - índices ordenados
+    """
+    documents = [
+        tokenize(chunk_to_text(chunk))
+        for chunk in chunks
+    ]
+
+    bm25 = BM25Okapi(documents)
+
+    query_tokens = tokenize(query)
+    scores = bm25.get_scores(query_tokens)
+
+    ranked_indices = sorted(
+        range(len(chunks)),
+        key=lambda index: scores[index],
+        reverse=True,
+    )
+
+    ranked_chunks = [
+        chunks[index]
+        for index in ranked_indices
+    ]
+
+    return ranked_chunks, scores.tolist(), ranked_indices
+
+def evaluate_at_k(
+    ranked_chunks: list[Chunk],
+    gold_context: list[dict],
+    repo_root,
+) -> list[dict]:
+    """
+    Evalúa un ranking para los valores de K configurados.
+
+    Devuelve una fila por cada combinación de:
+    - K
+    - nivel de evaluación (file/line)
+    """
+    results = []
+
+    for k in EVALUATION_K_VALUES:
+        metrics = evaluate_retrieval(
+            predicted_chunks=ranked_chunks[:k],
+            gold_context=gold_context,
+            repo_root=repo_root,
+        )
+
+        for level in ("file", "line"):
+            values = metrics[level]
+
+            results.append(
+                {
+                    "k": k,
+                    "level": level,
+                    "coverage": values["coverage"],
+                    "precision": values["precision"],
+                    "f1": values["f1"],
+                }
+            )
+
+    return results
+
+
+def evaluate_at_k(
+    ranked_chunks: list[Chunk],
+    gold_context: list[dict],
+    repo_root,
+) -> list[dict]:
+    """
+    Evalúa un ranking para los valores de K configurados.
+
+    Devuelve una fila por cada combinación de:
+    - K
+    - nivel de evaluación (file/line)
+    """
+    results = []
+
+    for k in EVALUATION_K_VALUES:
+        metrics = evaluate_retrieval(
+            predicted_chunks=ranked_chunks[:k],
+            gold_context=gold_context,
+            repo_root=repo_root,
+        )
+
+        for level in ("file", "line"):
+            values = metrics[level]
+
+            results.append(
+                {
+                    "k": k,
+                    "level": level,
+                    "coverage": values["coverage"],
+                    "precision": values["precision"],
+                    "f1": values["f1"],
+                }
+            )
+
+    return results
+
+
 def print_evaluation(
     ranked_chunks: list[Chunk],
     gold_context: list[dict],
@@ -58,23 +168,21 @@ def print_evaluation(
 
     print("-" * 49)
 
-    for k in EVALUATION_K_VALUES:
-        metrics = evaluate_retrieval(
-            predicted_chunks=ranked_chunks[:k],
-            gold_context=gold_context,
-            repo_root=repo_root,
+    results = evaluate_at_k(
+        ranked_chunks=ranked_chunks,
+        gold_context=gold_context,
+        repo_root=repo_root,
+    )
+
+    for result in results:
+        print(
+            f"{result['k']:<5}"
+            f"{result['level']:<10}"
+            f"{result['coverage']:>12.4f}"
+            f"{result['precision']:>12.4f}"
+            f"{result['f1']:>10.4f}"
         )
 
-        for level in ("file", "line"):
-            values = metrics[level]
-
-            print(
-                f"{k:<5}"
-                f"{level:<10}"
-                f"{values['coverage']:>12.4f}"
-                f"{values['precision']:>12.4f}"
-                f"{values['f1']:>10.4f}"
-            )
 
 def parse_args():
     """
@@ -91,10 +199,11 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def main():
     # 1. Cargar la tarea de ContextBench.
     args = parse_args()
-    task = load_task(args.task_id)  
+    task = load_task(args.task_id)
 
     query = task["problem_statement"]
     gold_context = json.loads(task["gold_context"])
@@ -124,31 +233,14 @@ def main():
 
     print(f"Chunks indexados: {len(chunks)}")
 
-    # 4. Construir el corpus léxico para BM25.
-    documents = [
-        tokenize(chunk_to_text(chunk))
-        for chunk in chunks
-    ]
-
+    # 4. Recuperar chunks mediante BM25 utilizando únicamente
+    #    el problem_statement como consulta.
     print("Construyendo índice BM25...")
 
-    bm25 = BM25Okapi(documents)
-
-    # 5. Recuperar chunks utilizando únicamente
-    #    el problem_statement como consulta.
-    query_tokens = tokenize(query)
-    scores = bm25.get_scores(query_tokens)
-
-    ranked_indices = sorted(
-        range(len(chunks)),
-        key=lambda index: scores[index],
-        reverse=True,
+    ranked_chunks, scores, ranked_indices = rank_bm25(
+        chunks=chunks,
+        query=query,
     )
-
-    ranked_chunks = [
-        chunks[index]
-        for index in ranked_indices
-    ]
 
     print(f"\n=== BM25 TOP-{TOP_K} ===")
 
@@ -166,7 +258,7 @@ def main():
             f"{chunk.symbol}"
         )
 
-    # 6. El gold_context aparece únicamente aquí,
+    # 5. El gold_context aparece únicamente aquí,
     #    después de haber realizado la recuperación.
     print_evaluation(
         ranked_chunks=ranked_chunks,

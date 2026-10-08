@@ -23,9 +23,9 @@ innecesariamente el alcance del TFM.
 | **11 oct.**    | Revisión ligera del proyecto, Git, actualización del registro experimental y preparación para defensa/reuniones. | [x] |
 | **12 oct.**    | Generalizar el pipeline para múltiples tareas y repositorios.                                                    | [x] |
 | **13 oct.**    | Implementar la selección reproducible de tareas.                                                                 | [x] |
-| **14 oct.**    | Preparar y comenzar el mini-piloto de aproximadamente 5 tareas.                                                  |
-| **15 oct.**    | Ejecutar BM25, recuperación semántica e híbrida sobre las tareas del mini-piloto.                                |
-| **16 oct.**    | Corregir únicamente problemas generales detectados en el pipeline.                                               |
+| **14 oct.**    | Preparar y comenzar el mini-piloto de aproximadamente 5 tareas.                                                  | [x] |
+| **15 oct.**    | Ejecutar BM25, recuperación semántica e híbrida sobre las tareas del mini-piloto.                                | [x] |
+| **16 oct.**    | Corregir únicamente problemas generales detectados en el pipeline.                                               | [x] |
 | **17 oct.**    | Reejecutar el mini-piloto y generar una primera tabla comparativa.                                               |
 | **18 oct.**    | Analizar y documentar el mini-piloto y congelar la configuración experimental.                                   |
 | **19 oct.**    | Seleccionar de forma reproducible la muestra final de 30–50 tareas.                                              |

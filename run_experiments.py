@@ -1,4 +1,6 @@
 import json
+import csv
+from pathlib import Path
 
 from src.chunking import Chunk, chunk_python_repository
 from src.contextbench import load_task
@@ -15,6 +17,16 @@ from src.retrieval.semantic import (
 K_VALUES = (5, 10, 20)
 FUSION_DEPTH = 100
 
+RESULTS_DIR = Path("results")
+RESULTS_FILE = RESULTS_DIR / "retrieval_results.csv"
+
+MINI_PILOT_TASKS = [
+    "django__django-12663",
+    "Significant-Gravitas__AutoGPT-4652",
+    "matplotlib__matplotlib-25479",
+    "langchain-ai__langchain-6765",
+    "scikit-learn__scikit-learn-25931",
+]
 
 def evaluate_ranking(
     task_id: str,
@@ -187,16 +199,75 @@ def run_task(task_id: str) -> list[dict]:
     return rows
 
 
+def save_results(rows: list[dict]) -> None:
+    """
+    Guarda los resultados estructurados en CSV.
+    """
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    fieldnames = [
+        "task_id",
+        "method",
+        "k",
+        "level",
+        "coverage",
+        "precision",
+        "f1",
+    ]
+
+    with RESULTS_FILE.open(
+        "w",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=fieldnames,
+        )
+
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print(f"\nResultados guardados en: {RESULTS_FILE}")
+
+
 def main() -> None:
-    task_id = "astropy__astropy-12907"
+    all_rows = []
 
-    rows = run_task(task_id)
+    for index, task_id in enumerate(
+        MINI_PILOT_TASKS,
+        start=1,
+    ):
+        print()
+        print("#" * 70)
+        print(
+            f"MINI-PILOTO {index}/"
+            f"{len(MINI_PILOT_TASKS)}"
+        )
+        print("#" * 70)
 
-    print("\n=== RESULTADOS ESTRUCTURADOS ===")
+        rows = run_task(task_id)
 
-    for row in rows:
-        print(row)
+        all_rows.extend(rows)
 
+        # Guardamos después de cada tarea para no perder
+        # resultados si una ejecución posterior falla.
+        save_results(all_rows)
+
+        print(
+            f"\nTarea completada: {task_id}"
+        )
+        print(
+            f"Filas acumuladas: {len(all_rows)}"
+        )
+
+    print()
+    print("=" * 70)
+    print("MINI-PILOTO COMPLETADO")
+    print(f"Tareas: {len(MINI_PILOT_TASKS)}")
+    print(f"Filas: {len(all_rows)}")
+    print(f"CSV: {RESULTS_FILE}")
+    print("=" * 70)
 
 if __name__ == "__main__":
     main()

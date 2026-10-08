@@ -713,3 +713,161 @@ BM25 no recuperó contexto gold dentro de los primeros 20 resultados para
 esta tarea. El resultado se conserva como parte del mini-piloto y no se
 utiliza de forma aislada para extraer conclusiones generales sobre el
 rendimiento de la estrategia.
+
+## Automatización del mini-piloto de recuperación
+
+Se automatizó la ejecución conjunta de las tres estrategias de recuperación
+evaluadas en el trabajo: BM25, recuperación semántica mediante UniXcoder y
+recuperación híbrida mediante Reciprocal Rank Fusion (RRF).
+
+El runner experimental reutiliza para cada tarea el mismo repositorio en el
+`base_commit` indicado por ContextBench y el mismo corpus de chunks para las
+tres estrategias. Los rankings obtenidos se evalúan para K=5, K=10 y K=20
+a nivel de fichero y línea.
+
+La ejecución automatizada se realizó sobre las cinco tareas seleccionadas
+previamente para el mini-piloto:
+
+- `django__django-12663`
+- `Significant-Gravitas__AutoGPT-4652`
+- `matplotlib__matplotlib-25479`
+- `langchain-ai__langchain-6765`
+- `scikit-learn__scikit-learn-25931`
+
+La ejecución finalizó correctamente para las cinco tareas y generó 90 filas
+de resultados:
+
+5 tareas × 3 estrategias × 3 valores de K × 2 niveles de evaluación = 90.
+
+Los resultados se almacenaron de forma estructurada en:
+
+`results/retrieval_results.csv`
+
+El fichero contiene, para cada combinación experimental, el identificador de
+la tarea, la estrategia de recuperación, K, el nivel de evaluación y las
+métricas de coverage, precision y F1.
+
+La automatización no modifica las estrategias de recuperación ni las métricas
+utilizadas previamente, sino que permite ejecutar de forma reproducible el
+mismo procedimiento sobre múltiples tareas y reducir errores derivados de la
+recopilación manual de resultados.
+
+**Evidencia:** `docs/screenshots/17-mini-pilot-automated.png`
+
+## Validación del pipeline de recuperación semántica
+
+Durante el análisis del mini-piloto se observó que la recuperación semántica
+mediante UniXcoder no recuperaba contexto gold dentro de Top-5, Top-10 ni
+Top-20 para las cinco tareas seleccionadas. Antes de interpretar este
+resultado como comportamiento del método, se realizaron comprobaciones
+adicionales para descartar un fallo básico de implementación.
+
+En la tarea `django__django-12663` se inspeccionó el ranking semántico completo.
+Los seis ficheros gold estaban presentes en el ranking, aunque su primera
+aparición se producía en posiciones alejadas del Top-20. La mejor posición
+observada fue 654 y la más baja 4492.
+
+Posteriormente se realizó una prueba de autorrecuperación utilizando como
+consulta la misma representación textual de un chunk existente en el corpus.
+El chunk seleccionado se encontraba aproximadamente en la mitad del corpus,
+evitando seleccionar manualmente un caso favorable.
+
+El chunk utilizado fue:
+
+- Fichero: `tests/distinct_on_fields/tests.py`
+- Símbolo: `DistinctOnTests.test_transform`
+- Líneas: 101-109
+
+El sistema recuperó el mismo chunk en la posición 1 con una similitud coseno
+de 1.000000.
+
+Estas comprobaciones indican que los embeddings almacenados mantienen una
+correspondencia coherente con los chunks y que el pipeline semántico es capaz
+de recuperar correctamente una consulta idéntica a una unidad indexada.
+Por tanto, no se encontraron indicios de que los resultados nulos observados
+en Top-5, Top-10 y Top-20 se deban a un fallo básico de generación,
+almacenamiento o asociación de los embeddings.
+
+Este diagnóstico no implica que UniXcoder sea incapaz de recuperar contexto
+relevante en general, sino que, para las consultas y tareas analizadas en el
+mini-piloto, los chunks pertenecientes a los ficheros gold no fueron
+posicionados dentro de los valores de K evaluados.
+
+**Evidencias:**
+
+- `docs/screenshots/19-semantic-gold-rank-django.png`
+- `docs/screenshots/20-semantic-self-retrieval.png`
+
+## Resultados agregados del mini-piloto
+
+Tras completar la ejecución automatizada de las cinco tareas del mini-piloto,
+se calcularon macro-promedios de las métricas de recuperación. Cada tarea
+contribuye con el mismo peso al promedio, independientemente del tamaño del
+repositorio o de la cantidad de contexto gold.
+
+Los resultados agregados fueron:
+
+| Método        |   K | Nivel   | Coverage | Precision |     F1 |
+| ------------- | --: | ------- | -------: | --------: | -----: |
+| BM25          |   5 | fichero |   0.2333 |    0.1167 | 0.1400 |
+| BM25          |   5 | línea   |   0.2096 |    0.0406 | 0.0487 |
+| BM25          |  10 | fichero |   0.3333 |    0.0971 | 0.1379 |
+| BM25          |  10 | línea   |   0.2407 |    0.0517 | 0.0595 |
+| BM25          |  20 | fichero |   0.5000 |    0.1268 | 0.1921 |
+| BM25          |  20 | línea   |   0.2844 |    0.0617 | 0.0775 |
+| UniXcoder     |   5 | fichero |   0.0000 |    0.0000 | 0.0000 |
+| UniXcoder     |   5 | línea   |   0.0000 |    0.0000 | 0.0000 |
+| UniXcoder     |  10 | fichero |   0.0000 |    0.0000 | 0.0000 |
+| UniXcoder     |  10 | línea   |   0.0000 |    0.0000 | 0.0000 |
+| UniXcoder     |  20 | fichero |   0.0000 |    0.0000 | 0.0000 |
+| UniXcoder     |  20 | línea   |   0.0000 |    0.0000 | 0.0000 |
+| Híbrido (RRF) |   5 | fichero |   0.0333 |    0.0667 | 0.0444 |
+| Híbrido (RRF) |   5 | línea   |   0.0096 |    0.0162 | 0.0120 |
+| Híbrido (RRF) |  10 | fichero |   0.2333 |    0.0450 | 0.0649 |
+| Híbrido (RRF) |  10 | línea   |   0.2096 |    0.0141 | 0.0194 |
+| Híbrido (RRF) |  20 | fichero |   0.2333 |    0.0254 | 0.0411 |
+| Híbrido (RRF) |  20 | línea   |   0.2096 |    0.0071 | 0.0114 |
+
+En este mini-piloto, BM25 obtuvo los mayores macro-promedios de F1 tanto a
+nivel de fichero como de línea. Su mejor resultado se obtuvo con K=20, con
+un F1 de 0.1921 a nivel de fichero y 0.0775 a nivel de línea.
+
+La estrategia semántica mediante UniXcoder no recuperó contexto gold dentro
+de Top-5, Top-10 ni Top-20 en las cinco tareas seleccionadas. Las
+comprobaciones adicionales realizadas sobre el pipeline semántico no
+mostraron indicios de un fallo básico en la generación, almacenamiento o
+asociación de los embeddings.
+
+La estrategia híbrida mediante RRF produjo resultados distintos de cero,
+pero no mejoró los macro-promedios obtenidos por BM25. Este comportamiento
+muestra que la combinación de recuperación léxica y semántica no garantiza
+por sí misma una mejora del ranking.
+
+Estos resultados se consideran preliminares debido al reducido tamaño del
+mini-piloto. Su finalidad es validar la infraestructura experimental,
+detectar posibles problemas y comprobar el comportamiento de las estrategias
+antes de ejecutar la muestra final. No se utilizan para concluir que BM25
+sea superior de forma general.
+
+A partir de estos resultados se congela la configuración principal de
+recuperación para la siguiente fase experimental:
+
+- Estrategias: BM25, UniXcoder y combinación híbrida mediante RRF.
+- Mismo chunking para las tres estrategias.
+- Consulta: `problem_statement` de ContextBench.
+- K: 5, 10 y 20.
+- Evaluación: nivel de fichero y nivel de línea.
+- Métricas: coverage, precision y F1.
+- Parámetro RRF: k=60.
+- Profundidad de rankings utilizados para la fusión: 100.
+
+La configuración no se modificará en función de qué estrategia obtenga
+mejores o peores resultados. Solo se realizarán cambios si se identifica un
+error de implementación que comprometa la validez del experimento.
+
+**Evidencia:** `docs/screenshots/18-mini-pilot-macro-results.png`
+
+**Resultados reproducibles:**
+
+- `results/retrieval_results.csv`
+- `results/retrieval_summary.csv`

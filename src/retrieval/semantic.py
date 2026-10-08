@@ -12,6 +12,17 @@ ENCODING_MODE = "encoder-only"
 MAX_LENGTH = 512
 
 
+def semantic_cache_path(
+    repository: str,
+    commit: str,
+) -> Path:
+    repository_name = repository.replace("/", "__")
+
+    return Path("cache") / (
+        f"{repository_name}-{commit[:8]}-semantic.pt"
+    )
+
+
 def chunk_to_text(chunk: Chunk) -> str:
     return f"{chunk.file_path}\n{chunk.symbol}\n{chunk.code}"
 
@@ -97,6 +108,7 @@ class SemanticRetriever:
             )
 
             all_embeddings.append(embeddings.cpu())
+
             processed = min(
                 start_idx + batch_size,
                 len(texts),
@@ -193,6 +205,49 @@ class SemanticRetriever:
             )
 
         return cache_data["embeddings"]
+
+    def load_or_build_embeddings(
+        self,
+        chunks: list[Chunk],
+        path: Path,
+        repository: str,
+        commit: str,
+        batch_size: int = 8,
+    ) -> torch.Tensor:
+        """
+        Carga los embeddings desde caché si existen.
+
+        Si todavía no existe una caché para el repositorio y commit
+        indicados, genera los embeddings y los guarda.
+        """
+        if path.exists():
+            print(f"Cargando índice semántico desde: {path}")
+
+            return self.load_embeddings(
+                path=path,
+                repository=repository,
+                commit=commit,
+                expected_num_chunks=len(chunks),
+            )
+
+        print("No existe índice semántico en caché.")
+        print("Generando embeddings del corpus...")
+
+        embeddings = self.index(
+            chunks,
+            batch_size=batch_size,
+        )
+
+        self.save_embeddings(
+            embeddings=embeddings,
+            path=path,
+            repository=repository,
+            commit=commit,
+        )
+
+        print(f"Índice semántico guardado en: {path}")
+
+        return embeddings
 
     def search(
         self,

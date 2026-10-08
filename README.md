@@ -366,3 +366,45 @@ El experimento distingue dos etapas:
 Una de las cuestiones que queremos analizar es precisamente si una mejor
 recuperación de contexto se traduce en una mayor capacidad del LLM para resolver
 los issues.
+
+## Mini-piloto y metodología experimental
+
+### 1. ¿Por qué realizar un mini-piloto con unas 5 incidencias de varios repositorios antes de ejecutar las 30–50 tareas finales?
+
+Queremos comprobar que el pipeline validado inicialmente con Astropy se generaliza correctamente a incidencias de distintos repositorios antes de ejecutar el experimento completo.
+
+El objetivo principal de este mini-piloto no es determinar todavía qué estrategia es mejor, sino detectar posibles problemas de generalización relacionados con el clonado de repositorios, el `base_commit`, el chunking, la recuperación o la evaluación.
+
+
+### 2. Si BM25 obtiene mejores resultados que la estrategia híbrida en algunas incidencias, ¿deberíamos modificar RRF para conseguir que el híbrido gane?
+
+No. El objetivo del experimento no es demostrar que una estrategia concreta sea superior, sino estudiar bajo qué condiciones funciona mejor cada estrategia.
+
+Modificar los parámetros después de observar los resultados para favorecer al híbrido introduciría un sesgo en la comparación.
+
+
+### 3. ¿Por qué utilizamos exactamente el mismo chunking para BM25, UniXcoder y la estrategia híbrida?
+
+Porque si modificáramos también el chunking introduciríamos otra variable en el experimento y sería más difícil determinar a qué se deben las diferencias observadas.
+
+Por eso mantenemos constantes el chunking y el resto de condiciones experimentales y variamos únicamente la estrategia de recuperación. De esta forma podemos aislar mejor su influencia.
+
+
+### 4. Si UniXcoder obtiene mejores métricas de recuperación que BM25, pero BM25 permite al LLM resolver más incidencias, ¿sería una contradicción?
+
+No. Una mejor calidad de recuperación según las métricas no implica necesariamente una mayor tasa de resolución por parte del LLM.
+
+El LLM puede aprovechar de forma diferente el contexto recuperado y también puede verse afectado por información irrelevante o ruido.
+
+Precisamente por este motivo evaluamos por separado dos etapas: la calidad del contexto recuperado y la capacidad posterior del LLM para resolver la incidencia.
+
+
+### 5. ¿Qué información de ContextBench utilizamos para realizar la recuperación y qué información reservamos para la evaluación?
+
+Para realizar la recuperación utilizamos principalmente la descripción de la incidencia (`problem_statement`) sobre el repositorio correspondiente en el estado indicado por `base_commit`.
+
+El `base_commit` determina el estado exacto del repositorio sobre el que debe realizarse el experimento.
+
+El `gold_context` se reserva exclusivamente para la evaluación posterior, comparándolo con el contexto recuperado para determinar su relevancia.
+
+El `gold_context` nunca debe utilizarse para decidir qué recuperar, ya que esto produciría una fuga de información (data leakage) y dejaría de ser una evaluación válida.

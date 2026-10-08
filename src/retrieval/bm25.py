@@ -1,19 +1,14 @@
 import json
 import re
-from pathlib import Path
+import argparse
 
-from datasets import load_dataset
 from rank_bm25 import BM25Okapi
 
 from src.chunking import Chunk, chunk_python_repository
+from src.contextbench import load_task
 from src.evaluation.retrieval_metrics import evaluate_retrieval
+from src.repo_manager import prepare_repository
 
-
-DATASET_NAME = "Contextbench/ContextBench"
-TARGET_TASK = "astropy__astropy-12907"
-
-REPOSITORY = "astropy/astropy"
-REPO_ROOT = Path("repos/astropy")
 
 TOP_K = 20
 EVALUATION_K_VALUES = (5, 10, 20)
@@ -42,35 +37,15 @@ def tokenize(text: str) -> list[str]:
     return re.findall(r"[A-Za-z0-9_]+", text.lower())
 
 
-def load_task():
-    """
-    Carga de ContextBench la tarea seleccionada para el piloto.
-    """
-    dataset = load_dataset(DATASET_NAME)
-    tasks = dataset["train"]
-
-    matches = tasks.filter(
-        lambda task: task["original_inst_id"] == TARGET_TASK
-    )
-
-    if len(matches) != 1:
-        raise RuntimeError(
-            f"Esperábamos encontrar exactamente una tarea, "
-            f"pero encontramos {len(matches)}"
-        )
-
-    return matches[0]
-
-
 def print_evaluation(
     ranked_chunks: list[Chunk],
     gold_context: list[dict],
+    repo_root,
 ) -> None:
     """
     Evalúa BM25 para distintos valores de K
-    a nivel de fichero, símbolo y línea.
+    a nivel de fichero y línea.
     """
-
     print("\n=== EVALUACIÓN BM25 ===")
 
     print(
@@ -87,7 +62,7 @@ def print_evaluation(
         metrics = evaluate_retrieval(
             predicted_chunks=ranked_chunks[:k],
             gold_context=gold_context,
-            repo_root=REPO_ROOT,
+            repo_root=repo_root,
         )
 
         for level in ("file", "line"):
@@ -101,21 +76,55 @@ def print_evaluation(
                 f"{values['f1']:>10.4f}"
             )
 
+def parse_args():
+    """
+    Lee los argumentos recibidos desde la línea de comandos.
+    """
+    parser = argparse.ArgumentParser(
+        description="Ejecuta BM25 sobre una tarea de ContextBench."
+    )
+
+    parser.add_argument(
+        "task_id",
+        help="original_inst_id de la tarea de ContextBench",
+    )
+
+    return parser.parse_args()
 
 def main():
-    task = load_task()
+    # 1. Cargar la tarea de ContextBench.
+    args = parse_args()
+    task = load_task(args.task_id)  
+
     query = task["problem_statement"]
     gold_context = json.loads(task["gold_context"])
 
-    print("Construyendo corpus de chunks...")
+    repository = task["repo"]
+
+    # 2. Preparar automáticamente el repositorio
+    #    en el base_commit indicado por ContextBench.
+    repo_root = prepare_repository(
+        repository=repository,
+        repo_url=task["repo_url"],
+        base_commit=task["base_commit"],
+    )
+
+    print(f"\nTarea: {task['original_inst_id']}")
+    print(f"Repositorio: {repository}")
+    print(f"Base commit: {task['base_commit']}")
+    print(f"Ruta local: {repo_root}")
+
+    # 3. Construir los mismos chunks que utilizará BM25.
+    print("\nConstruyendo corpus de chunks...")
 
     chunks = chunk_python_repository(
-        repository=REPOSITORY,
-        repo_root=REPO_ROOT,
+        repository=repository,
+        repo_root=repo_root,
     )
 
     print(f"Chunks indexados: {len(chunks)}")
 
+    # 4. Construir el corpus léxico para BM25.
     documents = [
         tokenize(chunk_to_text(chunk))
         for chunk in chunks
@@ -125,6 +134,8 @@ def main():
 
     bm25 = BM25Okapi(documents)
 
+    # 5. Recuperar chunks utilizando únicamente
+    #    el problem_statement como consulta.
     query_tokens = tokenize(query)
     scores = bm25.get_scores(query_tokens)
 
@@ -155,9 +166,12 @@ def main():
             f"{chunk.symbol}"
         )
 
+    # 6. El gold_context aparece únicamente aquí,
+    #    después de haber realizado la recuperación.
     print_evaluation(
         ranked_chunks=ranked_chunks,
         gold_context=gold_context,
+        repo_root=repo_root,
     )
 
 

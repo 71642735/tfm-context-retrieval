@@ -396,3 +396,200 @@ extraer conclusiones generales, ya que corresponde únicamente a una tarea
 piloto.
 
 Captura: `docs/screenshots/09-hybrid-file-line.png`
+
+### Validación del pipeline BM25 generalizado
+
+Se generalizó la preparación del repositorio para obtener dinámicamente desde
+ContextBench el repositorio, su URL y el `base_commit` correspondiente a cada
+tarea.
+
+Como comprobación de regresión, se volvió a ejecutar la tarea piloto
+`astropy__astropy-12907`.
+
+El pipeline generalizado produjo 15.765 chunks y reprodujo exactamente los
+resultados BM25 obtenidos previamente para K=5, K=10 y K=20.
+
+Esto confirma que la generalización de la infraestructura no modificó el
+comportamiento experimental del recuperador BM25 en la tarea piloto.
+
+**Evidencia:** `docs/screenshots/10-bm25-generalized-pipeline.png`
+
+### Distribución de tareas Python en ContextBench
+
+Se analizó la distribución de tareas disponibles en ContextBench antes de
+seleccionar las incidencias del mini-piloto.
+
+El benchmark contiene 1.136 tareas, de las cuales 512 corresponden a Python,
+distribuidas entre 20 repositorios.
+
+La distribución no es uniforme. Algunos repositorios concentran una proporción
+considerable de las tareas, destacando `django/django` con 129 tareas,
+`huggingface/transformers` con 67 y `sympy/sympy` y `ansible/ansible` con 52
+cada uno.
+
+Debido a esta concentración, se decidió no realizar una selección aleatoria
+directa sobre todas las tareas Python para el mini-piloto.
+
+Para validar la generalización del pipeline se utilizarán aproximadamente cinco
+tareas pertenecientes a cinco repositorios diferentes, mediante un
+procedimiento reproducible con semilla fija.
+
+### Selección reproducible del mini-piloto
+
+Para validar el funcionamiento del pipeline sobre múltiples repositorios se
+seleccionaron cinco tareas Python de ContextBench pertenecientes a cinco
+repositorios diferentes.
+
+La selección se realizó mediante un procedimiento pseudoaleatorio reproducible
+con semilla fija `42`. Primero se seleccionaron cinco repositorios diferentes
+entre los 20 repositorios con tareas Python y posteriormente una tarea de cada
+repositorio seleccionado.
+
+Las tareas seleccionadas fueron:
+
+1. `django__django-12663` — `django/django`
+2. `Significant-Gravitas__AutoGPT-4652` — `Significant-Gravitas/AutoGPT`
+3. `matplotlib__matplotlib-25479` — `matplotlib/matplotlib`
+4. `langchain-ai__langchain-6765` — `langchain-ai/langchain`
+5. `scikit-learn__scikit-learn-25931` — `scikit-learn/scikit-learn`
+
+El objetivo de este mini-piloto no es obtener conclusiones comparativas
+definitivas, sino comprobar que el pipeline experimental funciona correctamente
+sobre tareas y repositorios diferentes antes de escalar el experimento.
+
+**Evidencia:** `docs/screenshots/11-mini-pilot-selection.png`
+
+### Validación de BM25 sobre un segundo repositorio
+
+Como primera comprobación del pipeline generalizado fuera de la tarea piloto
+de Astropy, se ejecutó BM25 sobre la tarea `django__django-12663`, perteneciente
+al repositorio `django/django`.
+
+El pipeline obtuvo automáticamente desde ContextBench el repositorio y el
+`base_commit`, clonó el repositorio, realizó el checkout del estado requerido,
+generó 24.541 chunks y ejecutó posteriormente la recuperación y evaluación.
+
+La ejecución finalizó correctamente sin necesidad de modificar manualmente el
+código para adaptarlo al nuevo repositorio.
+
+A diferencia de la tarea piloto de Astropy, en esta tarea se obtuvo solapamiento
+con el gold también a nivel de líneas. Para K=20 se alcanzó una cobertura de
+fichero de 1,0000 y una cobertura de líneas de 0,0685.
+
+Estos resultados no se utilizan todavía para extraer conclusiones comparativas
+sobre BM25. La finalidad de esta ejecución es validar la generalización técnica
+del pipeline antes de ejecutar el mini-piloto completo.
+
+**Evidencia:** `docs/screenshots/12-bm25-django-generalization.png`
+
+### Validación de la generalización de la recuperación semántica
+
+Se validó la versión generalizada del pipeline de recuperación semántica
+utilizando nuevamente la tarea `astropy__astropy-12907`.
+
+El pipeline obtuvo dinámicamente el repositorio y `base_commit` desde
+ContextBench, generó los mismos 15.765 chunks y reutilizó correctamente
+la caché de embeddings correspondiente al repositorio y commit.
+
+Los resultados de evaluación coincidieron exactamente con los obtenidos
+antes de la generalización:
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   1.0000 |    0.2500 | 0.4000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   1.0000 |    0.1667 | 0.2857 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   1.0000 |    0.0714 | 0.1333 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+Esto confirma que la generalización de la infraestructura no modificó
+el comportamiento del recuperador semántico.
+
+### Validación de la generalización de la recuperación híbrida
+
+Se validó la versión generalizada del pipeline híbrido BM25 + recuperación
+semántica mediante RRF utilizando nuevamente la tarea
+`astropy__astropy-12907`.
+
+El pipeline obtuvo dinámicamente la tarea, repositorio y `base_commit`,
+generó los mismos 15.765 chunks y reutilizó correctamente la caché de
+embeddings semánticos. Para la fusión se utilizaron los 100 primeros
+resultados de BM25 y los 100 primeros resultados semánticos.
+
+Los resultados coincidieron exactamente con los obtenidos antes de la
+generalización:
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   1.0000 |    0.2500 | 0.4000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   1.0000 |    0.1111 | 0.2000 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   1.0000 |    0.0667 | 0.1250 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+La prueba confirma que la generalización de la infraestructura no alteró
+el comportamiento de la estrategia híbrida.
+
+### Recuperación semántica sobre Django
+
+Se ejecutó la recuperación semántica generalizada sobre la tarea
+`django__django-12663`, perteneciente al repositorio `django/django`
+en el `base_commit` especificado por ContextBench.
+
+Se generaron 24.541 chunks y sus correspondientes embeddings mediante
+UniXcoder. El índice semántico fue almacenado en caché para su
+reutilización posterior.
+
+Los resultados obtenidos fueron:
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   0.0000 |    0.0000 | 0.0000 |
+| 5   | line  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 10  | line  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | file  |   0.0000 |    0.0000 | 0.0000 |
+| 20  | line  |   0.0000 |    0.0000 | 0.0000 |
+
+En esta tarea concreta, la estrategia semántica no recuperó ningún
+fichero perteneciente al contexto gold dentro de los primeros 20
+resultados. Este resultado contrasta con BM25, que alcanzó una cobertura
+de fichero de 1.0000 en K=20.
+
+El resultado corresponde únicamente a esta tarea y no permite todavía
+extraer conclusiones generales sobre la superioridad de una estrategia.
+
+**Evidencia:** `docs/screenshots/13-semantic-django-generalization.png`
+
+### Recuperación híbrida sobre Django
+
+Se ejecutó la estrategia híbrida BM25 + recuperación semántica mediante
+RRF sobre la tarea `django__django-12663`.
+
+El pipeline reutilizó correctamente los 24.541 embeddings previamente
+almacenados para el repositorio y commit, calculando únicamente el
+embedding correspondiente al issue. Para RRF se utilizaron los primeros
+100 resultados de cada estrategia.
+
+Los resultados obtenidos fueron:
+
+| K   | Nivel | Coverage | Precision |     F1 |
+| --- | ----- | -------: | --------: | -----: |
+| 5   | file  |   0.1667 |    0.3333 | 0.2222 |
+| 5   | line  |   0.0479 |    0.0809 | 0.0602 |
+| 10  | file  |   0.1667 |    0.1250 | 0.1429 |
+| 10  | line  |   0.0479 |    0.0449 | 0.0464 |
+| 20  | file  |   0.1667 |    0.0714 | 0.1000 |
+| 20  | line  |   0.0479 |    0.0218 | 0.0299 |
+
+En esta tarea, la combinación mediante RRF no mejoró sistemáticamente
+a BM25. El híbrido obtuvo un F1 de fichero ligeramente superior en K=5,
+pero en K=20 BM25 alcanzó una cobertura de fichero de 1.0000 frente a
+0.1667 del híbrido.
+
+Estos resultados corresponden a una única tarea y no permiten todavía
+extraer conclusiones generales sobre las estrategias.
+
+**Evidencia:** `docs/screenshots/14-hybrid-django-generalization.png`

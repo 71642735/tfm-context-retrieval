@@ -26,8 +26,8 @@ innecesariamente el alcance del TFM.
 | **14 oct.**    | Preparar y comenzar el mini-piloto de aproximadamente 5 tareas.                                                  | [x] |
 | **15 oct.**    | Ejecutar BM25, recuperación semántica e híbrida sobre las tareas del mini-piloto.                                | [x] |
 | **16 oct.**    | Corregir únicamente problemas generales detectados en el pipeline.                                               | [x] |
-| **17 oct.**    | Reejecutar el mini-piloto y generar una primera tabla comparativa.                                               |
-| **18 oct.**    | Analizar y documentar el mini-piloto y congelar la configuración experimental.                                   |
+| **17 oct.**    | Reejecutar el mini-piloto y generar una primera tabla comparativa.                                               | [x] |
+| **18 oct.**    | Analizar y documentar el mini-piloto y congelar la configuración experimental.                                   | [x] |
 | **19 oct.**    | Seleccionar de forma reproducible la muestra final de 30–50 tareas.                                              |
 | **20 oct.**    | Preparar repositorios y `base_commit` de la muestra final.                                                       |
 | **21 oct.**    | Ejecutar BM25 sobre la muestra final.                                                                            |

@@ -871,3 +871,75 @@ error de implementación que comprometa la validez del experimento.
 
 - `results/retrieval_results.csv`
 - `results/retrieval_summary.csv`
+
+## Definición de la muestra experimental final
+
+Una vez validado el pipeline mediante el mini-piloto, se fija la muestra
+objetivo para la evaluación final de las estrategias de recuperación.
+
+La muestra estará formada por 50 tareas de ContextBench que cumplan los
+siguientes criterios:
+
+- Lenguaje: Python.
+- Tamaño objetivo: 50 tareas.
+- Selección reproducible mediante semilla fija `seed=42`.
+- Máximo de 5 tareas por repositorio.
+- Ningún repositorio podrá representar, por tanto, más del 10 % de la muestra.
+- La selección se realizará antes de ejecutar y analizar los resultados
+  finales de recuperación.
+- Las tareas no se seleccionarán ni descartarán en función del rendimiento
+  obtenido por BM25, UniXcoder o RRF.
+
+El límite por repositorio se introduce para reducir la concentración de la
+muestra en los proyectos con mayor representación dentro de ContextBench y
+aumentar la diversidad de repositorios evaluados.
+
+El tamaño de 50 tareas se establece como un compromiso entre diversidad de
+la muestra, coste computacional y viabilidad temporal del experimento. No se
+asume que este tamaño garantice representatividad estadística del conjunto
+completo de ContextBench.
+
+La selección obtenida mediante estas reglas quedará fijada antes de comenzar
+la ejecución experimental final.
+
+### Resultado de la selección de la muestra final
+
+Se ejecutó el procedimiento de selección reproducible definido previamente
+para obtener la muestra experimental final.
+
+El resultado fue:
+
+- Tareas Python disponibles en ContextBench: 512.
+- Repositorios Python disponibles: 20.
+- Tareas seleccionadas: 50.
+- Repositorios representados: 20.
+- Máximo observado de tareas por repositorio: 3.
+- Máximo peso de un único repositorio en la muestra: 6 %.
+- Semilla utilizada: `42`.
+- Límite previamente establecido: máximo 5 tareas por repositorio.
+
+La selección resultante presenta representación de los 20 repositorios Python
+disponibles en ContextBench. Aunque el límite máximo establecido era de cinco
+tareas por repositorio, el procedimiento de selección por rondas produjo una
+distribución más equilibrada, con entre una y tres tareas por repositorio.
+
+La lista exacta de tareas seleccionadas se almacena en
+`results/final_tasks.csv`. Este fichero fija la muestra que se utilizará en
+la evaluación final y evita realizar modificaciones posteriores en función
+de los resultados obtenidos por las estrategias de recuperación.
+
+**Evidencia:** `docs/screenshots/21-final-sample-selection.png`
+
+### Estimación del coste computacional de la recuperación semántica
+
+Antes de ejecutar la evaluación final se realizó una medición del coste de generación de embeddings con _UniXcoder_ sobre uno de los estados de repositorio incluidos en la muestra final.
+
+La prueba se realizó sobre `scikit-learn/scikit-learn`, en el commit `586f4318ffcdfbd9a1093f35ad43e81983740b66`, utilizando la misma configuración semántica definida para el experimento final (`batch_size=8`).
+
+Se procesaron 10.049 chunks en 4.231,79 segundos (1,18 horas), obteniendo una velocidad aproximada de 2,37 chunks por segundo, equivalentes a 142,48 chunks por minuto.
+
+A partir de los 567.285 chunks pendientes inicialmente en la muestra final, esta velocidad supone una estimación lineal aproximada de 66,36 horas de cálculo. Tras generar durante el benchmark los embeddings correspondientes a este estado, quedan aproximadamente 557.236 chunks, con una proyección de 65,18 horas adicionales.
+
+Esta estimación se utiliza únicamente para planificar la ejecución computacional. El tiempo real puede variar entre repositorios debido a diferencias en la longitud y contenido de los chunks.
+
+**Evidencia:** `docs/screenshots/22-semantic-performance-benchmark.png`

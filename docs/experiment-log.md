@@ -943,3 +943,259 @@ A partir de los 567.285 chunks pendientes inicialmente en la muestra final, esta
 Esta estimación se utiliza únicamente para planificar la ejecución computacional. El tiempo real puede variar entre repositorios debido a diferencias en la longitud y contenido de los chunks.
 
 **Evidencia:** `docs/screenshots/22-semantic-performance-benchmark.png`
+
+### Finalización de la evaluación de recuperación
+
+Se completó la evaluación final de las tres estrategias de recuperación sobre la muestra experimental de 50 tareas de ContextBench.
+
+Para cada tarea se evaluaron BM25, recuperación semántica mediante _UniXcoder_ y recuperación híbrida mediante _Reciprocal Rank Fusion_ (RRF), utilizando K=5, K=10 y K=20 y métricas a nivel de fichero y línea.
+
+La ejecución produjo 900 filas de resultados:
+
+- 50 tareas.
+- 3 estrategias de recuperación.
+- 3 valores de K.
+- 2 niveles de evaluación.
+
+La validación posterior confirmó 50 identificadores de tarea únicos y 18 combinaciones de resultados para cada tarea. No se registraron fallos durante la ejecución final.
+
+Por tanto, el conjunto de resultados de recuperación se considera completo y válido para iniciar el análisis agregado.
+
+**Resultados:** `results/final_retrieval_results.csv`
+
+**Evidencia:** `docs/screenshots/23-final-retrieval-complete.png`
+
+### Resultados agregados de la evaluación final de recuperación
+
+Tras completar la evaluación sobre las 50 tareas seleccionadas, se agregaron los
+resultados mediante macro-promedio por tarea. De esta forma, cada tarea tiene el
+mismo peso en el resultado agregado, independientemente de sus características.
+
+Se evaluaron las tres estrategias de recuperación (BM25, UniXcoder y RRF) para
+K=5, K=10 y K=20, tanto a nivel de fichero como de línea.
+
+| Método    |   K | Nivel | Coverage | Precision |     F1 |
+| --------- | --: | ----- | -------: | --------: | -----: |
+| BM25      |   5 | file  |   0.4033 |    0.2337 | 0.2578 |
+| BM25      |   5 | line  |   0.1740 |    0.1352 | 0.1332 |
+| BM25      |  10 | file  |   0.4757 |    0.1911 | 0.2438 |
+| BM25      |  10 | line  |   0.2381 |    0.0991 | 0.1228 |
+| BM25      |  20 | file  |   0.5652 |    0.1307 | 0.1939 |
+| BM25      |  20 | line  |   0.2733 |    0.0627 | 0.0912 |
+| UniXcoder |   5 | file  |   0.2617 |    0.1480 | 0.1673 |
+| UniXcoder |   5 | line  |   0.1065 |    0.0901 | 0.0880 |
+| UniXcoder |  10 | file  |   0.3289 |    0.1216 | 0.1604 |
+| UniXcoder |  10 | line  |   0.1547 |    0.0631 | 0.0784 |
+| UniXcoder |  20 | file  |   0.4369 |    0.1024 | 0.1521 |
+| UniXcoder |  20 | line  |   0.1868 |    0.0404 | 0.0598 |
+| RRF       |   5 | file  |   0.3556 |    0.2337 | 0.2505 |
+| RRF       |   5 | line  |   0.1483 |    0.1229 | 0.1190 |
+| RRF       |  10 | file  |   0.4273 |    0.1741 | 0.2222 |
+| RRF       |  10 | line  |   0.2015 |    0.0855 | 0.1084 |
+| RRF       |  20 | file  |   0.5629 |    0.1225 | 0.1862 |
+| RRF       |  20 | line  |   0.2546 |    0.0555 | 0.0841 |
+
+La validación del fichero agregado confirmó que las 18 combinaciones
+correspondientes a 3 métodos, 3 valores de K y 2 niveles de evaluación contienen
+exactamente 50 tareas cada una.
+
+Los resultados muestran que, en la muestra evaluada, BM25 obtiene los mayores
+valores de F1 en todas las configuraciones analizadas. La recuperación semántica
+mediante UniXcoder presenta resultados inferiores a BM25 en las métricas agregadas de la muestra evaluada, mientras que la estrategia híbrida RRF se aproxima a BM25 pero no lo supera en F1.
+
+También se observa un patrón consistente al aumentar K: aumenta la cobertura del
+contexto gold, mientras disminuyen la precisión y el F1. Este comportamiento
+refleja el compromiso entre recuperar una mayor proporción del contexto relevante
+y añadir una mayor cantidad de contexto no relevante.
+
+Estos resultados describen exclusivamente la calidad de la etapa de recuperación.
+La evaluación downstream permitirá analizar posteriormente si las diferencias
+observadas en retrieval se traducen o no en diferencias en la capacidad del LLM
+para resolver los issues.
+
+**Resultados:** `results/final_retrieval_summary.csv`
+
+**Evidencia:** `docs/screenshots/24-final-retrieval-summary.png`
+
+#### Análisis de resultados por tarea
+
+Como complemento a las métricas agregadas, se comparó el F1 de las tres
+estrategias individualmente para cada tarea, manteniendo fijos K y el nivel de
+evaluación. Las tareas en las que los tres métodos obtuvieron F1=0 se
+contabilizaron por separado y los empates con F1>0 no se asignaron
+arbitrariamente a ningún método.
+
+|   K | Nivel | BM25 | UniXcoder | RRF | Empates | Todos F1=0 |
+| --: | ----- | ---: | --------: | --: | ------: | ---------: |
+|   5 | file  |   12 |         7 |  12 |      10 |          9 |
+|   5 | line  |   13 |         5 |   9 |       0 |         23 |
+|  10 | file  |   17 |        12 |   8 |       5 |          8 |
+|  10 | line  |   14 |         8 |  12 |       0 |         16 |
+|  20 | file  |   17 |        12 |  10 |       5 |          6 |
+|  20 | line  |   19 |         8 |   9 |       0 |         14 |
+
+BM25 es el método con mayor número de victorias individuales en cinco de las
+seis configuraciones y empata con RRF en K=5 a nivel de fichero. Esto es
+coherente con su mejor rendimiento agregado en F1.
+
+No obstante, UniXcoder y RRF obtienen el mejor F1 en determinados subconjuntos
+de tareas. Por tanto, los resultados no indican que una estrategia domine
+necesariamente en todos los issues, sino que existen diferencias de
+comportamiento entre tareas.
+
+También se observa que el número de tareas en las que los tres métodos obtienen
+F1=0 disminuye al aumentar K. A nivel de línea pasa de 23 tareas con K=5 a 14
+con K=20, lo que es consistente con el aumento de cobertura observado en los
+resultados agregados.
+
+#### Cierre de la fase de recuperación
+
+El análisis por tarea confirma que el mejor rendimiento agregado de BM25 no
+implica que esta estrategia sea superior en todos los issues. Existen tareas
+concretas en las que UniXcoder o RRF obtienen un F1 superior.
+
+Como ejemplos ilustrativos para K=10 a nivel de línea:
+
+- `keras-team__keras-18871`: BM25 obtiene el mayor F1 (0.6880), frente a
+  UniXcoder (0.5090) y RRF (0.5710).
+- `sympy__sympy-16886`: UniXcoder obtiene el mayor F1 (0.4363), frente a
+  BM25 (0.2181) y RRF (0.2847).
+- `sphinx-doc__sphinx-9461`: RRF obtiene F1=0.1880, mientras que BM25 y
+  UniXcoder obtienen F1=0.
+
+Estos casos se utilizan únicamente como ejemplos ilustrativos de la variabilidad
+observada entre tareas y no como evidencia adicional seleccionada para modificar
+las conclusiones agregadas.
+
+En consecuencia, en la muestra evaluada de 50 tareas, BM25 presenta el mejor
+rendimiento agregado en F1, pero ninguna de las estrategias puede considerarse
+dominante para todos los issues.
+
+Con este análisis se considera cerrada la fase experimental de recuperación.
+La siguiente fase evaluará si las diferencias observadas en la calidad del
+contexto recuperado se traducen en diferencias en la capacidad de un LLM para
+resolver los issues.
+
+#### Inspección cualitativa de rankings
+
+Como análisis complementario, se inspeccionaron los rankings de tres tareas
+ilustrativas para K=10 a nivel de línea, sin modificar la configuración
+experimental ni las estrategias de recuperación.
+
+En `keras-team__keras-18871`, BM25 obtuvo el mayor F1 a nivel de línea
+(0.6880). En su Top-10 aparecieron tres chunks con solapamiento con el contexto
+gold, frente a dos en UniXcoder. RRF también recuperó tres chunks con
+solapamiento, aunque obtuvo un F1 inferior a BM25.
+
+En `sympy__sympy-16886`, UniXcoder obtuvo el mayor F1 (0.4363), aunque los tres
+métodos recuperaron dos chunks con solapamiento con el gold dentro del Top-10.
+Esto muestra que el número de chunks con solapamiento no explica por sí solo el
+resultado: los métodos recuperan conjuntos de chunks con diferentes rangos de
+líneas, lo que afecta a la precisión y al F1 a nivel de línea.
+
+El caso `sphinx-doc__sphinx-9461` ilustra el comportamiento de la fusión RRF.
+El chunk `Documenter.filter_members`, situado en las líneas 669-818 de
+`sphinx/ext/autodoc/__init__.py`, ocupaba la posición 78 en BM25 y la posición
+39 en UniXcoder, por lo que no aparecía en el Top-10 de ninguno de los dos
+métodos. Al combinar ambos rankings mediante RRF, el chunk ascendió hasta la
+posición 6 y pasó a formar parte del contexto recuperado para K=10. Esto explica
+que RRF obtuviera F1=0.1880 en esta tarea mientras BM25 y UniXcoder obtuvieron
+F1=0.
+
+Esta inspección se utiliza únicamente como análisis cualitativo ilustrativo de
+los resultados ya obtenidos y no se empleó para modificar parámetros,
+seleccionar nuevas configuraciones ni alterar las conclusiones agregadas.
+
+**Evidencia:**
+
+- `docs/screenshots/25-rrf-ranking-inspection-sphinx.png`
+- `docs/screenshots/26-rrf-gold-ranks-sphinx.png`
+
+#### Auditoría de las métricas de recuperación
+
+Antes de iniciar la evaluación downstream se realizó una revisión adicional de
+la implementación de las métricas de recuperación.
+
+Se ampliaron los tests unitarios para comprobar ocho casos, incluyendo
+coincidencia completa, ausencia y solapamiento parcial de líneas, múltiples
+ficheros, fichero incorrecto e intervalos solapados tanto en la predicción como
+en el contexto gold. Los ocho tests finalizaron correctamente.
+
+También se verificaron las 50 tareas de la muestra experimental para comprobar
+la validez del contexto gold. Ninguna tarea presentó un `gold_context` vacío ni
+intervalos con límites de línea inválidos.
+
+Estas comprobaciones no modificaron la implementación de las métricas ni los
+resultados experimentales, sino que se realizaron como validación adicional de
+su corrección antes de iniciar la fase downstream.
+
+**Evidencia:** `docs/screenshots/27-retrieval-metrics-audit.png`
+
+#### Auditoría del pipeline de recuperación
+
+Antes de iniciar la evaluación downstream se revisó adicionalmente el pipeline
+de recuperación para comprobar la comparabilidad entre estrategias y descartar
+posibles filtraciones de información del contexto gold.
+
+La inspección del pipeline confirmó que BM25 y UniXcoder utilizan exclusivamente
+el `problem_statement` como consulta y reciben el mismo corpus de chunks,
+construido a partir del repositorio en el `base_commit` correspondiente.
+El `gold_context` se utiliza únicamente después de generar los rankings para
+calcular las métricas, mientras que `patch` y `test_patch` no intervienen en la
+recuperación.
+
+También se revisó la implementación de RRF. La fusión utiliza únicamente las
+posiciones de los resultados de BM25 y UniXcoder, con `rrf_k=60` y una
+profundidad de fusión de 100 resultados por método.
+
+Como comprobación adicional de la caché semántica, se verificó el determinismo
+del chunking sobre `sphinx-doc__sphinx`: dos ejecuciones independientes
+produjeron 6071 chunks en exactamente el mismo orden, sin diferencias entre
+posiciones.
+
+Finalmente, se validaron las cachés semánticas correspondientes a las 50 tareas
+de la muestra final. Las 50 cachés utilizadas presentaron metadatos coherentes
+para repositorio, commit, modelo, modo de encoding y longitud máxima, y el
+número declarado de chunks coincidió con el número de embeddings almacenados.
+No se detectaron errores en esta comprobación.
+
+La caché semántica no almacena actualmente una huella de la identidad y el orden
+de los chunks, por lo que esta validación podría reforzarse en futuras versiones.
+No obstante, las comprobaciones de determinismo, metadatos y autorrecuperación
+realizadas no proporcionaron indicios de una desalineación entre chunks y
+embeddings en los experimentos ejecutados.
+
+**Evidencia:** `docs/screenshots/28-semantic-cache-audit.png`
+
+#### Auditoría de la muestra final y de la agregación
+
+Antes de iniciar la evaluación downstream se realizó una comprobación adicional
+de la integridad de la muestra experimental y de los resultados finales de
+recuperación.
+
+La muestra final contiene 50 tareas únicas pertenecientes a 20 repositorios,
+sin identificadores duplicados. El máximo observado fue de tres tareas por
+repositorio, equivalente al 6 % de la muestra.
+
+Los resultados finales contienen exactamente las mismas 50 tareas seleccionadas,
+sin tareas ausentes ni adicionales. Cada tarea presenta las 18 combinaciones
+experimentales previstas (3 métodos × 3 valores de K × 2 niveles), sin
+combinaciones duplicadas, para un total de 900 filas.
+
+También se recalcularon independientemente los macro-promedios de coverage,
+precision y F1 directamente a partir de las 900 filas originales. Las 18
+combinaciones recalculadas coincidieron numéricamente con
+`results/final_retrieval_summary.csv`, salvo diferencias del orden de 10^-17
+atribuibles a la representación en coma flotante.
+
+El recálculo confirmó además que BM25 obtiene el mayor F1 agregado en las seis
+configuraciones formadas por K={5,10,20} y los niveles de fichero y línea.
+
+Estas comprobaciones no modificaron los resultados experimentales y se
+realizaron para validar de forma independiente la integridad de la muestra y
+el procedimiento de agregación.
+
+**Evidencias:**
+
+- `docs/screenshots/29-final-sample-results-audit.png`
+- `docs/screenshots/30-final-aggregation-audit.png`

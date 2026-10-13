@@ -28,13 +28,13 @@ innecesariamente el alcance del TFM.
 | **16 oct.**    | Corregir únicamente problemas generales detectados en el pipeline.                                               | [x] |
 | **17 oct.**    | Reejecutar el mini-piloto y generar una primera tabla comparativa.                                               | [x] |
 | **18 oct.**    | Analizar y documentar el mini-piloto y congelar la configuración experimental.                                   | [x] |
-| **19 oct.**    | Seleccionar de forma reproducible la muestra final de 30–50 tareas.                                              |
-| **20 oct.**    | Preparar repositorios y `base_commit` de la muestra final.                                                       |
-| **21 oct.**    | Ejecutar BM25 sobre la muestra final.                                                                            |
-| **22 oct.**    | Ejecutar recuperación semántica sobre la muestra final.                                                          |
-| **23 oct.**    | Ejecutar recuperación híbrida sobre la muestra final.                                                            |
-| **24 oct.**    | Agregar resultados para K=5, K=10 y K=20.                                                                        |
-| **25 oct.**    | Analizar resultados y casos relevantes. Cierre de la fase de recuperación.                                       |
+| **19 oct.**    | Seleccionar de forma reproducible la muestra final de 30–50 tareas.                                              | [x] |
+| **20 oct.**    | Preparar repositorios y `base_commit` de la muestra final.                                                       | [x] |
+| **21 oct.**    | Ejecutar BM25 sobre la muestra final.                                                                            | [x] |
+| **22 oct.**    | Ejecutar recuperación semántica sobre la muestra final.                                                          | [x] |
+| **23 oct.**    | Ejecutar recuperación híbrida sobre la muestra final.                                                            | [x] |
+| **24 oct.**    | Agregar resultados para K=5, K=10 y K=20.                                                                        | [x] |
+| **25 oct.**    | Analizar resultados y casos relevantes. Cierre de la fase de recuperación.                                       | [x] |
 | **26 oct.**    | Diseñar el pipeline de evaluación downstream con LLM.                                                            |
 | **27 oct.**    | Ejecutar una primera tarea completa con LLM de extremo a extremo.                                                |
 | **28 oct.**    | Automatizar la evaluación mediante LLM.                                                                          |
@@ -54,7 +54,7 @@ innecesariamente el alcance del TFM.
 
 ## Hitos principales
 
-### Hito 1 — Piloto inicial
+### Hito 1 — Piloto inicial ✅ COMPLETADO
 
 Validar sobre una tarea de ContextBench el pipeline completo de recuperación:
 
@@ -64,7 +64,7 @@ Validar sobre una tarea de ContextBench el pipeline completo de recuperación:
 - recuperación híbrida mediante RRF;
 - evaluación para K=5, K=10 y K=20.
 
-### Hito 2 — Mini-piloto multi-repositorio
+### Hito 2 — Mini-piloto multi-repositorio ✅ COMPLETADO
 
 Ejecutar el pipeline sobre aproximadamente cinco tareas pertenecientes a
 repositorios diferentes.
@@ -73,7 +73,7 @@ El objetivo de este mini-piloto no es obtener conclusiones definitivas sobre
 qué estrategia es mejor, sino comprobar que la infraestructura experimental
 funciona correctamente sobre diferentes tareas y repositorios.
 
-### Hito 3 — Experimento final de recuperación
+### Hito 3 — Experimento final de recuperación ✅ COMPLETADO
 
 Ejecutar las tres estrategias sobre una muestra reproducible de aproximadamente
 30–50 tareas de ContextBench.
@@ -81,7 +81,18 @@ Ejecutar las tres estrategias sobre una muestra reproducible de aproximadamente
 Comparar los resultados principalmente a nivel de fichero y líneas para
 K=5, K=10 y K=20.
 
-### Hito 4 — Evaluación downstream con LLM
+Estado final de ejecución:
+
+- 50 tareas evaluadas;
+- 3 estrategias: BM25, UniXcoder y RRF;
+- K=5, K=10 y K=20;
+- evaluación a nivel de fichero y línea;
+- 900 filas de resultados;
+- 50 tareas completas;
+- 0 tareas incompletas;
+- 0 fallos registrados.
+
+### Hito 4 — Evaluación downstream con LLM ⬜ PENDIENTE
 
 Proporcionar al mismo LLM el issue y el contexto recuperado por cada estrategia,
 manteniendo constantes las demás condiciones experimentales.
@@ -89,7 +100,7 @@ manteniendo constantes las demás condiciones experimentales.
 Evaluar la resolución de las incidencias mediante la aplicación del parche y
 la ejecución de los tests correspondientes.
 
-### Hito 5 — Análisis y redacción
+### Hito 5 — Análisis y redacción ⬜ PENDIENTE
 
 Analizar por separado:
 
@@ -99,6 +110,8 @@ Analizar por separado:
 
 Posteriormente redactar metodología, resultados, discusión, limitaciones y
 resto de apartados necesarios para la entrega.
+
+---
 
 ---
 
@@ -168,13 +181,47 @@ El adelanto consolidado se estima actualmente en aproximadamente **4–5 días**
 aunque esta estimación deberá actualizarse cuando se complete el mini-piloto
 multi-repositorio.
 
+### 11 de octubre de 2026
+
+Desde la actualización anterior se han completado los siguientes trabajos:
+
+- Finalización del mini-piloto multi-repositorio sobre cinco tareas.
+- Automatización de la ejecución y evaluación de las estrategias de recuperación.
+- Análisis agregado de los resultados del mini-piloto.
+- Validación adicional del funcionamiento de la recuperación semántica.
+- Congelación de la configuración experimental antes del experimento final.
+- Selección reproducible de la muestra final de 50 tareas de ContextBench.
+- Representación de los 20 repositorios Python disponibles en la muestra seleccionada.
+- Preparación de los repositorios y `base_commit` correspondientes.
+- Estimación y validación del coste computacional de la generación de embeddings.
+- Ejecución de BM25, UniXcoder y RRF sobre las 50 tareas de la muestra final.
+- Evaluación para K=5, K=10 y K=20 a nivel de fichero y línea.
+- Obtención y validación de 900 filas de resultados, sin tareas incompletas ni fallos registrados.
+
+El experimento final de recuperación se encuentra, por tanto, completamente
+ejecutado. El siguiente trabajo corresponde a la agregación y análisis de los
+resultados obtenidos.
+
+Según el calendario original, esta actividad estaba prevista para comenzar el
+**24 de octubre de 2026**, por lo que el desarrollo se encuentra actualmente
+aproximadamente **13 días por delante del plan inicial**.
+
+Este adelanto se mantendrá como margen de seguridad para las siguientes fases,
+sin ampliar el alcance experimental definido.
+
 ### Estado del mini-piloto
+
+El mini-piloto multi-repositorio se completó correctamente sobre cinco tareas
+pertenecientes a repositorios diferentes.
 
 | Tarea                                | BM25 | Semántico | Híbrido |
 | ------------------------------------ | ---- | --------- | ------- |
-| `astropy__astropy-12907`             | ✅   | ✅        | ✅      |
 | `django__django-12663`               | ✅   | ✅        | ✅      |
-| `Significant-Gravitas__AutoGPT-4652` | ⬜   | ⬜        | ⬜      |
-| `matplotlib__matplotlib-25479`       | ⬜   | ⬜        | ⬜      |
-| `langchain-ai__langchain-6765`       | ⬜   | ⬜        | ⬜      |
-| `scikit-learn__scikit-learn-25931`   | ⬜   | ⬜        | ⬜      |
+| `Significant-Gravitas__AutoGPT-4652` | ✅   | ✅        | ✅      |
+| `matplotlib__matplotlib-25479`       | ✅   | ✅        | ✅      |
+| `langchain-ai__langchain-6765`       | ✅   | ✅        | ✅      |
+| `scikit-learn__scikit-learn-25931`   | ✅   | ✅        | ✅      |
+
+El mini-piloto permitió validar la ejecución automatizada del pipeline sobre
+diferentes repositorios antes de congelar la configuración experimental y
+ejecutar la muestra final de 50 tareas.

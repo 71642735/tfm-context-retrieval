@@ -3,8 +3,8 @@ from collections import defaultdict
 from pathlib import Path
 
 
-RESULTS_FILE = Path("results/retrieval_results.csv")
-SUMMARY_FILE = Path("results/retrieval_summary.csv")
+RESULTS_FILE = Path("results/final_retrieval_results.csv")
+SUMMARY_FILE = Path("results/final_retrieval_summary.csv")
 
 
 def main() -> None:

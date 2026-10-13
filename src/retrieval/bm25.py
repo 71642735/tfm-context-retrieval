@@ -110,43 +110,6 @@ def evaluate_at_k(
     return results
 
 
-def evaluate_at_k(
-    ranked_chunks: list[Chunk],
-    gold_context: list[dict],
-    repo_root,
-) -> list[dict]:
-    """
-    Evalúa un ranking para los valores de K configurados.
-
-    Devuelve una fila por cada combinación de:
-    - K
-    - nivel de evaluación (file/line)
-    """
-    results = []
-
-    for k in EVALUATION_K_VALUES:
-        metrics = evaluate_retrieval(
-            predicted_chunks=ranked_chunks[:k],
-            gold_context=gold_context,
-            repo_root=repo_root,
-        )
-
-        for level in ("file", "line"):
-            values = metrics[level]
-
-            results.append(
-                {
-                    "k": k,
-                    "level": level,
-                    "coverage": values["coverage"],
-                    "precision": values["precision"],
-                    "f1": values["f1"],
-                }
-            )
-
-    return results
-
-
 def print_evaluation(
     ranked_chunks: list[Chunk],
     gold_context: list[dict],

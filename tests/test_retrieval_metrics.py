@@ -50,26 +50,11 @@ class TestRetrievalMetrics(unittest.TestCase):
             gold_context,
         )
 
-        self.assertEqual(
-            metrics["file"]["coverage"],
-            1.0,
-        )
-        self.assertEqual(
-            metrics["file"]["precision"],
-            1.0,
-        )
-        self.assertEqual(
-            metrics["line"]["coverage"],
-            1.0,
-        )
-        self.assertEqual(
-            metrics["line"]["precision"],
-            1.0,
-        )
-        self.assertEqual(
-            metrics["line"]["f1"],
-            1.0,
-        )
+        self.assertEqual(metrics["file"]["coverage"], 1.0)
+        self.assertEqual(metrics["file"]["precision"], 1.0)
+        self.assertEqual(metrics["line"]["coverage"], 1.0)
+        self.assertEqual(metrics["line"]["precision"], 1.0)
+        self.assertEqual(metrics["line"]["f1"], 1.0)
 
     def test_no_line_overlap(self):
         """
@@ -98,26 +83,11 @@ class TestRetrievalMetrics(unittest.TestCase):
             gold_context,
         )
 
-        self.assertEqual(
-            metrics["file"]["coverage"],
-            1.0,
-        )
-        self.assertEqual(
-            metrics["file"]["precision"],
-            1.0,
-        )
-        self.assertEqual(
-            metrics["line"]["coverage"],
-            0.0,
-        )
-        self.assertEqual(
-            metrics["line"]["precision"],
-            0.0,
-        )
-        self.assertEqual(
-            metrics["line"]["f1"],
-            0.0,
-        )
+        self.assertEqual(metrics["file"]["coverage"], 1.0)
+        self.assertEqual(metrics["file"]["precision"], 1.0)
+        self.assertEqual(metrics["line"]["coverage"], 0.0)
+        self.assertEqual(metrics["line"]["precision"], 0.0)
+        self.assertEqual(metrics["line"]["f1"], 0.0)
 
     def test_partial_line_overlap(self):
         """
@@ -148,7 +118,6 @@ class TestRetrievalMetrics(unittest.TestCase):
         # Gold 10-20 = 11 líneas.
         # Predicción 15-25 = 11 líneas.
         # Intersección 15-20 = 6 líneas.
-
         expected = 6 / 11
 
         self.assertAlmostEqual(
@@ -163,6 +132,146 @@ class TestRetrievalMetrics(unittest.TestCase):
             metrics["line"]["f1"],
             expected,
         )
+
+    def test_overlapping_predicted_chunks_are_not_double_counted(self):
+        """
+        Dos chunks recuperados se solapan.
+        Las líneas comunes no deben contarse dos veces.
+        """
+
+        gold_context = [
+            {
+                "file": "example.py",
+                "start_line": 10,
+                "end_line": 20,
+            }
+        ]
+
+        predicted_chunks = [
+            self.create_chunk(
+                file_path="example.py",
+                start_line=10,
+                end_line=15,
+            ),
+            self.create_chunk(
+                file_path="example.py",
+                start_line=14,
+                end_line=20,
+            ),
+        ]
+
+        metrics = evaluate_retrieval(
+            predicted_chunks,
+            gold_context,
+        )
+
+        self.assertEqual(metrics["line"]["coverage"], 1.0)
+        self.assertEqual(metrics["line"]["precision"], 1.0)
+        self.assertEqual(metrics["line"]["f1"], 1.0)
+
+    def test_overlapping_gold_intervals_are_not_double_counted(self):
+        """
+        Dos intervalos gold se solapan.
+        Las líneas comunes no deben contarse dos veces.
+        """
+
+        gold_context = [
+            {
+                "file": "example.py",
+                "start_line": 10,
+                "end_line": 15,
+            },
+            {
+                "file": "example.py",
+                "start_line": 14,
+                "end_line": 20,
+            },
+        ]
+
+        predicted_chunks = [
+            self.create_chunk(
+                file_path="example.py",
+                start_line=10,
+                end_line=20,
+            )
+        ]
+
+        metrics = evaluate_retrieval(
+            predicted_chunks,
+            gold_context,
+        )
+
+        self.assertEqual(metrics["line"]["coverage"], 1.0)
+        self.assertEqual(metrics["line"]["precision"], 1.0)
+        self.assertEqual(metrics["line"]["f1"], 1.0)
+
+    def test_multiple_files(self):
+        """
+        Se recupera completamente uno de dos ficheros gold.
+        """
+
+        gold_context = [
+            {
+                "file": "a.py",
+                "start_line": 1,
+                "end_line": 10,
+            },
+            {
+                "file": "b.py",
+                "start_line": 1,
+                "end_line": 10,
+            },
+        ]
+
+        predicted_chunks = [
+            self.create_chunk(
+                file_path="a.py",
+                start_line=1,
+                end_line=10,
+            )
+        ]
+
+        metrics = evaluate_retrieval(
+            predicted_chunks,
+            gold_context,
+        )
+
+        self.assertEqual(metrics["file"]["coverage"], 0.5)
+        self.assertEqual(metrics["file"]["precision"], 1.0)
+        self.assertEqual(metrics["line"]["coverage"], 0.5)
+        self.assertEqual(metrics["line"]["precision"], 1.0)
+
+    def test_completely_wrong_file(self):
+        """
+        El fichero recuperado no pertenece al gold.
+        """
+
+        gold_context = [
+            {
+                "file": "correct.py",
+                "start_line": 10,
+                "end_line": 20,
+            }
+        ]
+
+        predicted_chunks = [
+            self.create_chunk(
+                file_path="wrong.py",
+                start_line=10,
+                end_line=20,
+            )
+        ]
+
+        metrics = evaluate_retrieval(
+            predicted_chunks,
+            gold_context,
+        )
+
+        self.assertEqual(metrics["file"]["coverage"], 0.0)
+        self.assertEqual(metrics["file"]["precision"], 0.0)
+        self.assertEqual(metrics["line"]["coverage"], 0.0)
+        self.assertEqual(metrics["line"]["precision"], 0.0)
+        self.assertEqual(metrics["line"]["f1"], 0.0)
 
     def test_perfect_symbol_match(self):
         """

@@ -35,8 +35,8 @@ innecesariamente el alcance del TFM.
 | **23 oct.**    | Ejecutar recuperación híbrida sobre la muestra final.                                                            | [x] |
 | **24 oct.**    | Agregar resultados para K=5, K=10 y K=20.                                                                        | [x] |
 | **25 oct.**    | Analizar resultados y casos relevantes. Cierre de la fase de recuperación.                                       | [x] |
-| **26 oct.**    | Diseñar el pipeline de evaluación downstream con LLM.                                                            |
-| **27 oct.**    | Ejecutar una primera tarea completa con LLM de extremo a extremo.                                                |
+| **26 oct.**    | Diseñar el pipeline de evaluación downstream con LLM.                                                            | [x] |
+| **27 oct.**    | Ejecutar una primera tarea completa con LLM de extremo a extremo.                                                | [x] |
 | **28 oct.**    | Automatizar la evaluación mediante LLM.                                                                          |
 | **29–30 oct.** | Ejecutar la evaluación LLM y solucionar posibles problemas operativos.                                           |
 | **31 oct.**    | Analizar Pass/Fail y la relación entre calidad de recuperación y resolución de incidencias.                      |
@@ -92,13 +92,19 @@ Estado final de ejecución:
 - 0 tareas incompletas;
 - 0 fallos registrados.
 
-### Hito 4 — Evaluación downstream con LLM ⬜ PENDIENTE
+### Hito 4 — Evaluación downstream con LLM 🔄 EN CURSO
 
-Proporcionar al mismo LLM el issue y el contexto recuperado por cada estrategia,
-manteniendo constantes las demás condiciones experimentales.
+Estado actual:
 
-Evaluar la resolución de las incidencias mediante la aplicación del parche y
-la ejecución de los tests correspondientes.
+- [x] Diseñado el pipeline downstream.
+- [x] Configurado y validado el acceso al LLM.
+- [x] Generado un patch a partir del issue y del contexto recuperado.
+- [x] Validada la aplicación del patch.
+- [x] Validada una primera evaluación end-to-end mediante SWE-bench.
+- [x] Obtenido el primer resultado válido del grader (`resolved=True`).
+- [ ] Congelar la configuración downstream definitiva.
+- [ ] Automatizar la evaluación para las tres estrategias.
+- [ ] Ejecutar la evaluación sobre la muestra final.
 
 ### Hito 5 — Análisis y redacción ⬜ PENDIENTE
 

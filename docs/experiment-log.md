@@ -1199,3 +1199,49 @@ el procedimiento de agregación.
 
 - `docs/screenshots/29-final-sample-results-audit.png`
 - `docs/screenshots/30-final-aggregation-audit.png`
+
+### Preparación de la evaluación downstream con LLM
+
+Se inició la preparación de la fase downstream, cuyo objetivo es evaluar si las diferencias observadas entre las estrategias de recuperación se traducen en diferencias en la capacidad de un LLM para resolver los issues.
+
+Como requisito de diseño, el LLM recibirá únicamente el `problem_statement` y el contexto proporcionado por la estrategia de recuperación correspondiente. El `gold_context`, el patch de referencia y el `test_patch` no se utilizarán como entrada del modelo, evitando así fuga de información (_data leakage_).
+
+Se configuró el SDK `google-genai` (versión 2.30.0) y se validó correctamente el acceso a Gemini Developer API desde el entorno experimental.
+
+Como candidato inicial se está evaluando `gemini-3.5-flash-lite`. Se comprobó mediante una llamada mínima que el modelo puede generar respuestas correctamente. Para el proyecto `tfm-context-retrieval`, Google AI Studio mostró un límite gratuito para generación de texto de 15 RPM, 250K TPM y 500 RPD, suficiente en número de peticiones para un diseño potencial de 50 tareas × 3 estrategias de recuperación (150 generaciones).
+
+La selección del modelo todavía no se considera congelada. Antes se realizará un piloto con un issue real de ContextBench para comprobar su capacidad para generar un patch utilizable.
+
+**Estado:** configuración técnica validada; modelo downstream todavía provisional.
+
+**Evidencia:**
+
+- docs/screenshots/32-gemini-free-tier-limits.png
+
+### Evaluación de los patches generados
+
+Para evaluar si los _patches_ generados por el LLM resuelven realmente cada _issue_, se utilizará el _harness_ de SWE-bench.
+
+> Utilizamos el _harness_ de SWE-bench para evaluar de forma reproducible si los _patches_ generados por el LLM resuelven cada instancia, evitando definir manualmente un procedimiento de _testing_ diferente para cada repositorio.
+
+### Primer piloto downstream validado
+
+Se validó el pipeline downstream sobre la instancia `pytest-dev__pytest-5809`, primera tarea de la muestra final, utilizando recuperación BM25 con Top-K=10 y `gemini-3.5-flash-lite` como modelo candidato durante el piloto técnico.
+
+El flujo evaluado fue:
+
+`issue → recuperación BM25 Top-10 → prompt con contexto recuperado → generación de patch → aplicación del patch → evaluación mediante SWE-bench`.
+
+El patch generado fue aplicado correctamente por el harness (`patch_successfully_applied=True`) y el grader oficial de SWE-bench clasificó la instancia como resuelta (`resolved=True`, `infra_failure=False`).
+
+El test `FAIL_TO_PASS` fue resuelto correctamente:
+
+- `testing/test_pastebin.py::TestPaste::test_create_new_paste`
+
+Además, los tres tests `PASS_TO_PASS` continuaron pasando, sin introducir regresiones en los tests controlados por la instancia.
+
+Este resultado valida técnicamente el pipeline completo para una instancia piloto. No se utiliza para modificar la configuración experimental ni permite extraer conclusiones comparativas entre las estrategias de recuperación.
+
+Debido a incompatibilidades de infraestructura entre SWE-bench 5.0.2, Windows y Podman, la ejecución de los tests y la generación del informe final tuvieron que separarse: los tests se ejecutaron mediante el harness y el informe se regeneró posteriormente mediante `rewrite_reports=True` a partir del `test_output.txt` producido por la misma ejecución.
+
+**Evidencia:** `docs/screenshots/33-first-downstream-pass.png`

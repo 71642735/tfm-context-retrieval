@@ -232,3 +232,41 @@ ContextBench.
 **Estado:**  
 Resuelto y validado mediante la ejecución de BM25 sobre
 `Significant-Gravitas__AutoGPT-4652`.
+
+### Descarga de imágenes SWE-bench mediante Podman
+
+Durante la primera ejecución del harness de SWE-bench con Podman, la imagen de evaluación no se encontraba disponible localmente. SWE-bench intentó descargarla mediante el Docker SDK utilizando la API compatible con Docker expuesta por Podman, pero la conexión se cerró durante la operación `images.pull`, produciendo `RemoteDisconnected`.
+
+Se comprobó de forma aislada que la misma imagen podía descargarse correctamente mediante el CLI de Podman:
+
+`podman pull docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5809:latest`
+
+La descarga finalizó correctamente. Por tanto, el problema no estaba en la disponibilidad de la imagen ni en el acceso al registro, sino en la operación de descarga realizada a través de la capa de compatibilidad Docker SDK → Podman.
+
+Como solución se precargan directamente con Podman las imágenes de evaluación necesarias antes de ejecutar el harness de SWE-bench.
+
+### Incompatibilidades entre SWE-bench 5.0.2 y Podman en Windows
+
+Tras precargar correctamente la imagen mediante `podman pull`, la evaluación superó la fase de descarga de la imagen. Durante las primeras ejecuciones se identificaron varias incompatibilidades entre SWE-bench 5.0.2, Windows y Podman.
+
+En primer lugar, la función `cleanup_container()` de SWE-bench utiliza llamadas directas al ejecutable `docker` para detener y eliminar contenedores. Este comportamiento no es compatible con el entorno utilizado, donde Docker no está disponible y se utiliza Podman como motor de contenedores.
+
+La limpieza se adaptó para realizar estas operaciones mediante el Docker SDK, aprovechando la API compatible con Docker expuesta por Podman.
+
+Posteriormente se detectó que el script `eval.sh` generado por SWE-bench podía escribirse con finales de línea incompatibles con el entorno Linux del contenedor. Esto provocaba errores durante la ejecución del script. Se aseguró la escritura del script con finales de línea LF.
+
+También se produjo un problema de codificación al escribir en Windows la salida de los tests, debido a que la codificación predeterminada del entorno era `cp1252` y la salida contenía caracteres Unicode. La ejecución se realizó posteriormente en modo UTF-8.
+
+Finalmente, en una ejecución los tests finalizaron correctamente pero la conexión con la API compatible con Docker de Podman se cerró antes de que SWE-bench pudiera completar el grading. Para conservar la separación entre ejecución y evaluación, se utilizó la funcionalidad `rewrite_reports=True` del propio harness para regenerar el informe a partir del `test_output.txt` producido por la ejecución.
+
+Con estas adaptaciones, el harness produjo finalmente para la instancia piloto `pytest-dev__pytest-5809`:
+
+- `patch_successfully_applied=True`
+- `resolved=True`
+- `infra_failure=False`
+
+El test `FAIL_TO_PASS` pasó correctamente y los tres tests `PASS_TO_PASS` continuaron pasando.
+
+Estas incidencias se consideran problemas de compatibilidad de infraestructura entre SWE-bench 5.0.2, Windows y Podman, y no fallos del patch generado ni de la lógica experimental.
+
+**Estado:** resuelto para el piloto downstream.

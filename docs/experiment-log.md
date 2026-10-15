@@ -1299,3 +1299,38 @@ Los prompts contienen únicamente el `problem_statement` y los chunks proporcion
 Los errores de infraestructura o del proveedor se distinguirán de los fallos de resolución. Un patch generado con formato inválido o no aplicable se considerará un resultado de la generación y no se regenerará automáticamente, manteniendo una única generación por condición.
 
 Esta configuración se congela antes de ejecutar la evaluación downstream comparativa para evitar modificar el protocolo en función de los resultados posteriores.
+
+## Validación de la capa reutilizable de generación downstream
+
+Se ha refactorizado el pipeline downstream para separar la recuperación de contexto y la generación mediante LLM en componentes reutilizables.
+
+La capa de recuperación fue validada para las tres estrategias experimentales:
+
+- BM25;
+- UniXcoder;
+- RRF.
+
+En los tres casos se utiliza `K=10` como contexto proporcionado al LLM. Para RRF se mantiene una profundidad de fusión de 100 resultados, coherente con el experimento de recuperación previo. La recuperación semántica reutiliza las cachés de embeddings generadas durante dicho experimento.
+
+La configuración de generación queda fijada en:
+
+- modelo: `gemini-3.5-flash-lite`;
+- `K=10`;
+- `max_output_tokens=4096`;
+- `thinking_level="minimal"`;
+- una única generación válida por condición (Pass@1).
+
+Se implementó además una política de reintentos controlados para errores temporales del proveedor. Los errores HTTP 429 y 503 pueden reintentarse hasta un máximo de tres intentos, mientras que los errores no considerados temporales se propagan sin reintento. Esta política fue validada mediante pruebas simuladas sin consumo de API.
+
+Posteriormente se realizó una generación real de validación para la tarea `pytest-dev__pytest-5809` utilizando BM25 Top-10.
+
+El consumo registrado fue:
+
+- tokens de entrada: 3163;
+- tokens de salida: 330;
+- tokens de razonamiento: 0;
+- tokens totales: 3493.
+
+El patch generado se almacenó junto con el prompt y los metadatos de la generación. La comprobación mediante `git apply --check` sobre el `base_commit` correspondiente finalizó correctamente, por lo que el patch es aplicable. Este resultado no implica todavía que la incidencia esté resuelta; la resolución deberá determinarse posteriormente mediante la evaluación con SWE-bench.
+
+**Evidencia:** `docs/screenshots/35-downstream-refactored-generation.png`

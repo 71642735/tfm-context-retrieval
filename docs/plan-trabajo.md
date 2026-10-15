@@ -102,7 +102,7 @@ Estado actual:
 - [x] Validada la aplicación del patch.
 - [x] Validada una primera evaluación end-to-end mediante SWE-bench.
 - [x] Obtenido el primer resultado válido del grader (`resolved=True`).
-- [ ] Congelar la configuración downstream definitiva.
+- [x] Congelar la configuración downstream definitiva.
 - [ ] Automatizar la evaluación para las tres estrategias.
 - [ ] Ejecutar la evaluación sobre la muestra final.
 

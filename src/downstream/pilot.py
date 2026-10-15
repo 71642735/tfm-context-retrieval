@@ -1,6 +1,8 @@
+import json
 from pathlib import Path
 
 from google import genai
+from google.genai import types
 
 from src.chunking import chunk_python_repository
 from src.contextbench import load_task
@@ -9,10 +11,18 @@ from src.retrieval.bm25 import rank_bm25
 
 
 TASK_ID = "pytest-dev__pytest-5809"
+RETRIEVAL_METHOD = "bm25"
 TOP_K = 10
 MODEL = "gemini-3.5-flash-lite"
+MAX_OUTPUT_TOKENS = 4096
+THINKING_LEVEL = "minimal"
 
-OUTPUT_PATH = Path("pilot-bm25.patch")
+OUTPUT_DIR = (
+    Path("logs")
+    / "downstream"
+    / TASK_ID
+    / RETRIEVAL_METHOD
+)
 
 
 def build_prompt(
@@ -85,9 +95,23 @@ def main() -> None:
         retrieved_chunks=retrieved_chunks,
     )
 
+    # Creamos la carpeta de esta ejecución.
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    # Guardamos exactamente el prompt que enviaremos al LLM.
+    prompt_path = OUTPUT_DIR / "prompt.txt"
+    prompt_path.write_text(
+        prompt,
+        encoding="utf-8",
+    )
+
     print(
         f"Generando patch con {MODEL} "
-        f"para {TASK_ID} usando BM25 Top-{TOP_K}..."
+        f"para {TASK_ID} usando "
+        f"{RETRIEVAL_METHOD.upper()} Top-{TOP_K}..."
     )
 
     client = genai.Client()
@@ -95,6 +119,12 @@ def main() -> None:
     response = client.models.generate_content(
         model=MODEL,
         contents=prompt,
+        config=types.GenerateContentConfig(
+            max_output_tokens=MAX_OUTPUT_TOKENS,
+            thinking_config=types.ThinkingConfig(
+                thinking_level=THINKING_LEVEL,
+            ),
+        ),
     )
 
     patch = response.text
@@ -104,12 +134,60 @@ def main() -> None:
             "Gemini no devolvió contenido de texto."
         )
 
-    OUTPUT_PATH.write_text(
+    # Guardamos exactamente el patch generado.
+    patch_path = OUTPUT_DIR / "patch.diff"
+    patch_path.write_text(
         patch.strip() + "\n",
         encoding="utf-8",
     )
 
-    print(f"Patch guardado en: {OUTPUT_PATH}")
+    usage = response.usage_metadata
+
+    input_tokens = usage.prompt_token_count or 0
+    output_tokens = usage.candidates_token_count or 0
+    thinking_tokens = usage.thoughts_token_count or 0
+    total_tokens = usage.total_token_count or 0
+
+    # Metadatos de la generación.
+    result = {
+        "task_id": TASK_ID,
+        "repository": repository,
+        "base_commit": base_commit,
+        "retrieval_method": RETRIEVAL_METHOD,
+        "k": TOP_K,
+        "model": MODEL,
+        "max_output_tokens": MAX_OUTPUT_TOKENS,
+        "thinking_level": THINKING_LEVEL,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "thinking_tokens": thinking_tokens,
+        "total_tokens": total_tokens,
+    }
+
+    result_path = OUTPUT_DIR / "result.json"
+    result_path.write_text(
+        json.dumps(
+            result,
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    print()
+    print("=== USO DE TOKENS ===")
+    print(f"Input:    {input_tokens}")
+    print(f"Output:   {output_tokens}")
+    print(f"Thinking: {thinking_tokens}")
+    print(f"Total:    {total_tokens}")
+
+    print()
+    print("=== ARTEFACTOS ===")
+    print(f"Prompt:    {prompt_path}")
+    print(f"Patch:     {patch_path}")
+    print(f"Resultado: {result_path}")
+
     print()
     print("=== PATCH GENERADO ===")
     print(patch)

@@ -1245,3 +1245,57 @@ Este resultado valida técnicamente el pipeline completo para una instancia pilo
 Debido a incompatibilidades de infraestructura entre SWE-bench 5.0.2, Windows y Podman, la ejecución de los tests y la generación del informe final tuvieron que separarse: los tests se ejecutaron mediante el harness y el informe se regeneró posteriormente mediante `rewrite_reports=True` a partir del `test_output.txt` producido por la misma ejecución.
 
 **Evidencia:** `docs/screenshots/33-first-downstream-pass.png`
+
+### Validación del registro de consumo de tokens
+
+Se comprobó que la API de Gemini proporciona metadatos de uso para cada generación, permitiendo registrar el consumo real de tokens durante la evaluación downstream.
+
+En una ejecución piloto de `pytest-dev__pytest-5809` utilizando BM25 con K=10 y `gemini-3.5-flash-lite`, la API reportó:
+
+- tokens de entrada: 3163;
+- tokens de salida: 330;
+- tokens de razonamiento reportados: ninguno;
+- tokens totales: 3493.
+
+Esta información se utilizará como dato auxiliar durante la evaluación downstream para controlar el consumo de la API y analizar el volumen de contexto procesado por cada estrategia. No se utilizará como métrica principal para determinar la calidad de las estrategias de recuperación.
+
+**Evidencia:** `docs/screenshots/34-downstream-token-usage.png`
+
+### Congelación del protocolo de evaluación downstream
+
+Tras validar técnicamente el pipeline de generación y el registro de artefactos, se congela la configuración que se utilizará en la evaluación downstream.
+
+La configuración fijada es:
+
+- estrategias de recuperación: BM25, UniXcoder y RRF;
+- muestra: las 50 tareas previamente seleccionadas y congeladas;
+- K: 10 chunks recuperados por condición;
+- LLM: `gemini-3.5-flash-lite`;
+- máximo de tokens de salida: 4096;
+- nivel de razonamiento: `minimal`;
+- una única generación por condición (Pass@1);
+- misma plantilla de prompt para las tres estrategias;
+- mismo procedimiento de aplicación y evaluación mediante SWE-bench.
+
+No se fijan explícitamente `temperature`, `top_p` ni `top_k` de generación, utilizándose el comportamiento por defecto del modelo.
+
+El valor K=10 se selecciona como punto intermedio entre K=5, K=10 y K=20, buscando un compromiso entre cantidad de contexto y ruido. No se selecciona retrospectivamente en función de la estrategia que obtuvo mejores resultados de retrieval.
+
+`gemini-3.5-flash-lite` se selecciona por su disponibilidad y viabilidad para ejecutar el volumen previsto de generaciones, y no por el resultado obtenido en la primera tarea piloto.
+
+Para cada generación se conservarán como artefactos experimentales:
+
+- el prompt exacto enviado al modelo;
+- el patch generado;
+- la configuración utilizada;
+- los tokens de entrada;
+- los tokens de salida;
+- los tokens de razonamiento reportados;
+- los tokens totales;
+- posteriormente, el resultado de evaluación mediante SWE-bench.
+
+Los prompts contienen únicamente el `problem_statement` y los chunks proporcionados por la estrategia de recuperación. No se proporciona al LLM `gold_context`, el patch de referencia ni `test_patch`.
+
+Los errores de infraestructura o del proveedor se distinguirán de los fallos de resolución. Un patch generado con formato inválido o no aplicable se considerará un resultado de la generación y no se regenerará automáticamente, manteniendo una única generación por condición.
+
+Esta configuración se congela antes de ejecutar la evaluación downstream comparativa para evitar modificar el protocolo en función de los resultados posteriores.

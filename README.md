@@ -375,20 +375,17 @@ Queremos comprobar que el pipeline validado inicialmente con Astropy se generali
 
 El objetivo principal de este mini-piloto no es determinar todavía qué estrategia es mejor, sino detectar posibles problemas de generalización relacionados con el clonado de repositorios, el `base_commit`, el chunking, la recuperación o la evaluación.
 
-
 ### 2. Si BM25 obtiene mejores resultados que la estrategia híbrida en algunas incidencias, ¿deberíamos modificar RRF para conseguir que el híbrido gane?
 
 No. El objetivo del experimento no es demostrar que una estrategia concreta sea superior, sino estudiar bajo qué condiciones funciona mejor cada estrategia.
 
 Modificar los parámetros después de observar los resultados para favorecer al híbrido introduciría un sesgo en la comparación.
 
-
 ### 3. ¿Por qué utilizamos exactamente el mismo chunking para BM25, UniXcoder y la estrategia híbrida?
 
 Porque si modificáramos también el chunking introduciríamos otra variable en el experimento y sería más difícil determinar a qué se deben las diferencias observadas.
 
 Por eso mantenemos constantes el chunking y el resto de condiciones experimentales y variamos únicamente la estrategia de recuperación. De esta forma podemos aislar mejor su influencia.
-
 
 ### 4. Si UniXcoder obtiene mejores métricas de recuperación que BM25, pero BM25 permite al LLM resolver más incidencias, ¿sería una contradicción?
 
@@ -397,7 +394,6 @@ No. Una mejor calidad de recuperación según las métricas no implica necesaria
 El LLM puede aprovechar de forma diferente el contexto recuperado y también puede verse afectado por información irrelevante o ruido.
 
 Precisamente por este motivo evaluamos por separado dos etapas: la calidad del contexto recuperado y la capacidad posterior del LLM para resolver la incidencia.
-
 
 ### 5. ¿Qué información de ContextBench utilizamos para realizar la recuperación y qué información reservamos para la evaluación?
 
@@ -408,3 +404,204 @@ El `base_commit` determina el estado exacto del repositorio sobre el que debe re
 El `gold_context` se reserva exclusivamente para la evaluación posterior, comparándolo con el contexto recuperado para determinar su relevancia.
 
 El `gold_context` nunca debe utilizarse para decidir qué recuperar, ya que esto produciría una fuga de información (data leakage) y dejaría de ser una evaluación válida.
+
+## Evaluación downstream con LLM y SWE-bench
+
+### ¿Para qué utilizamos el harness de SWE-bench?
+
+Utilizamos el harness de SWE-bench para evaluar de forma reproducible si los patches generados por el LLM resuelven realmente cada issue.
+
+El harness prepara el entorno de evaluación correspondiente a la tarea, aplica el patch generado, ejecuta los tests definidos para la instancia y determina finalmente si la incidencia puede considerarse resuelta.
+
+Esto evita tener que definir manualmente un procedimiento de testing diferente para cada repositorio.
+
+### ¿Qué significa que una tarea termine con `resolved=True`?
+
+Significa que el grader de SWE-bench ha clasificado la instancia como resuelta después de evaluar el patch generado.
+
+Por tanto, no nos limitamos a comprobar que el patch tenga una sintaxis válida o pueda aplicarse al repositorio, sino que utilizamos el resultado del benchmark para determinar si realmente resuelve la tarea.
+
+### ¿Cuál es la diferencia entre `FAIL_TO_PASS` y `PASS_TO_PASS`?
+
+Los tests `FAIL_TO_PASS` son tests que fallaban antes de aplicar la solución y que deben pasar después de aplicar el patch. Sirven para comprobar que se ha corregido el problema.
+
+Los tests `PASS_TO_PASS` son tests que ya pasaban antes de aplicar la solución y deben continuar pasando después. Sirven para comprobar que el cambio no introduce regresiones en comportamiento que ya funcionaba.
+
+Una forma sencilla de recordarlo es:
+
+- `FAIL_TO_PASS` → ¿hemos arreglado lo que estaba roto?
+- `PASS_TO_PASS` → ¿hemos evitado romper lo que ya funcionaba?
+
+### ¿Por qué un error de Podman, un error 503 de Gemini o un fallo de infraestructura no debe contarse automáticamente como un fallo del LLM?
+
+Porque ese tipo de error no demuestra que el LLM haya sido incapaz de resolver el issue.
+
+El fallo puede producirse antes de la generación, durante la comunicación con el proveedor del modelo o durante la infraestructura utilizada para ejecutar y evaluar el patch.
+
+Por ello, debemos distinguir los fallos experimentales de resolución de los fallos de infraestructura. Un error de infraestructura debe registrarse y, cuando corresponda, reintentarse de forma controlada, pero no debe mezclarse directamente con los resultados PASS/FAIL del LLM.
+
+### ¿Por qué haber conseguido un `resolved=True` con BM25 y K=10 no demuestra que BM25 o K=10 sean la mejor configuración?
+
+Porque se trata únicamente de una instancia utilizada para validar técnicamente el pipeline downstream.
+
+El resultado demuestra que la cadena completa puede funcionar:
+
+`issue → retrieval → contexto recuperado → LLM → patch → SWE-bench → resultado`
+
+Pero una única tarea no permite comparar las estrategias de recuperación ni seleccionar una configuración óptima.
+
+Para estudiar si BM25, UniXcoder o RRF influyen de forma diferente en la capacidad del LLM para resolver issues, debemos mantener constantes el modelo, el prompt y el resto del protocolo y comparar los resultados sobre la muestra experimental.
+
+### ¿Por qué el primer `resolved=False` que obtuvimos no era un FAIL válido del LLM?
+
+Porque los tests no habían llegado a ejecutarse correctamente debido a un problema de infraestructura.
+
+El script `eval.sh` generado desde Windows contenía finales de línea CRLF que provocaban errores al ejecutarse dentro del contenedor Linux. Por tanto, aquel `resolved=False` no demostraba que el patch generado por el LLM fuera incorrecto.
+
+Para considerar válido un resultado downstream debemos asegurarnos de que la infraestructura de evaluación ha funcionado correctamente y que SWE-bench ha podido evaluar realmente el patch.
+
+### ¿Qué debemos mantener constante cuando comparemos BM25, UniXcoder y RRF en la evaluación downstream?
+
+Debemos mantener constante todo aquello que no sea la estrategia de recuperación.
+
+En particular:
+
+- el mismo LLM;
+- el mismo prompt;
+- el mismo valor de K;
+- los mismos parámetros de generación;
+- el mismo procedimiento de aplicación del patch;
+- el mismo procedimiento de evaluación mediante SWE-bench;
+- las mismas tareas de la muestra experimental.
+
+De esta forma, la principal variable que cambia entre las condiciones experimentales es la estrategia utilizada para seleccionar el contexto: BM25, UniXcoder o RRF.
+
+Esto permite estudiar si las diferencias en el contexto recuperado se traducen en diferencias en la capacidad del LLM para resolver los mismos issues.
+
+## Ideas clave — Evaluación downstream con LLM
+
+### 1. ¿Qué estamos midiendo realmente en downstream?
+
+La calidad de la recuperación de contexto y la capacidad del LLM para resolver un issue son dos etapas relacionadas, pero diferentes.
+
+Primero evaluamos la calidad del contexto recuperado mediante métricas de retrieval. Posteriormente evaluamos si ese contexto permite al LLM generar un patch que resuelva realmente el issue.
+
+Por tanto:
+
+> Una mejor recuperación de contexto no implica necesariamente una mayor capacidad del LLM para resolver el issue.
+
+Esta relación entre calidad de retrieval y resolución de issues es precisamente uno de los aspectos que queremos estudiar.
+
+### 2. El LLM no puede explorar libremente el repositorio
+
+El LLM recibe únicamente:
+
+- el `problem_statement`;
+- el contexto seleccionado por la estrategia de recuperación.
+
+No puede explorar libremente otros ficheros del repositorio.
+
+Además, no recibe:
+
+- `gold_context`;
+- el patch de referencia;
+- `test_patch`.
+
+Esto permite evitar fuga de información (_data leakage_) y hace que el contexto disponible para el LLM dependa realmente de la estrategia de recuperación.
+
+Si permitiéramos al modelo explorar libremente el repositorio, sería más difícil determinar si la resolución del issue se debe al contexto proporcionado por el retriever o a la exploración realizada posteriormente por el propio LLM.
+
+### 3. ¿Qué función cumple SWE-bench?
+
+El LLM genera un patch, pero necesitamos un procedimiento objetivo y reproducible para determinar si ese patch resuelve realmente el issue.
+
+Para ello utilizamos el _harness_ de SWE-bench.
+
+De forma simplificada:
+
+`issue → retrieval → contexto → LLM → patch → SWE-bench → PASS/FAIL`
+
+El harness permite aplicar el patch, ejecutar la evaluación correspondiente a la instancia y determinar si puede considerarse resuelta.
+
+### 4. Diferencia entre `FAIL_TO_PASS` y `PASS_TO_PASS`
+
+Los tests `FAIL_TO_PASS` son tests que fallaban antes de aplicar la solución y deben pasar después del patch.
+
+Los tests `PASS_TO_PASS` son tests que ya funcionaban antes y deben continuar funcionando después del cambio.
+
+Una forma sencilla de recordarlo es:
+
+> `FAIL_TO_PASS` → ¿hemos arreglado lo que estaba roto?
+
+> `PASS_TO_PASS` → ¿hemos evitado romper lo que ya funcionaba?
+
+Ambos tipos son importantes: no basta con solucionar el problema si para hacerlo introducimos regresiones en comportamiento que ya funcionaba.
+
+### 5. Debemos separar los fallos del LLM de los fallos de infraestructura
+
+No todos los errores producidos durante una ejecución significan que el LLM haya sido incapaz de resolver el issue.
+
+Por ejemplo:
+
+- un error 503 del proveedor del LLM;
+- una pérdida de conexión con Podman;
+- un error durante la preparación del contenedor;
+- un problema que impida ejecutar correctamente los tests.
+
+son problemas de infraestructura.
+
+Si la evaluación no ha podido completarse correctamente, no tenemos evidencia suficiente para clasificar el resultado como un fallo de resolución del LLM.
+
+Por tanto, los errores de infraestructura deben registrarse y tratarse separadamente de los resultados experimentales PASS/FAIL.
+
+### 6. ¿Qué significa nuestro primer `resolved=True`?
+
+El primer `resolved=True` demuestra que hemos validado técnicamente el pipeline downstream completo:
+
+`issue → BM25 Top-10 → contexto recuperado → LLM → patch → SWE-bench → resolved=True`
+
+Esto demuestra que las distintas piezas del pipeline pueden conectarse y producir una evaluación válida de extremo a extremo.
+
+Sin embargo, este resultado corresponde a una única instancia piloto.
+
+Por tanto, NO demuestra:
+
+- que BM25 sea mejor que UniXcoder o RRF;
+- que K=10 sea el mejor valor de K;
+- que la configuración utilizada en el piloto sea necesariamente la configuración definitiva;
+- que podamos extraer conclusiones generales sobre la resolución de issues.
+
+El piloto sirve para validar técnicamente el procedimiento, no para seleccionar la estrategia ganadora.
+
+### 7. Principio fundamental del experimento downstream: controlar las variables
+
+Cuando comparemos BM25, UniXcoder y RRF debemos intentar mantener constante todo aquello que no sea la estrategia de recuperación.
+
+Debemos mantener constantes:
+
+- el mismo LLM;
+- el mismo prompt;
+- el mismo valor de K;
+- los mismos parámetros de generación;
+- las mismas tareas;
+- el mismo procedimiento de aplicación del patch;
+- el mismo procedimiento de evaluación mediante SWE-bench.
+
+La principal variable que cambia será:
+
+**la estrategia utilizada para seleccionar el contexto: BM25, UniXcoder o RRF.**
+
+De esta forma podemos estudiar si cambiar la estrategia de recuperación, y por tanto el contexto proporcionado al LLM, produce diferencias en su capacidad para resolver los mismos issues.
+
+## Idea global para la defensa
+
+El objetivo no es únicamente determinar qué estrategia obtiene mejores métricas de retrieval.
+
+Queremos estudiar si las diferencias en la calidad y selección del contexto recuperado se traducen posteriormente en diferencias en la capacidad de un LLM para resolver incidencias software a nivel de repositorio.
+
+Por ello evaluamos las dos etapas por separado:
+
+1. **Retrieval:** ¿qué contexto recupera cada estrategia?
+2. **Downstream:** ¿puede el LLM resolver el issue utilizando ese contexto?
+
+Esta separación permite analizar si una mejor recuperación de contexto se traduce realmente en una mayor capacidad de resolución.

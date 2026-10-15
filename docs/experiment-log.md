@@ -1334,3 +1334,28 @@ El consumo registrado fue:
 El patch generado se almacenó junto con el prompt y los metadatos de la generación. La comprobación mediante `git apply --check` sobre el `base_commit` correspondiente finalizó correctamente, por lo que el patch es aplicable. Este resultado no implica todavía que la incidencia esté resuelta; la resolución deberá determinarse posteriormente mediante la evaluación con SWE-bench.
 
 **Evidencia:** `docs/screenshots/35-downstream-refactored-generation.png`
+
+## Validación de la evaluación downstream reutilizable
+
+Se implementó una capa reutilizable de evaluación downstream para evaluar un patch generado para una tarea concreta mediante el harness oficial de SWE-bench.
+
+La evaluación distingue cuatro estados:
+
+- `resolved`: SWE-bench determina que el patch resuelve la instancia.
+- `not_resolved`: la evaluación termina correctamente, pero el patch no resuelve la instancia.
+- `invalid_patch`: el patch generado no puede aplicarse sobre el `base_commit`.
+- `infrastructure_error`: no puede obtenerse un resultado experimental válido debido a un fallo de infraestructura.
+
+Antes de ejecutar SWE-bench se comprueba la aplicabilidad del patch mediante `git apply --check`. Un patch no aplicable se considera un resultado del modelo y no provoca una nueva generación bajo el protocolo Pass@1.
+
+Durante la validación en Windows + Podman se reprodujo la desconexión ya observada entre Docker SDK y la API compatible de Podman después de finalizar los tests. Para evitar clasificar este caso como fallo experimental, la capa de evaluación comprueba si SWE-bench ha producido un `test_output.txt` completo mediante el marcador `>>>>> Test Exit Code:`. Si la salida es completa, se ejecuta únicamente el grader oficial de SWE-bench mediante `rewrite_reports=True`. Una salida inexistente o incompleta continúa clasificándose como `infrastructure_error`.
+
+La validación se realizó sobre `pytest-dev__pytest-5809` con el contexto recuperado mediante BM25 en K=10. La ejecución automática recuperó correctamente el informe oficial de SWE-bench y obtuvo:
+
+- `status = resolved`
+- `resolved = True`
+- `infrastructure_failure = False`
+
+Este resultado valida el mecanismo de evaluación individual y su recuperación controlada ante la desconexión posterior a la ejecución de tests. No constituye todavía un resultado comparativo entre estrategias de recuperación.
+
+**Evidencia:** `docs/screenshots/37-downstream-automatic-evaluation-recovery.png`

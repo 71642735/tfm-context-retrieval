@@ -259,6 +259,8 @@ También se produjo un problema de codificación al escribir en Windows la salid
 
 Finalmente, en una ejecución los tests finalizaron correctamente pero la conexión con la API compatible con Docker de Podman se cerró antes de que SWE-bench pudiera completar el grading. Para conservar la separación entre ejecución y evaluación, se utilizó la funcionalidad `rewrite_reports=True` del propio harness para regenerar el informe a partir del `test_output.txt` producido por la ejecución.
 
+La capa reutilizable de evaluación downstream automatiza esta recuperación. Si la ejecución normal de `run_instance()` no devuelve un informe, se comprueba si existe un `test_output.txt` completo mediante el marcador `>>>>> Test Exit Code:` generado por SWE-bench. Cuando la salida es completa, se ejecuta únicamente el grader oficial mediante `rewrite_reports=True`, evitando repetir los tests. Si la salida no existe o está incompleta, el caso se mantiene como `infrastructure_error` y no se contabiliza como un fallo de resolución del modelo.
+
 Con estas adaptaciones, el harness produjo finalmente para la instancia piloto `pytest-dev__pytest-5809`:
 
 - `patch_successfully_applied=True`
@@ -269,4 +271,4 @@ El test `FAIL_TO_PASS` pasó correctamente y los tres tests `PASS_TO_PASS` conti
 
 Estas incidencias se consideran problemas de compatibilidad de infraestructura entre SWE-bench 5.0.2, Windows y Podman, y no fallos del patch generado ni de la lógica experimental.
 
-**Estado:** resuelto para el piloto downstream.
+**Estado:** resuelto y automatizado en la capa reutilizable de evaluación downstream.

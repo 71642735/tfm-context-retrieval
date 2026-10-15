@@ -271,4 +271,6 @@ El test `FAIL_TO_PASS` pasó correctamente y los tres tests `PASS_TO_PASS` conti
 
 Estas incidencias se consideran problemas de compatibilidad de infraestructura entre SWE-bench 5.0.2, Windows y Podman, y no fallos del patch generado ni de la lógica experimental.
 
+Como medida preventiva para la ejecución automatizada, el evaluador comprueba ahora si la imagen indicada por `TestSpec.image` está disponible localmente mediante `podman image exists`. Si no está disponible, se descarga explícitamente mediante `podman pull` antes de iniciar SWE-bench. De este modo se evita depender de la descarga de imágenes a través de Docker SDK, que había mostrado problemas de compatibilidad con Podman en Windows.
+
 **Estado:** resuelto y automatizado en la capa reutilizable de evaluación downstream.

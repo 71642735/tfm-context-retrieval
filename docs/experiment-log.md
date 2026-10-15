@@ -1359,3 +1359,25 @@ La validación se realizó sobre `pytest-dev__pytest-5809` con el contexto recup
 Este resultado valida el mecanismo de evaluación individual y su recuperación controlada ante la desconexión posterior a la ejecución de tests. No constituye todavía un resultado comparativo entre estrategias de recuperación.
 
 **Evidencia:** `docs/screenshots/37-downstream-automatic-evaluation-recovery.png`
+
+### Validación de reanudación del experimento downstream
+
+Se validó el mecanismo de reanudación del ejecutor downstream mediante una ejecución limitada a una condición (`--limit 1`). El ejecutor cargó correctamente la muestra congelada de 50 tareas y las tres estrategias de recuperación, correspondientes a 150 condiciones experimentales.
+
+La condición `pytest-dev__pytest-5809` con BM25 ya disponía de un resultado definitivo (`resolved`), por lo que fue detectada y omitida automáticamente. No se realizó una nueva generación mediante el LLM ni una nueva evaluación mediante SWE-bench.
+
+Esta validación confirma que los resultados definitivos no se repiten al reanudar una ejecución y que los fallos de infraestructura pueden reintentarse sin conceder una nueva oportunidad de generación al modelo, preservando el protocolo Pass@1.
+
+**Evidencia:** `docs/screenshots/38-downstream-resume-skip.png`
+
+### Validación end-to-end del orquestador downstream
+
+Tras separar los artefactos utilizados durante el desarrollo y la validación previa, se inició un espacio limpio para la ejecución experimental final. Se validó el orquestador mediante una ejecución limitada a una única condición (`--limit 1`).
+
+La condición `pytest-dev__pytest-5809` con recuperación BM25 y K=10 recorrió automáticamente el pipeline completo: preparación del repositorio en el commit base, construcción del corpus de chunks, recuperación de contexto, generación del patch mediante `gemini-3.5-flash-lite`, persistencia de artefactos, comprobación de aplicabilidad y evaluación mediante SWE-bench.
+
+La ejecución produjo un patch aplicable y el grader de SWE-bench devolvió `resolved=True`. Se registraron 3163 tokens de entrada, 330 de salida, 0 de razonamiento y 3493 tokens totales.
+
+Esta ejecución valida el funcionamiento end-to-end del orquestador y su capacidad para persistir resultados de forma incremental. El resultado corresponde ya al espacio experimental final y no a los artefactos de validación previamente archivados.
+
+**Evidencia:** `docs/screenshots/39-downstream-orchestrator-end-to-end.png`

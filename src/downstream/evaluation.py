@@ -13,6 +13,7 @@ MODEL = "gemini-3.5-flash-lite"
 EVALUATION_TIMEOUT = 1800
 TEST_EXIT_MARKER = ">>>>> Test Exit Code:"
 
+
 @dataclass
 class EvaluationResult:
     task_id: str
@@ -207,6 +208,50 @@ def recover_report_from_test_output(
     )
 
 
+def ensure_podman_image(image: str) -> None:
+    """
+    Garantiza que la imagen SWE-bench esté disponible localmente.
+
+    Se utiliza Podman CLI para evitar depender de la descarga de
+    imágenes mediante Docker SDK, que ha resultado inestable en
+    Windows con el backend de Podman.
+    """
+    inspect_result = subprocess.run(
+        [
+            "podman",
+            "image",
+            "exists",
+            image,
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    if inspect_result.returncode == 0:
+        print("Imagen SWE-bench disponible localmente.")
+        return
+
+    print("Imagen SWE-bench no disponible.")
+    print("Descargando imagen mediante Podman...")
+
+    pull_result = subprocess.run(
+        [
+            "podman",
+            "pull",
+            image,
+        ],
+        text=True,
+    )
+
+    if pull_result.returncode != 0:
+        raise RuntimeError(
+            "No se pudo descargar la imagen SWE-bench "
+            f"mediante Podman: {image}"
+        )
+
+    print("Imagen SWE-bench descargada correctamente.")
+
+
 def evaluate_patch(
     task_id: str,
     patch_path: Path,
@@ -273,6 +318,9 @@ def evaluate_patch(
 
         print("Construyendo TestSpec...")
         test_spec = swe_run.make_test_spec(instance)
+
+        print(f"Imagen SWE-bench: {test_spec.image}")
+        ensure_podman_image(test_spec.image)
 
         patch = patch_path.read_text(
             encoding="utf-8"
@@ -346,44 +394,44 @@ def evaluate_patch(
                 ),
             )
 
-    print(
-        "Salida de tests completa detectada. "
-        "Recuperando grader oficial..."
-    )
-
-    try:
-        raw_result = recover_report_from_test_output(
-            test_spec=test_spec,
-            pred=pred,
-            client=client,
-            run_id=run_id,
-        )
-    except Exception as exc:
-        return EvaluationResult(
-            task_id=task_id,
-            retrieval_method=retrieval_method,
-            status="infrastructure_error",
-            resolved=None,
-            patch_path=patch_path,
-            infrastructure_failure=True,
-            detail=(
-                "Could not recover SWE-bench report "
-                f"from complete test output: {exc}"
-            ),
+        print(
+            "Salida de tests completa detectada. "
+            "Recuperando grader oficial..."
         )
 
-    if raw_result is None:
-        return EvaluationResult(
-            task_id=task_id,
-            retrieval_method=retrieval_method,
-            status="infrastructure_error",
-            resolved=None,
-            patch_path=patch_path,
-            infrastructure_failure=True,
-            detail=(
-                "SWE-bench report recovery returned None."
-            ),
-        )
+        try:
+            raw_result = recover_report_from_test_output(
+                test_spec=test_spec,
+                pred=pred,
+                client=client,
+                run_id=run_id,
+            )
+        except Exception as exc:
+            return EvaluationResult(
+                task_id=task_id,
+                retrieval_method=retrieval_method,
+                status="infrastructure_error",
+                resolved=None,
+                patch_path=patch_path,
+                infrastructure_failure=True,
+                detail=(
+                    "Could not recover SWE-bench report "
+                    f"from complete test output: {exc}"
+                ),
+            )
+
+        if raw_result is None:
+            return EvaluationResult(
+                task_id=task_id,
+                retrieval_method=retrieval_method,
+                status="infrastructure_error",
+                resolved=None,
+                patch_path=patch_path,
+                infrastructure_failure=True,
+                detail=(
+                    "SWE-bench report recovery returned None."
+                ),
+            )
 
     returned_task_id, report = raw_result
 

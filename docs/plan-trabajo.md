@@ -37,7 +37,7 @@ innecesariamente el alcance del TFM.
 | **25 oct.**    | Analizar resultados y casos relevantes. Cierre de la fase de recuperación.                                       | [x] |
 | **26 oct.**    | Diseñar el pipeline de evaluación downstream con LLM.                                                            | [x] |
 | **27 oct.**    | Ejecutar una primera tarea completa con LLM de extremo a extremo.                                                | [x] |
-| **28 oct.**    | Automatizar la evaluación mediante LLM.                                                                          |
+| **28 oct.**    | Automatizar la evaluación mediante LLM.                                                                          | [x] |
 | **29–30 oct.** | Ejecutar la evaluación LLM y solucionar posibles problemas operativos.                                           |
 | **31 oct.**    | Analizar Pass/Fail y la relación entre calidad de recuperación y resolución de incidencias.                      |
 | **1 nov.**     | Preparar tablas y gráficas finales de resultados.                                                                |
@@ -103,7 +103,7 @@ Estado actual:
 - [x] Validada una primera evaluación end-to-end mediante SWE-bench.
 - [x] Obtenido el primer resultado válido del grader (`resolved=True`).
 - [x] Congelar la configuración downstream definitiva.
-- [ ] Automatizar la evaluación para las tres estrategias.
+- [x] Automatizar la evaluación para las tres estrategias.
 - [ ] Ejecutar la evaluación sobre la muestra final.
 
 ### Hito 5 — Análisis y redacción ⬜ PENDIENTE

@@ -1,3 +1,4 @@
+import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,6 +14,13 @@ MODEL = "gemini-3.5-flash-lite"
 EVALUATION_TIMEOUT = 1800
 TEST_EXIT_MARKER = ">>>>> Test Exit Code:"
 
+POLYBENCH_PYTHON = Path(".venv-polybench/Scripts/python.exe")
+POLYBENCH_RUNNER = Path("src/downstream/polybench_runner.py")
+POLYBENCH_RESULT_PREFIX = "TFM_POLYBENCH_RESULT="
+
+PROBENCH_RUNNER = Path("src/downstream/probench_runner.py")
+PROBENCH_ROOT = Path("external/SWE-bench_Pro")
+PROBENCH_RESULT_PREFIX = "TFM_PROBENCH_RESULT="
 
 @dataclass
 class EvaluationResult:
@@ -252,6 +260,325 @@ def ensure_podman_image(image: str) -> None:
     print("Imagen SWE-bench descargada correctamente.")
 
 
+def evaluate_poly_patch(
+    task: dict,
+    patch_path: Path,
+    retrieval_method: str,
+) -> EvaluationResult:
+    """
+    Evalúa un patch de una instancia procedente de SWE-PolyBench
+    mediante su evaluador oficial, ejecutado en un entorno Python
+    aislado.
+    """
+    task_id = task["original_inst_id"]
+    polybench_instance_id = task["original_inst_id"]
+
+    work_dir = (
+        Path("logs")
+        / "polybench"
+        / task_id
+        / retrieval_method
+    )
+
+    print()
+    print("=== EVALUACIÓN SWE-POLYBENCH ===")
+    print(f"Tarea ContextBench: {task_id}")
+    print(f"Instancia PolyBench: {polybench_instance_id}")
+    print(f"Método: {retrieval_method}")
+
+    if not POLYBENCH_PYTHON.exists():
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"PolyBench Python not found: {POLYBENCH_PYTHON}",
+        )
+
+    if not POLYBENCH_RUNNER.exists():
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"PolyBench runner not found: {POLYBENCH_RUNNER}",
+        )
+
+    command = [
+        str(POLYBENCH_PYTHON),
+        "-X",
+        "utf8",
+        str(POLYBENCH_RUNNER),
+        "--instance-id",
+        polybench_instance_id,
+        "--patch-path",
+        str(patch_path.resolve()),
+        "--work-dir",
+        str(work_dir.resolve()),
+    ]
+
+    try:
+        process = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=EVALUATION_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail="SWE-PolyBench evaluation timed out.",
+        )
+    except Exception as exc:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"Could not execute SWE-PolyBench: {exc}",
+        )
+
+    if process.stdout:
+        print(process.stdout)
+
+    if process.stderr:
+        print(process.stderr)
+
+    if process.returncode != 0:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=(
+                f"SWE-PolyBench exited with code "
+                f"{process.returncode}."
+            ),
+        )
+
+    result_payload = None
+
+    for line in process.stdout.splitlines():
+        if line.startswith(POLYBENCH_RESULT_PREFIX):
+            result_payload = line[len(POLYBENCH_RESULT_PREFIX):]
+
+    if result_payload is None:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail="SWE-PolyBench did not return a result marker.",
+        )
+
+    try:
+        result = json.loads(result_payload)
+        resolved = bool(result["resolved"])
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"Invalid SWE-PolyBench result: {exc}",
+        )
+
+    status = "resolved" if resolved else "not_resolved"
+
+    print()
+    print("=== RESULTADO SWE-POLYBENCH ===")
+    print(f"Estado:   {status}")
+    print(f"Resolved: {resolved}")
+
+    return EvaluationResult(
+        task_id=task_id,
+        retrieval_method=retrieval_method,
+        status=status,
+        resolved=resolved,
+        patch_path=patch_path,
+        infrastructure_failure=False,
+    )
+
+
+def evaluate_pro_patch(
+    task: dict,
+    patch_path: Path,
+    retrieval_method: str,
+) -> EvaluationResult:
+    """
+    Evalúa un patch de una instancia procedente de SWE-bench Pro V1
+    mediante su evaluador oficial y Docker/Podman local.
+    """
+    task_id = task["original_inst_id"]
+    probench_instance_id = task["original_inst_id"]
+
+    work_dir = (
+        Path("logs")
+        / "probench"
+        / task_id
+        / retrieval_method
+    )
+
+    print()
+    print("=== EVALUACIÓN SWE-BENCH PRO ===")
+    print(f"Tarea ContextBench: {task_id}")
+    print(f"Instancia Pro: {probench_instance_id}")
+    print(f"Método: {retrieval_method}")
+
+    if not PROBENCH_RUNNER.exists():
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"Pro runner not found: {PROBENCH_RUNNER}",
+        )
+
+    if not PROBENCH_ROOT.exists():
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"SWE-bench Pro root not found: {PROBENCH_ROOT}",
+        )
+
+    command = [
+        str(Path(".venv/Scripts/python.exe")),
+        "-X",
+        "utf8",
+        str(PROBENCH_RUNNER),
+        "--instance-id",
+        probench_instance_id,
+        "--patch-path",
+        str(patch_path.resolve()),
+        "--work-dir",
+        str(work_dir.resolve()),
+        "--probench-root",
+        str(PROBENCH_ROOT.resolve()),
+    ]
+
+    try:
+        process = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=EVALUATION_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail="SWE-bench Pro evaluation timed out.",
+        )
+    except Exception as exc:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"Could not execute SWE-bench Pro: {exc}",
+        )
+
+    if process.stdout:
+        print(process.stdout)
+
+    if process.stderr:
+        print(process.stderr)
+
+    if process.returncode != 0:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=(
+                f"SWE-bench Pro runner exited with code "
+                f"{process.returncode}."
+            ),
+        )
+
+    result_line = None
+
+    for line in process.stdout.splitlines():
+        if line.startswith(PROBENCH_RESULT_PREFIX):
+            result_line = line[len(PROBENCH_RESULT_PREFIX):]
+            break
+
+    if result_line is None:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail="SWE-bench Pro runner did not return a TFM result.",
+        )
+
+    try:
+        result = json.loads(result_line)
+        resolved = bool(result["resolved"])
+    except Exception as exc:
+        return EvaluationResult(
+            task_id=task_id,
+            retrieval_method=retrieval_method,
+            status="infrastructure_error",
+            resolved=None,
+            patch_path=patch_path,
+            infrastructure_failure=True,
+            detail=f"Could not parse SWE-bench Pro result: {exc}",
+        )
+
+    status = "resolved" if resolved else "not_resolved"
+
+    print(f"Estado: {status}")
+    print(f"Resolved: {resolved}")
+
+    return EvaluationResult(
+        task_id=task_id,
+        retrieval_method=retrieval_method,
+        status=status,
+        resolved=resolved,
+        patch_path=patch_path,
+        infrastructure_failure=False,
+        detail=None,
+    )
+
+
 def evaluate_patch(
     task_id: str,
     patch_path: Path,
@@ -300,6 +627,25 @@ def evaluate_patch(
 
     print("Patch aplicable: sí")
     print()
+
+    source = task.get("source")
+
+    print(f"Fuente de evaluación: {source}")
+
+    if source == "Poly":
+        return evaluate_poly_patch(
+            task=task,
+            patch_path=patch_path,
+            retrieval_method=retrieval_method,
+        )
+
+    if source == "Pro":
+        return evaluate_pro_patch(
+            task=task,
+            patch_path=patch_path,
+            retrieval_method=retrieval_method,
+        )
+
     print("Cargando instancia oficial de SWE-bench...")
 
     try:

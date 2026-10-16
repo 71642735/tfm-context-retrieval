@@ -605,3 +605,89 @@ Por ello evaluamos las dos etapas por separado:
 2. **Downstream:** ¿puede el LLM resolver el issue utilizando ese contexto?
 
 Esta separación permite analizar si una mejor recuperación de contexto se traduce realmente en una mayor capacidad de resolución.
+
+## Preguntas sobre la evaluación downstream y Pass@1
+
+### 1. ¿Por qué un resultado `invalid_patch` se considera un resultado del modelo y no un fallo de infraestructura?
+
+Porque la petición al LLM se ha realizado correctamente y el modelo ha generado una respuesta. El problema es que el diff producido no puede aplicarse correctamente sobre el repositorio en el commit correspondiente.
+
+Por tanto, no ha fallado la infraestructura, el proveedor del LLM ni el sistema de evaluación. La generación se ha completado, pero el resultado generado no es válido como patch aplicable. Por este motivo se considera un resultado negativo del modelo y no se regenera automáticamente.
+
+---
+
+### 2. Si SWE-bench falla después de que el LLM ya haya generado un patch, ¿por qué reutilizamos exactamente el mismo patch al reintentar?
+
+Para preservar el protocolo Pass@1.
+
+Una vez que el LLM ha producido un patch, esa generación constituye su única oportunidad para esa condición experimental. Si posteriormente ocurre un fallo de infraestructura, se puede repetir la evaluación, pero no la generación.
+
+Generar un nuevo patch concedería al modelo una segunda oportunidad y podría sesgar los resultados. Además, al tratarse de un modelo no determinista, una nueva llamada podría producir una solución diferente.
+
+Por tanto:
+
+`generación completada → mismo patch → reintento únicamente de la evaluación`
+
+---
+
+### 3. Si en una tarea BM25 obtiene `resolved` mientras Semantic y Hybrid obtienen `invalid_patch`, ¿por qué no podemos afirmar todavía que BM25 sea mejor downstream?
+
+Porque una única tarea no proporciona evidencia suficiente para establecer una conclusión general sobre las estrategias.
+
+El resultado solo demuestra que, para esa tarea concreta y bajo las condiciones experimentales establecidas, el contexto recuperado mediante BM25 permitió al LLM generar una solución válida que resolvió el issue, mientras que las otras estrategias no lo hicieron.
+
+La comparación debe realizarse sobre el conjunto completo de tareas y mediante resultados agregados antes de concluir qué estrategia presenta mejor comportamiento downstream.
+
+---
+
+### 4. ¿Qué intentamos aislar manteniendo fijos el LLM, K=10, el prompt, la configuración de generación y el procedimiento de evaluación?
+
+Intentamos aislar la influencia de la estrategia de recuperación de contexto.
+
+La variable que modificamos entre condiciones es fundamentalmente el método utilizado para recuperar información del repositorio:
+
+- BM25 para recuperación léxica.
+- UniXcoder para recuperación semántica.
+- RRF para recuperación híbrida.
+
+El resto del protocolo se mantiene fijo para reducir variables de confusión. De esta forma podemos estudiar si cambiar la estrategia que construye el contexto proporcionado al LLM influye en su capacidad para resolver el mismo issue.
+
+---
+
+### 5. ¿Por qué se separan los artefactos y resultados del piloto de los resultados del experimento final?
+
+Porque el piloto se utilizó para desarrollar, depurar y validar el pipeline experimental.
+
+Durante esa fase todavía se estaban realizando modificaciones sobre la generación, evaluación, tratamiento de errores y automatización. Por tanto, esos resultados no deben mezclarse con los obtenidos una vez congelado y validado el procedimiento experimental.
+
+La separación permite mantener una frontera clara entre:
+
+`desarrollo y validación del pipeline ≠ ejecución experimental final`
+
+Así se garantiza que los resultados finales se obtienen bajo un protocolo común y previamente definido.
+
+### ¿Por qué un `invalid_patch` se considera un resultado definitivo en el experimento downstream?
+
+Porque el modelo ya ha realizado su único intento bajo el protocolo Pass@1. Gemini ha generado una respuesta, pero esta no contiene un patch aplicable al commit base de la tarea.
+
+Por tanto, `invalid_patch` representa un fallo del modelo dentro del experimento y se considera un resultado definitivo. No se realiza una nueva generación, ya que eso supondría conceder al modelo un segundo intento.
+
+### ¿Por qué un `infrastructure_error` no se considera un resultado experimental definitivo?
+
+Porque representa un fallo de la infraestructura utilizada para ejecutar o evaluar el experimento, no necesariamente un fallo del modelo.
+
+Incluso si Gemini ya ha generado un patch válido, un problema posterior en Docker/Podman, en el evaluador o en otro componente de infraestructura puede impedir determinar si dicho patch resuelve la tarea.
+
+Por ello, un `infrastructure_error` puede volver a evaluarse una vez solucionado el problema de infraestructura, pero reutilizando exactamente la misma generación.
+
+### ¿Por qué se reutiliza el mismo patch después de solucionar un `infrastructure_error`?
+
+Porque el experimento utiliza un protocolo Pass@1: cada condición dispone de una única generación del modelo.
+
+Si después de un fallo de infraestructura se volviera a llamar a Gemini, se estaría obteniendo un segundo intento y se alteraría el protocolo experimental.
+
+Por tanto, se corrige únicamente el problema de infraestructura y se vuelve a evaluar exactamente el mismo patch generado originalmente.
+
+### ¿Cuál es la idea fundamental detrás de estas decisiones?
+
+Los fallos del modelo son resultados experimentales; los fallos de nuestra infraestructura no. Reparar la infraestructura nunca debe proporcionar al modelo un nuevo intento.

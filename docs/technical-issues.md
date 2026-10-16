@@ -274,3 +274,75 @@ Estas incidencias se consideran problemas de compatibilidad de infraestructura e
 Como medida preventiva para la ejecución automatizada, el evaluador comprueba ahora si la imagen indicada por `TestSpec.image` está disponible localmente mediante `podman image exists`. Si no está disponible, se descarga explícitamente mediante `podman pull` antes de iniciar SWE-bench. De este modo se evita depender de la descarga de imágenes a través de Docker SDK, que había mostrado problemas de compatibilidad con Podman en Windows.
 
 **Estado:** resuelto y automatizado en la capa reutilizable de evaluación downstream.
+
+### Múltiples fuentes de benchmark en ContextBench
+
+Durante la validación de la evaluación downstream se detectó que no todas las tareas de la muestra final de ContextBench podían cargarse mediante el dataset de SWE-bench utilizado inicialmente por el evaluador.
+
+La inspección de los metadatos de ContextBench mostró que las tareas proceden de distintas fuentes. Por ejemplo:
+
+- `pytest-dev__pytest-5809` → `source: Verified`
+- `langchain-ai__langchain-5609` → `source: Poly`
+- `Significant-Gravitas__AutoGPT-4652` → `source: Poly`
+- una instancia de `ansible/ansible` → `source: Pro`
+
+Esto demuestra que el supuesto inicial de que todas las tareas de ContextBench podían evaluarse utilizando una única fuente de SWE-bench era incorrecto.
+
+El problema afecta únicamente a la fase de evaluación downstream; la evaluación de recuperación ya realizada no depende de este mecanismo.
+
+Como comprobación adicional, se contrastaron las 50 tareas de la muestra final con el cargador de SWE-bench utilizado inicialmente. Solo 29 de las 50 tareas pudieron localizarse, mientras que 21 no fueron encontradas.
+
+Posteriormente se comprobó que la distribución de fuentes de la muestra era:
+
+- `Verified`: 29 tareas
+- `Poly`: 12 tareas
+- `Pro`: 9 tareas
+
+La coincidencia entre las 29 tareas localizables y las 29 tareas de tipo `Verified` permitió identificar que el evaluador inicial solo estaba cubriendo correctamente esa fuente.
+
+**Evidencias:**
+
+- `docs/screenshots/42-swebench-coverage-final-sample.png`
+- `docs/screenshots/43-contextbench-multiple-sources.png`
+
+**Estado:** pendiente de adaptar el evaluador para soportar correctamente las distintas fuentes sin modificar la muestra final congelada.
+
+#### SWE-PolyBench: instancia no localizada por `instance_id`
+
+Durante la primera evaluación efectiva mediante el adaptador oficial de SWE-PolyBench, la condición semántica de `keras-team__keras-19201` produjo un patch aplicable y alcanzó correctamente la rama de evaluación Poly.
+
+El adaptador intentó localizar inicialmente la instancia mediante el identificador sintético de ContextBench:
+
+`SWE-PolyBench__python__maintenance__bugfix__3f3ff585`
+
+Sin embargo, el dataset oficial `AmazonScience/SWE-PolyBench` utiliza como `instance_id` el identificador original:
+
+`keras-team__keras-19201`
+
+Se corrigió el adaptador para utilizar `original_inst_id` de ContextBench al invocar SWE-PolyBench.
+
+Durante el primer intento posterior, la imagen preconstruida de la instancia se descargó y etiquetó correctamente mediante Podman, pero se produjo una desconexión temporal de la API compatible con Docker al intentar inspeccionarla. Se comprobó posteriormente que Podman estaba operativo, que la imagen estaba disponible localmente y que el Docker SDK podía acceder a ella correctamente (`WORKDIR=/testbed`).
+
+Al repetir únicamente la evaluación, se reutilizó exactamente el patch previamente generado para preservar Pass@1. SWE-PolyBench reutilizó la imagen local y completó correctamente la evaluación, obteniendo un resultado definitivo `not_resolved` (`resolved=False`).
+
+No fue necesario regenerar el patch ni modificar el protocolo experimental.
+
+**Estado:** resuelto.
+
+**Evidencia:** `docs/screenshots/45-polybench-instance-id-mismatch.png` y `docs/screenshots/46-polybench-first-official-result.png`
+
+### Compatibilidad local de SWE-bench Pro V1 en Windows/Podman
+
+Durante la integración del evaluador oficial de SWE-bench Pro V1 se detectaron dos problemas de infraestructura al ejecutar la evaluación local mediante Docker SDK sobre Podman.
+
+1. **Resolución de rutas relativas del evaluador.**
+   El evaluador oficial utilizaba rutas relativas para acceder a `dockerfiles/base_dockerfile/...`. Al ejecutarlo desde el directorio raíz del TFM no encontraba estos recursos, aunque existían dentro del repositorio oficial. Se solucionó ejecutando el evaluador con el repositorio de SWE-bench Pro como directorio de trabajo (`cwd`) y utilizando rutas absolutas para los argumentos proporcionados por el adaptador.
+
+2. **Finales de línea CRLF en los scripts del workspace.**
+   Los scripts `run_script.sh` llegaban al workspace montado en el contenedor con finales de línea CRLF, incompatibles con Bash/Linux. Se comprobó que el script fuente contenía 0 caracteres CR, mientras que el fichero materializado en el workspace contenía 57. La causa era la escritura en modo texto realizada por `write_files_local()` en Windows. Se validó la solución escribiendo estos ficheros con `newline="\n"`, preservando finales de línea LF.
+
+En ambos casos el adaptador mantuvo la condición como `infrastructure_error`, evitando contabilizar los fallos de infraestructura como fallos del modelo. Tras corregirlos se reutilizó exactamente el patch generado originalmente para preservar Pass@1, sin realizar una nueva llamada al LLM.
+
+La evaluación posterior finalizó correctamente mediante el evaluador oficial de SWE-bench Pro V1 y produjo un resultado experimental válido: `not_resolved`.
+
+**Evidencia:** `docs/screenshots/48-probench-first-official-result.png`

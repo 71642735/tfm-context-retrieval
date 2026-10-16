@@ -346,6 +346,16 @@ def parse_args() -> argparse.Namespace:
         ),
     )
 
+    parser.add_argument(
+        "--task-id",
+        type=str,
+        default=None,
+        help=(
+            "Ejecuta únicamente una tarea concreta de la muestra "
+            "final congelada."
+        ),
+    )
+
     args = parser.parse_args()
 
     if args.limit is not None and args.limit < 1:
@@ -366,6 +376,16 @@ def main() -> None:
         )
 
     task_ids = load_task_ids()
+
+    if args.task_id is not None:
+        if args.task_id not in task_ids:
+            raise RuntimeError(
+                f"La tarea {args.task_id!r} no pertenece a "
+                "la muestra final congelada."
+            )
+
+        task_ids = [args.task_id]
+
     previous_results = load_latest_results()
 
     total_conditions = (

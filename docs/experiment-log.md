@@ -1381,3 +1381,107 @@ La ejecución produjo un patch aplicable y el grader de SWE-bench devolvió `res
 Esta ejecución valida el funcionamiento end-to-end del orquestador y su capacidad para persistir resultados de forma incremental. El resultado corresponde ya al espacio experimental final y no a los artefactos de validación previamente archivados.
 
 **Evidencia:** `docs/screenshots/39-downstream-orchestrator-end-to-end.png`
+
+### Primera ejecución comparativa de las tres estrategias downstream
+
+Se ejecutaron las tres estrategias de recuperación sobre la primera tarea de la muestra final, `pytest-dev__pytest-5809`, utilizando K=10 y manteniendo fijo el resto del protocolo downstream.
+
+BM25 produjo un patch aplicable que fue evaluado por SWE-bench como `resolved=True`. La recuperación semántica mediante UniXcoder y la estrategia híbrida RRF produjeron respuestas del LLM que no pudieron aplicarse al repositorio, por lo que ambas condiciones fueron clasificadas como `invalid_patch`.
+
+Los resultados de esta única tarea no permiten establecer conclusiones comparativas entre las estrategias. Su finalidad en este punto es validar que el orquestador ejecuta y registra correctamente las tres condiciones experimentales y distingue resultados del modelo de fallos de infraestructura.
+
+No se produjeron fallos de infraestructura en las tres condiciones. Los resultados definitivos registrados fueron:
+
+- BM25: `resolved`.
+- Semantic: `invalid_patch`.
+- Hybrid: `invalid_patch`.
+
+**Evidencia:** `docs/screenshots/39-downstream-orchestrator-end-to-end.png`, `docs/screenshots/40a-downstream-semantic-invalid-patch.png` y `docs/screenshots/40b-downstream-hybrid-invalid-patch.png`.
+
+### Validación de resultados `invalid_patch` en el experimento downstream
+
+Durante la validación del evaluador para tareas procedentes de SWE-PolyBench se observaron 12 condiciones consecutivas clasificadas como `invalid_patch`. Antes de continuar con nuevas generaciones se realizó una comprobación para descartar que esta clasificación fuese consecuencia de un problema del pipeline de extracción o de las marcas Markdown generadas por el LLM.
+
+De las 12 respuestas analizadas:
+
+- 9 no contenían un `diff --git` y, por tanto, no constituían un patch aplicable.
+- 3 contenían un diff envuelto en marcas Markdown.
+- Los 3 diffs fueron comprobados nuevamente eliminando únicamente el envoltorio Markdown y ejecutando `git apply --check` contra el commit correspondiente.
+- Ninguno de los 3 diffs pudo aplicarse al repositorio.
+
+Por tanto, no se encontró evidencia de que el pipeline estuviese rechazando patches válidos debido al envoltorio Markdown. Las 12 condiciones se mantienen como resultados `invalid_patch` y no se realiza ninguna regeneración, preservando el protocolo Pass@1.
+
+Esta comprobación no modifica el prompt, el modelo, el contexto recuperado ni los patches originales.
+
+#### Auditoría del contexto recuperado ante resultados `invalid_patch`
+
+Ante la elevada frecuencia de resultados `invalid_patch` en las tareas procedentes de SWE-PolyBench, se realizó una auditoría diagnóstica sobre la tarea `huggingface__transformers-29675`, sin modificar el protocolo experimental ni realizar nuevas generaciones.
+
+El `gold_context` de ContextBench identifica como relevante el fichero `src/transformers/generation/configuration_utils.py`, incluyendo, entre otras, las regiones 372–395 y 457–522.
+
+Se reconstruyeron los rankings utilizando el mismo pipeline del experimento y K=10, correspondiente al contexto proporcionado al LLM. El fichero `configuration_utils.py` no apareció en el Top-10 de BM25, UniXcoder ni de la estrategia híbrida RRF.
+
+Este resultado confirma que, para esta tarea, el LLM no recibió en su Top-10 el fichero principal identificado por el contexto gold. Sin embargo, todavía debe comprobarse si dicho contexto estaba correctamente representado en los chunks disponibles y, en caso afirmativo, en qué posición fue clasificado por cada método. Por tanto, no se atribuye todavía la causa definitiva al algoritmo de recuperación.
+
+La auditoría es únicamente diagnóstica y no modifica la muestra, el chunking, los rankings originales, el prompt, K, el modelo ni los resultados Pass@1.
+
+**Evidencia:** `docs/screenshots/44a-poly-gold-context.png` y `docs/screenshots/44b-poly-retrieval-top10.png`
+
+Como comprobación adicional, se verificó la representabilidad del contexto gold dentro del corpus de chunks. El fichero `src/transformers/generation/configuration_utils.py` estaba representado mediante 18 chunks. En particular, la región gold 372–395 solapaba con los chunks `GenerationConfig.__init__` (301–393) y `GenerationConfig.__hash__` (395–396), mientras que la región 457–522 estaba contenida en el chunk `GenerationConfig.validate` (457–629).
+
+Por tanto, para esta tarea concreta, la ausencia del contexto relevante en el Top-10 no se debe a que el chunking hiciera irrecuperable el código gold. El contexto relevante estaba representado en el corpus, pero ninguno de los tres métodos lo situó dentro del Top-10 proporcionado al LLM.
+
+Este análisis se limita a una tarea diagnóstica y no se generaliza automáticamente al resto de resultados `invalid_patch`.
+
+#### Primera evaluación downstream completada con SWE-PolyBench
+
+Se validó correctamente el flujo de evaluación específico para tareas procedentes de SWE-PolyBench utilizando la tarea `keras-team__keras-19201`.
+
+La condición correspondiente a recuperación semántica había generado previamente un patch aplicable. Tras resolver los problemas de infraestructura del evaluador, se reutilizó exactamente la generación existente para preservar el protocolo Pass@1, sin realizar una nueva llamada al LLM.
+
+El evaluador oficial de SWE-PolyBench ejecutó la condición y produjo un resultado definitivo `not_resolved` (`resolved=False`). Las otras dos condiciones de la tarea, BM25 e híbrida, habían producido previamente `invalid_patch`.
+
+Resultados definitivos de la tarea:
+
+- BM25: `invalid_patch`
+- Semantic: `not_resolved`
+- Hybrid: `invalid_patch`
+
+Con esta ejecución queda validado el flujo completo para tareas Poly: recuperación → generación Pass@1 → validación del patch → evaluación oficial → resultado definitivo.
+
+**Evidencia:** `docs/screenshots/46-polybench-first-official-result.png`
+
+#### Cierre de las tareas SWE-PolyBench de la muestra final
+
+Se completó el procesamiento downstream de las 12 tareas procedentes de SWE-PolyBench incluidas en la muestra final congelada.
+
+Cada tarea fue evaluada bajo las tres condiciones experimentales definidas: BM25, UniXcoder y RRF, utilizando K=10 y el mismo protocolo de generación Pass@1.
+
+Las condiciones que produjeron un patch no aplicable se conservaron como resultados definitivos `invalid_patch`, sin regeneración. Cuando fue necesaria la ejecución del evaluador oficial de SWE-PolyBench, se reutilizó exactamente el patch generado originalmente.
+
+Con ello, las 12 tareas SWE-PolyBench disponen de resultados definitivos para sus tres métodos de recuperación, completando las 36 condiciones downstream correspondientes a esta fuente.
+
+**Evidencia:** `docs/screenshots/46-polybench-first-official-result.png` y `docs/screenshots/47-polybench-complete.png`
+
+#### Correspondencia de las tareas SWE-bench Pro
+
+Se verificó la correspondencia entre las tareas de ContextBench etiquetadas con la fuente `Pro` y el dataset oficial `ScaleAI/SWE-bench_Pro` utilizando su configuración `v1`.
+
+Como comprobación inicial se utilizó la tarea
+`instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86`.
+
+La instancia fue localizada de forma unívoca en SWE-bench Pro V1 y coincidieron tanto el repositorio (`ansible/ansible`) como el commit base (`8502c2302871e35e59fb7092b4b01b937c934031`).
+
+Por tanto, para las tareas de ContextBench procedentes de SWE-bench Pro se utilizará la configuración V1 del benchmark, manteniendo la correspondencia con las instancias originales de la muestra congelada.
+
+### Validación del evaluador SWE-bench Pro V1
+
+Las instancias `Pro` de la muestra congelada de ContextBench se evaluarán mediante SWE-bench Pro V1, ya que se comprobó que los identificadores, repositorios y commits base de las tareas seleccionadas corresponden a esta versión.
+
+Se validó el flujo completo utilizando una condición con patch aplicable de la tarea `instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb`.
+
+Para el método híbrido se reutilizó exactamente la generación Pass@1 existente después de resolver incidencias de infraestructura, sin realizar una nueva generación. El evaluador oficial finalizó correctamente y clasificó la condición como `not_resolved`.
+
+Con esta prueba queda validada la integración del evaluador oficial de SWE-bench Pro V1 para continuar con las restantes instancias `Pro` de la muestra congelada.
+
+**Evidencia:** `docs/screenshots/48-probench-first-official-result.png`

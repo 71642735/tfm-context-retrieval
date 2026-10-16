@@ -1485,3 +1485,125 @@ Para el método híbrido se reutilizó exactamente la generación Pass@1 existen
 Con esta prueba queda validada la integración del evaluador oficial de SWE-bench Pro V1 para continuar con las restantes instancias `Pro` de la muestra congelada.
 
 **Evidencia:** `docs/screenshots/48-probench-first-official-result.png`
+
+## Cierre de la evaluación downstream con SWE-bench Pro V1
+
+Se completó la evaluación de las 9 tareas de la muestra final procedentes de SWE-bench Pro V1. Cada tarea fue evaluada con las tres estrategias de recuperación congeladas (BM25, semántica con UniXcoder e híbrida mediante RRF), dando lugar a 27 condiciones experimentales definitivas.
+
+### Resultados
+
+| Método    | invalid_patch | not_resolved | resolved |  Total |
+| --------- | ------------: | -----------: | -------: | -----: |
+| BM25      |             9 |            0 |        0 |      9 |
+| Semantic  |             9 |            0 |        0 |      9 |
+| Hybrid    |             7 |            2 |        0 |      9 |
+| **Total** |        **25** |        **2** |    **0** | **27** |
+
+En total, 25 de las 27 condiciones (92,6 %) produjeron un patch no aplicable (`invalid_patch`). Las 2 condiciones restantes (7,4 %), ambas correspondientes al método híbrido, produjeron patches aplicables pero no resolvieron la tarea según el evaluador oficial (`not_resolved`). No se obtuvo ningún resultado `resolved` en las tareas Pro.
+
+Este resultado debe interpretarse teniendo en cuenta el protocolo downstream utilizado: un único intento por condición (Pass@1), K=10, el mismo modelo generativo y prompt para todos los métodos, sin acceso del modelo al gold context, al patch de referencia ni a los tests, y sin exploración libre del repositorio.
+
+### Tratamiento de fallos de infraestructura
+
+El fichero `results/downstream_results.jsonl` contiene 31 registros históricos asociados a estas tareas, aunque existen únicamente 27 condiciones experimentales. Los 4 registros adicionales corresponden a intentos que finalizaron con `infrastructure_error` y fueron posteriormente reevaluados reutilizando exactamente el patch generado originalmente.
+
+Los fallos de infraestructura no se contabilizan como resultados experimentales. Para la agregación final se conservó un único resultado definitivo por pareja `(tarea, método)`, excluyendo los registros históricos con `infrastructure_error`.
+
+Este criterio mantiene la semántica Pass@1: una reparación de la infraestructura de evaluación no proporciona al modelo una nueva oportunidad de generación.
+
+### Procedimiento de agregación
+
+La agregación final se realizó leyendo `results/downstream_results.jsonl`, identificando las tareas pertenecientes a `ScaleAI/SWE-bench_Pro` configuración `v1` y seleccionando un único resultado no `infrastructure_error` para cada pareja `(task_id, retrieval_method)`.
+
+Comando utilizado para reproducir la agregación:
+
+```powershell
+@'
+import json
+from collections import Counter, defaultdict
+from datasets import load_dataset
+
+pro_ids = {
+    row["instance_id"]
+    for row in load_dataset("ScaleAI/SWE-bench_Pro", "v1", split="test")
+}
+
+rows = []
+with open("results/downstream_results.jsonl", encoding="utf-8") as f:
+    for line in f:
+        if line.strip():
+            row = json.loads(line)
+            task_id = row.get("task_id") or row.get("instance_id") or row.get("original_inst_id")
+            if task_id in pro_ids:
+                rows.append(row)
+
+final = {}
+
+for row in rows:
+    task_id = row.get("task_id") or row.get("instance_id") or row.get("original_inst_id")
+    method = row.get("retrieval_method") or row.get("method")
+    status = row.get("status")
+
+    if status != "infrastructure_error":
+        final[(task_id, method)] = row
+
+print("=== CIERRE FINAL SWE-BENCH PRO ===")
+print("Registros históricos:", len(rows))
+print("Condiciones definitivas:", len(final))
+print()
+
+statuses = Counter(r.get("status") for r in final.values())
+print("POR ESTADO")
+print(dict(statuses))
+print()
+
+print("POR MÉTODO")
+by_method = defaultdict(Counter)
+
+for (_, method), row in final.items():
+    by_method[method][row.get("status")] += 1
+
+for method in ("bm25", "semantic", "hybrid"):
+    print(method, dict(by_method[method]))
+
+print()
+print("Tareas únicas:", len({task_id for task_id, _ in final}))
+print("Resolved:", statuses.get("resolved", 0))
+'@ | python -X utf8 -
+```
+
+La comprobación final produjo:
+
+- Registros históricos: 31
+- Condiciones definitivas: 27
+- Tareas únicas: 9
+- `invalid_patch`: 25
+- `not_resolved`: 2
+- `resolved`: 0
+
+**Evidencia:** `docs/screenshots/49-probench-final-summary.png`
+
+### Auditoría de `invalid_patch` en las fuentes cerradas
+
+Antes de continuar con las tareas Verified se realizó una auditoría de los resultados `invalid_patch` obtenidos en las fuentes Poly y Pro, debido a su elevada frecuencia.
+
+En las 63 condiciones definitivas completadas hasta este punto (36 Poly y 27 Pro), 60 fueron clasificadas como `invalid_patch`.
+
+El análisis de los artefactos `patch.diff` produjo:
+
+| Clasificación                                         | Pro | Poly | Total |
+| ----------------------------------------------------- | --: | ---: | ----: |
+| `invalid_patch`                                       |  25 |   35 |    60 |
+| Sin diff reconocible                                  |  10 |    8 |    18 |
+| Con diff reconocible                                  |  15 |   27 |    42 |
+| Estructura completa (`diff --git`, cabeceras y hunks) |   3 |    7 |    10 |
+| Unified diff sin cabecera `diff --git`                |  12 |   20 |    32 |
+| Estructura parcial/malformada                         |   0 |    0 |     0 |
+
+Por tanto, 18 de los 60 patches inválidos (30 %) no contienen una estructura de diff reconocible, mientras que 42 (70 %) sí contienen una estructura reconocible. Entre estos últimos, 10 presentan los elementos estructurales comprobados de un diff completo y 32 presentan un unified diff sin cabecera `diff --git`.
+
+Esta clasificación describe únicamente la estructura de los artefactos. No permite atribuir causalmente el fallo de aplicación a la ausencia de una cabecera `diff --git` ni al método de recuperación. Todos estos artefactos habían sido previamente clasificados como no aplicables mediante la validación del pipeline.
+
+La auditoría no motivó cambios en el protocolo experimental: se mantienen el modelo, prompt, K=10, Pass@1 y las tres estrategias de recuperación previamente congeladas.
+
+**Evidencia:** `docs/screenshots/50-invalid-patch-audit-pro-poly.png`

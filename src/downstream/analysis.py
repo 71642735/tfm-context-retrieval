@@ -1,4 +1,5 @@
 from __future__ import annotations
+from statistics import median
 
 import argparse
 import csv
@@ -13,6 +14,7 @@ from datasets import load_dataset
 
 RESULTS_PATH = Path("results/downstream_results.jsonl")
 FINAL_TASKS_PATH = Path("results/final_tasks.csv")
+FINAL_RETRIEVAL_RESULTS_PATH = Path("results/final_retrieval_results.csv")
 
 DEFINITIVE_STATUSES = {
     "invalid_patch",
@@ -252,6 +254,136 @@ def analyze_recognizable_diffs(
     )
 
 
+def analyze_retrieval_vs_downstream(
+    final: dict[tuple[str, str], dict[str, Any]],
+    retrieval_path: Path,
+) -> None:
+    """
+    Cruza la calidad de retrieval en K=10 con el resultado downstream.
+
+    El análisis es descriptivo. Compara las métricas de recuperación entre
+    invalid_patch, not_resolved y resolved, y entre patches aplicables y
+    no aplicables.
+    """
+    retrieval: dict[tuple[str, str], dict[str, dict[str, float]]] = {}
+
+    with retrieval_path.open(encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            if int(row["k"]) != 10:
+                continue
+
+            key = (row["task_id"], row["method"])
+            level = row["level"]
+
+            retrieval.setdefault(key, {})[level] = {
+                "coverage": float(row["coverage"]),
+                "precision": float(row["precision"]),
+                "f1": float(row["f1"]),
+            }
+
+    joined: list[dict[str, Any]] = []
+
+    for key, downstream_row in final.items():
+        task_id, method = key
+        metrics = retrieval.get(key)
+
+        if metrics is None:
+            raise RuntimeError(
+                f"No hay resultados de retrieval K=10 para {task_id} / {method}"
+            )
+
+        if "file" not in metrics or "line" not in metrics:
+            raise RuntimeError(
+                f"Faltan niveles file/line para {task_id} / {method}"
+            )
+
+        status = downstream_row["status"]
+
+        joined.append(
+            {
+                "task_id": task_id,
+                "method": method,
+                "status": status,
+                "applicable": status in {"not_resolved", "resolved"},
+                "file_coverage": metrics["file"]["coverage"],
+                "file_precision": metrics["file"]["precision"],
+                "file_f1": metrics["file"]["f1"],
+                "line_coverage": metrics["line"]["coverage"],
+                "line_precision": metrics["line"]["precision"],
+                "line_f1": metrics["line"]["f1"],
+            }
+        )
+
+    if len(joined) != 150:
+        raise RuntimeError(
+            f"Se esperaban 150 condiciones cruzadas y se obtuvieron {len(joined)}"
+        )
+
+    metric_names = (
+        "file_coverage",
+        "file_precision",
+        "file_f1",
+        "line_coverage",
+        "line_precision",
+        "line_f1",
+    )
+
+    def print_group(label: str, rows: list[dict[str, Any]]) -> None:
+        print()
+        print(f"{label} (n={len(rows)})")
+
+        for metric in metric_names:
+            values = [row[metric] for row in rows]
+            mean = sum(values) / len(values)
+            median_value = median(values)
+
+            print(
+                f"  {metric}: "
+                f"mean={mean:.4f} "
+                f"median={median_value:.4f}"
+            )
+
+    print()
+    print("=== RETRIEVAL K=10 VS DOWNSTREAM ===")
+    print(f"Condiciones cruzadas: {len(joined)}")
+
+    for status in ("invalid_patch", "not_resolved", "resolved"):
+        group = [row for row in joined if row["status"] == status]
+        print_group(status, group)
+
+    non_applicable = [
+        row for row in joined
+        if not row["applicable"]
+    ]
+    applicable = [
+        row for row in joined
+        if row["applicable"]
+    ]
+
+    print()
+    print("=== APLICABILIDAD DEL PATCH ===")
+    print_group("No aplicable", non_applicable)
+    print_group("Aplicable", applicable)
+
+    print()
+    print("=== CASOS RESOLVED ===")
+
+    for row in joined:
+        if row["status"] != "resolved":
+            continue
+
+        print(
+            row["task_id"],
+            row["method"],
+            f"file_f1={row['file_f1']:.4f}",
+            f"line_f1={row['line_f1']:.4f}",
+            f"file_coverage={row['file_coverage']:.4f}",
+            f"line_coverage={row['line_coverage']:.4f}",
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -276,6 +408,12 @@ def main() -> None:
     analyze_invalid_patches(final)
 
     analyze_recognizable_diffs(final)
+
+    if args.source is None:
+        analyze_retrieval_vs_downstream(
+            final,
+            FINAL_RETRIEVAL_RESULTS_PATH,
+        )
 
 
 if __name__ == "__main__":

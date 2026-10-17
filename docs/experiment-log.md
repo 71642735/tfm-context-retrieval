@@ -1607,3 +1607,109 @@ Esta clasificación describe únicamente la estructura de los artefactos. No per
 La auditoría no motivó cambios en el protocolo experimental: se mantienen el modelo, prompt, K=10, Pass@1 y las tres estrategias de recuperación previamente congeladas.
 
 **Evidencia:** `docs/screenshots/50-invalid-patch-audit-pro-poly.png`
+
+### Inicio de la evaluación downstream de Verified
+
+Se inició la evaluación de las 29 tareas de la muestra final procedentes de la fuente `Verified`, correspondientes a 87 condiciones experimentales (29 tareas × 3 estrategias de recuperación).
+
+Como validación inicial del flujo se utilizó la primera tarea Verified de la muestra congelada:
+
+- Tarea: `astropy__astropy-13398`
+- Método: BM25
+- K: 10
+- Modelo: `gemini-3.5-flash-lite`
+- Protocolo: Pass@1
+
+La generación se realizó una única vez y se conservaron el prompt, el patch y los metadatos correspondientes.
+
+El patch generado no superó la validación de aplicabilidad y fue clasificado como:
+
+- Estado: `invalid_patch`
+- Resolved: `False`
+- Detalle: `patch fragment without header at line 75`
+
+De acuerdo con el protocolo congelado, el patch no se corrigió ni se regeneró. El resultado se considera una condición experimental definitiva y no un fallo de infraestructura.
+
+Tras esta primera condición, el estado global del experimento downstream es de 64/150 condiciones definitivas, de las cuales 1/87 corresponde a Verified.
+
+**Evidencia:** `docs/screenshots/51-verified-first-result.png`
+
+La ejecución completa de la primera tarea Verified confirmó el funcionamiento del orquestador con las tres estrategias. Las tres condiciones (`bm25`, `semantic` e `hybrid`) finalizaron como `invalid_patch`, alcanzándose 3/3 condiciones definitivas para la tarea.
+
+**Evidencia adicional:** `docs/screenshots/52-verified-first-task-complete.png`
+
+### Cierre de la ejecución downstream
+
+Se completó la evaluación downstream de las 50 tareas seleccionadas con las tres estrategias de recuperación (BM25, semántica mediante UniXcoder e híbrida mediante RRF), alcanzando un total de 150/150 condiciones definitivas.
+
+Los errores de infraestructura encontrados durante la ejecución fueron resueltos y las condiciones afectadas se reevaluaron reutilizando los patches generados originalmente, preservando así el criterio Pass@1.
+
+**Estado final:** 150/150 condiciones definitivas.
+
+**Evidencia:** `docs/screenshots/53-downstream-150-complete.png`
+
+#### Resultados finales de la evaluación downstream
+
+Una vez completadas las 150 condiciones experimentales (50 tareas × 3 estrategias de recuperación), se realizó la agregación definitiva de los resultados.
+
+Resultados globales:
+
+| Método    | Resolved | Not resolved | Invalid patch |   Total |
+| --------- | -------: | -----------: | ------------: | ------: |
+| BM25      |        2 |            1 |            47 |      50 |
+| Semantic  |        0 |            2 |            48 |      50 |
+| Hybrid    |        0 |            4 |            46 |      50 |
+| **Total** |    **2** |        **7** |       **141** | **150** |
+
+La tasa global de resolución fue de 2/150 (1,33 %). BM25 fue la única estrategia que produjo condiciones resueltas, con 2/50 (4 %), mientras que las estrategias semántica e híbrida no produjeron ninguna resolución en la configuración experimental evaluada.
+
+Dado el reducido número absoluto de incidencias resueltas, este resultado se considera descriptivo y no permite concluir por sí solo una superioridad general de BM25 en capacidad de resolución downstream.
+
+El estado predominante fue `invalid_patch`, con 141/150 condiciones (94,00 %). La auditoría de estos casos mostró que 113/141 (80,1 %) contenían un diff reconocible y 28/141 (19,9 %) no lo contenían. Entre los diffs reconocibles, 33 presentaban estructura completa y 80 correspondían a unified diffs sin cabecera Git. Por tanto, la elevada proporción de `invalid_patch` no puede atribuirse únicamente a la ausencia de una estructura de diff en la salida del modelo.
+
+Para el subconjunto Verified (29 tareas, 87 condiciones), se obtuvieron 2 condiciones `resolved`, 4 `not_resolved` y 81 `invalid_patch`. Las dos resoluciones correspondieron igualmente a BM25.
+
+**Evidencia:**
+
+- `docs/screenshots/54-downstream-verified-analysis.png`
+- `docs/screenshots/55-downstream-global-analysis.png`
+
+## Cruce entre calidad de recuperación y resultado downstream
+
+Se cruzaron los resultados de recuperación correspondientes a K=10 con las
+150 condiciones definitivas de la evaluación downstream. Se utilizó K=10
+porque es el número de chunks proporcionado al LLM en el experimento
+downstream.
+
+Las condiciones se analizaron tanto por estado final (`invalid_patch`,
+`not_resolved` y `resolved`) como por aplicabilidad del patch. Se consideraron
+aplicables las condiciones clasificadas como `not_resolved` o `resolved`.
+
+En las 141 condiciones que produjeron `invalid_patch`, la cobertura a nivel
+de líneas presentó una media de 0.1863 y una mediana de 0.0000, mientras que
+el F1 a nivel de líneas presentó una media de 0.0982 y una mediana de 0.0000.
+
+En las 9 condiciones que produjeron un patch aplicable, la cobertura a nivel
+de líneas alcanzó una media de 0.3832 y una mediana de 0.4048, mientras que
+el F1 a nivel de líneas alcanzó una media de 0.1811 y una mediana de 0.1882.
+
+Por tanto, en la muestra evaluada, las condiciones que produjeron patches
+aplicables presentaron descriptivamente mejores métricas de recuperación,
+especialmente a nivel de líneas. No obstante, el reducido número de patches
+aplicables impide establecer una relación concluyente o causal entre la
+calidad de recuperación y la aplicabilidad del patch.
+
+Los dos únicos casos `resolved` correspondieron a BM25. Su cobertura a nivel
+de líneas fue de 0.5400 y 0.8070 respectivamente. Aunque este resultado es
+coherente con el mejor rendimiento agregado obtenido por BM25 en la evaluación
+de recuperación, dos casos resueltos son insuficientes para establecer una
+superioridad downstream estadísticamente sustentada.
+
+En consecuencia, los resultados sugieren una posible relación entre una mejor
+recuperación de contexto relevante y la capacidad de producir patches
+aplicables, pero la elevada proporción de `invalid_patch` limita la capacidad
+del experimento downstream para determinar si las diferencias entre estrategias
+de recuperación se traducen sistemáticamente en una mayor resolución de
+incidencias.
+
+**Evidencia:** `docs/screenshots/56-retrieval-downstream-cross-analysis.png`

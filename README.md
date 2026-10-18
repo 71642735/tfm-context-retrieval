@@ -691,3 +691,78 @@ Por tanto, se corrige únicamente el problema de infraestructura y se vuelve a e
 ### ¿Cuál es la idea fundamental detrás de estas decisiones?
 
 Los fallos del modelo son resultados experimentales; los fallos de nuestra infraestructura no. Reparar la infraestructura nunca debe proporcionar al modelo un nuevo intento.
+
+## Preguntas sobre el cruce retrieval ↔ downstream
+
+### 1. ¿Por qué se utiliza K=10 para relacionar la calidad del retrieval con los resultados downstream?
+
+Aunque la evaluación de recuperación se realizó con K=5, K=10 y K=20, en el experimento downstream se fijó K=10, es decir, se proporcionaron al LLM los 10 chunks mejor posicionados por cada estrategia.
+
+Por tanto, el cruce se realiza con K=10 porque permite analizar exactamente la calidad del contexto que recibió el LLM durante la generación de los patches.
+
+---
+
+### 2. ¿Cuál es la diferencia entre `invalid_patch` y `not_resolved`?
+
+`invalid_patch` significa que el patch generado por el LLM no pudo aplicarse correctamente al estado exacto del repositorio.
+
+`not_resolved` significa que el patch sí pudo aplicarse, pero la evaluación posterior mediante los tests correspondientes determinó que no resolvía la incidencia.
+
+El proceso puede resumirse como:
+
+1. El LLM genera un patch.
+2. Se comprueba si el patch puede aplicarse.
+3. Si puede aplicarse, se ejecuta la evaluación correspondiente.
+4. Si no puede aplicarse → `invalid_patch`.
+5. Si se aplica pero no resuelve la incidencia → `not_resolved`.
+6. Si se aplica y resuelve la incidencia → `resolved`.
+
+---
+
+### 3. ¿Qué significa que la mediana de `line_f1` sea 0 en los `invalid_patch` y 0.1882 en los patches aplicables?
+
+En las 141 condiciones clasificadas como `invalid_patch`, la mediana de `line_f1` fue 0. Esto significa que al menos la mitad de esas condiciones obtuvo un F1 de recuperación a nivel de líneas igual a cero.
+
+En cambio, entre las 9 condiciones que produjeron un patch aplicable, la mediana de `line_f1` fue 0.1882.
+
+Esto muestra descriptivamente que la recuperación de contexto relevante a nivel de líneas fue mejor entre las condiciones que consiguieron generar patches aplicables.
+
+Sin embargo, no permite afirmar que una peor recuperación sea la causa de los `invalid_patch`. Se observa una asociación descriptiva, no una relación causal demostrada.
+
+---
+
+### 4. ¿Por qué no se puede concluir que BM25 es superior downstream si los dos únicos casos `resolved` utilizaron BM25?
+
+Porque únicamente se obtuvieron 2 casos `resolved` entre las 150 condiciones evaluadas. Ambos correspondieron a BM25, pero el número de éxitos es demasiado reducido para establecer una superioridad downstream estadísticamente sustentada.
+
+Además, la resolución de una incidencia no depende únicamente de la calidad del retrieval. También interviene la capacidad del LLM para interpretar el contexto recuperado y generar un patch correcto y aplicable.
+
+Por tanto, el resultado es compatible con el mejor rendimiento agregado de BM25 observado en la evaluación de retrieval, pero no demuestra que BM25 sea necesariamente superior para la resolución downstream.
+
+---
+
+### 5. ¿Una mejor recuperación de contexto implica necesariamente una mayor capacidad para resolver incidencias?
+
+No.
+
+Una mejor recuperación aumenta la probabilidad de proporcionar al LLM información relevante, pero posteriormente el modelo debe interpretar correctamente ese contexto y generar una modificación válida del código.
+
+En este experimento se observó una señal descriptiva favorable: los patches aplicables presentaron mejores métricas de recuperación, especialmente a nivel de líneas. Sin embargo, la elevada proporción de `invalid_patch` (141 de 150 condiciones) limitó la capacidad para demostrar que las mejoras en retrieval se traducen sistemáticamente en una mayor resolución de incidencias.
+
+Por tanto, una de las conclusiones del experimento es que la calidad del retrieval es importante, pero no constituye por sí sola una garantía de resolución.
+
+### ¿Por qué disminuye el F1 cuando aumenta K?
+
+Al aumentar K se recupera un mayor número de chunks. Esto aumenta la
+probabilidad de recuperar contexto relevante y, por tanto, tiende a aumentar
+la cobertura.
+
+Sin embargo, también se incorporan más chunks que no son relevantes para la
+incidencia, lo que reduce la precisión.
+
+En los resultados obtenidos, la pérdida de precisión al aumentar K fue mayor
+que la mejora obtenida en cobertura desde el punto de vista del equilibrio
+medido por F1. Por este motivo, el F1 disminuyó al pasar de K=5 a K=10 y K=20.
+
+Por tanto, recuperar más contexto no implica necesariamente recuperar mejor
+contexto: existe un compromiso entre cobertura y precisión.

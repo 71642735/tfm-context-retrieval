@@ -1,0 +1,5 @@
+applicability,level,coverage_mean,coverage_median,precision_mean,precision_median,f1_mean,f1_median
+Aplicable,file,0.5556,0.5,0.1577,0.1667,0.2362,0.25
+Aplicable,line,0.3832,0.4048,0.129,0.1149,0.1811,0.1882
+No aplicable,file,0.4014,0.2857,0.1625,0.125,0.207,0.1818
+No aplicable,line,0.1863,0.0,0.0796,0.0,0.0982,0.0

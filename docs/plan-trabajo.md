@@ -40,7 +40,7 @@ innecesariamente el alcance del TFM.
 | **28 oct.**    | Automatizar la evaluación mediante LLM.                                                                          | [x] |
 | **29–30 oct.** | Ejecutar la evaluación LLM y solucionar posibles problemas operativos.                                           | [x] |
 | **31 oct.**    | Analizar Pass/Fail y la relación entre calidad de recuperación y resolución de incidencias.                      | [x] |
-| **1 nov.**     | Preparar tablas y gráficas finales de resultados.                                                                |
+| **1 nov.**     | Preparar tablas y gráficas finales de resultados.                                                                | [x] |
 | **2 nov.**     | Buffer experimental y congelación definitiva del experimento.                                                    |
 | **3 nov.**     | Redactar metodología.                                                                                            |
 | **4 nov.**     | Redactar resultados.                                                                                             |

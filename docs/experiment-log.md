@@ -1713,3 +1713,56 @@ de recuperación se traducen sistemáticamente en una mayor resolución de
 incidencias.
 
 **Evidencia:** `docs/screenshots/56-retrieval-downstream-cross-analysis.png`
+
+## Generación de tablas y figuras finales
+
+A partir de los resultados experimentales congelados se generaron de forma
+reproducible cuatro figuras y tres tablas destinadas a resumir los principales
+resultados del experimento.
+
+Las figuras generadas son:
+
+- `results/figures/retrieval-f1-by-k.png`: F1 medio de recuperación por
+  estrategia y valor de K, diferenciando evaluación a nivel de fichero y líneas.
+- `results/figures/downstream-status-by-method.png`: distribución de los
+  resultados downstream (`invalid_patch`, `not_resolved` y `resolved`) para
+  cada estrategia de recuperación.
+- `results/figures/retrieval-by-patch-applicability.png`: comparación de la
+  calidad media de recuperación a nivel de líneas en K=10 entre condiciones
+  que produjeron patches aplicables y no aplicables.
+
+Las tablas generadas son:
+
+- `results/tables/retrieval-summary.csv`: métricas agregadas de coverage,
+  precision y F1 para cada estrategia, K y nivel de evaluación.
+- `results/tables/downstream-summary.csv`: resultados downstream absolutos y
+  porcentuales por estrategia.
+- `results/tables/retrieval-by-applicability.csv`: media y mediana de las
+  métricas de recuperación en K=10 según la aplicabilidad del patch.
+- `results/figures/task-distribution-by-repository.png`: distribución de las
+  50 tareas de la muestra final entre los 20 repositorios representados.
+  El máximo observado es de tres tareas por repositorio, equivalente al 6 %
+  de la muestra.
+
+La tabla de retrieval confirma que BM25 obtuvo el mayor F1 medio en las seis
+combinaciones evaluadas de K y nivel. En las tres estrategias y en ambos
+niveles de evaluación se observa además un aumento de coverage y una
+disminución de precision al incrementar K. En la muestra evaluada, este
+compromiso se tradujo en una disminución del F1 medio al aumentar K.
+
+La tabla downstream confirma el predominio de `invalid_patch`, con 141 de las
+150 condiciones definitivas (94 %). Se obtuvieron 7 condiciones
+`not_resolved` y 2 condiciones `resolved`. Los dos únicos casos `resolved`
+correspondieron a BM25.
+
+En el análisis por aplicabilidad, las 9 condiciones que produjeron un patch
+aplicable presentaron un `line_coverage` medio de 0.3832 y un `line_f1` medio
+de 0.1811, frente a 0.1863 y 0.0982 respectivamente en las 141 condiciones
+con patch no aplicable. Las medianas de `line_coverage` y `line_f1` fueron
+0.4048 y 0.1882 en el grupo aplicable, frente a 0.0000 y 0.0000 en el grupo
+no aplicable.
+
+Estas diferencias son descriptivas. El reducido número de patches aplicables
+(n=9), y especialmente de incidencias resueltas (n=2), impide establecer a
+partir de estos resultados una relación causal o una superioridad downstream
+estadísticamente sustentada entre las estrategias de recuperación.

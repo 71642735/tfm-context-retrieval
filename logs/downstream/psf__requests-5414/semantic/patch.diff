@@ -1,0 +1,11 @@
+--- requests/models.py
++++ requests/models.py
+@@ -395,7 +395,7 @@
+         if not unicode_is_ascii(host):
+             try:
+                 host = self._get_idna_encoded_host(host)
+-            except UnicodeError:
++            except (UnicodeError, LocationParseError):
+                 raise InvalidURL('URL has an invalid label.')
+         elif host.startswith(u'*'):
+             raise InvalidURL('URL has an invalid label.')

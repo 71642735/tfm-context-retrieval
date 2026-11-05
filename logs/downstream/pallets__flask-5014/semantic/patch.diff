@@ -1,0 +1,20 @@
+--- src/flask/blueprints.py
+--- src/flask/blueprints.py
+@@ -103,6 +103,8 @@
+         self.subdomain = subdomain
+         self.url_values_defaults = url_defaults
+         self.cli_group = cli_group
++        if not name:
++            raise ValueError("Blueprint name cannot be empty.")
+
+     def _set_dir_path(self, import_name: str) ->``
+--- src/flask/blueprints.py
++++ src/flask/blueprints.py
+@@ -103,6 +103,8 @@
+         self.subdomain = subdomain
+         self.url_values_defaults = url_defaults
+         self.cli_group = cli_group
++        if not name:
++            raise ValueError("Blueprint name cannot be empty.")
+
+     def _set_dir_path(self, import_name: str) -> None:

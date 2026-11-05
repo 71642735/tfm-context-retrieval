@@ -1,0 +1,36 @@
+--- keras/backend/jax/distribution_lib.py
++++ keras/backend/jax/distribution_lib.py
+@@ -201,11 +201,11 @@
+                 f"{len(job_addresses)} jobs, but num_processes is "
+                 f"{num_processes}"
+             )
+-        corrdinator_address = job_addresses[0]
++        coordinator_address = job_addresses[0]
+     else:
+-        corrdinator_address = job_addresses
++        coordinator_address = job_addresses
+ 
+     jax.distributed.initialize(
+-        corrdinator_address=corrdinator_address,
++        coordinator_address=coordinator_address,
+         num_processes=num_processes,
+         process_id=process_id,
+     )
+--- keras/backend/jax/distribution_lib_test.py
++++ keras/backend/jax/distribution_lib_test.py
+@@ -52,7 +52,7 @@
+     def test_initialize_with_all_job_addresses(self, mock_jax_initialze):
+         backend_dlib.initialize("10.0.0.1:1234,10.0.0.2:2345", 2, 0)
+         mock_jax_initialze.assert_called_once_with(
+-            corrdinator_address="10.0.0.1:1234", num_processes=2, process_id=0
++            coordinator_address="10.0.0.1:1234", num_processes=2, process_id=0
+         )
+ 
+     def test_initialize_with_coordinater_address(self, mock_jax_initialze):
+@@ -64,5 +64,5 @@
+     def test_initialize_with_coordinater_address(self, mock_jax_initialze):
+         backend_dlib.initialize("10.0.0.1:1234", 2, 0)
+         mock_jax_initialze.assert_called_once_with(
+-            corrdinator_address="10.0.0.1:1234", num_processes=2, process_id=0
++            coordinator_address="10.0.0.1:1234", num_processes=2, process_id=0
+         )

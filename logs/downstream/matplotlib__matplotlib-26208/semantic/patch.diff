@@ -1,0 +1,14 @@
+```patch
+diff --git a/lib/matplotlib/axes/_axes.py b/lib/matplotlib/axes/_axes.py
+--- a/lib/matplotlib/axes/_axes.py
++++ b/lib/matplotlib/axes/_axes.py
+@@ -4700,3 +4700,5 @@
+             return coll
+ 
+-        self.dataLim.update_from_data_xy(xy, valid=False)
++        self.dataLim.update_from_data_xy(
++            xy, valid=True,
++            ignore=(self.dataLim.minmax == [np.inf, -np.inf, np.inf, -np.inf]).all())
+         return PolyCollection(
+             polys,
+```

@@ -1,0 +1,439 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+cla(), clf() should unset the `.axes` and `.figure` attributes of deparented artists
+mpl2.0b3: Removing an artist from its axes unsets its `.axes` attribute, but clearing the axes does not do so.
+
+```
+In [11]: f, a = plt.subplots(); l, = a.plot([1, 2]); l.remove(); print(l.axes)
+None
+
+In [12]: f, a = plt.subplots(); l, = a.plot([1, 2]); a.cla(); print(l.axes)
+Axes(0.125,0.11;0.775x0.77)
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: lib/matplotlib/tests/test_figure.py
+Lines: 691-769
+Symbol: test_figure_clear
+
+def test_figure_clear(clear_meth):
+    # we test the following figure clearing scenarios:
+    fig = plt.figure()
+
+    # a) an empty figure
+    fig.clear()
+    assert fig.axes == []
+
+    # b) a figure with a single unnested axes
+    ax = fig.add_subplot(111)
+    getattr(fig, clear_meth)()
+    assert fig.axes == []
+
+    # c) a figure multiple unnested axes
+    axes = [fig.add_subplot(2, 1, i+1) for i in range(2)]
+    getattr(fig, clear_meth)()
+    assert fig.axes == []
+
+    # d) a figure with a subfigure
+    gs = fig.add_gridspec(ncols=2, nrows=1)
+    subfig = fig.add_subfigure(gs[0])
+    subaxes = subfig.add_subplot(111)
+    getattr(fig, clear_meth)()
+    assert subfig not in fig.subfigs
+    assert fig.axes == []
+
+    # e) a figure with a subfigure and a subplot
+    subfig = fig.add_subfigure(gs[0])
+    subaxes = subfig.add_subplot(111)
+    mainaxes = fig.add_subplot(gs[1])
+
+    # e.1) removing just the axes leaves the subplot
+    mainaxes.remove()
+    assert fig.axes == [subaxes]
+
+    # e.2) removing just the subaxes leaves the subplot
+    # and subfigure
+    mainaxes = fig.add_subplot(gs[1])
+    subaxes.remove()
+    assert fig.axes == [mainaxes]
+    assert subfig in fig.subfigs
+
+    # e.3) clearing the subfigure leaves the subplot
+    subaxes = subfig.add_subplot(111)
+    assert mainaxes in fig.axes
+    assert subaxes in fig.axes
+    getattr(subfig, clear_meth)()
+    assert subfig in fig.subfigs
+    assert subaxes not in subfig.axes
+    assert subaxes not in fig.axes
+    assert mainaxes in fig.axes
+
+    # e.4) clearing the whole thing
+    subaxes = subfig.add_subplot(111)
+    getattr(fig, clear_meth)()
+    assert fig.axes == []
+    assert fig.subfigs == []
+
+    # f) multiple subfigures
+    subfigs = [fig.add_subfigure(gs[i]) for i in [0, 1]]
+    subaxes = [sfig.add_subplot(111) for sfig in subfigs]
+    assert all(ax in fig.axes for ax in subaxes)
+    assert all(sfig in fig.subfigs for sfig in subfigs)
+
+    # f.1) clearing only one subfigure
+    getattr(subfigs[0], clear_meth)()
+    assert subaxes[0] not in fig.axes
+    assert subaxes[1] in fig.axes
+    assert subfigs[1] in fig.subfigs
+
+    # f.2) clearing the whole thing
+    getattr(subfigs[1], clear_meth)()
+    subfigs = [fig.add_subfigure(gs[i]) for i in [0, 1]]
+    subaxes = [sfig.add_subplot(111) for sfig in subfigs]
+    assert all(ax in fig.axes for ax in subaxes)
+    assert all(sfig in fig.subfigs for sfig in subfigs)
+    getattr(fig, clear_meth)()
+    assert fig.subfigs == []
+    assert fig.axes == []
+
+--- Chunk 2 ---
+File: lib/matplotlib/tests/test_figure.py
+Lines: 144-160
+Symbol: test_clf_keyword
+
+def test_clf_keyword():
+    # test if existing figure is cleared with figure() and subplots()
+    text1 = 'A fancy plot'
+    text2 = 'Really fancy!'
+
+    fig0 = plt.figure(num=1)
+    fig0.suptitle(text1)
+    assert [t.get_text() for t in fig0.texts] == [text1]
+
+    fig1 = plt.figure(num=1, clear=False)
+    fig1.text(0.5, 0.5, text2)
+    assert fig0 is fig1
+    assert [t.get_text() for t in fig1.texts] == [text1, text2]
+
+    fig2, ax2 = plt.subplots(2, 1, num=1, clear=True)
+    assert fig0 is fig2
+    assert [t.get_text() for t in fig2.texts] == []
+
+--- Chunk 3 ---
+File: lib/matplotlib/figure.py
+Lines: 931-964
+Symbol: FigureBase.clear
+
+    def clear(self, keep_observers=False):
+        """
+        Clear the figure.
+
+        Parameters
+        ----------
+        keep_observers: bool, default: False
+            Set *keep_observers* to True if, for example,
+            a gui widget is tracking the Axes in the figure.
+        """
+        self.suppressComposite = None
+
+        # first clear the axes in any subfigures
+        for subfig in self.subfigs:
+            subfig.clear(keep_observers=keep_observers)
+        self.subfigs = []
+
+        for ax in tuple(self.axes):  # Iterate over the copy.
+            ax.clear()
+            self.delaxes(ax)  # Remove ax from self._axstack.
+
+        self.artists = []
+        self.lines = []
+        self.patches = []
+        self.texts = []
+        self.images = []
+        self.legends = []
+        if not keep_observers:
+            self._axobservers = cbook.CallbackRegistry()
+        self._suptitle = None
+        self._supxlabel = None
+        self._supylabel = None
+
+        self.stale = True
+
+--- Chunk 4 ---
+File: lib/matplotlib/artist.py
+Lines: 193-229
+Symbol: Artist.remove
+
+    def remove(self):
+        """
+        Remove the artist from the figure if possible.
+
+        The effect will not be visible until the figure is redrawn, e.g.,
+        with `.FigureCanvasBase.draw_idle`.  Call `~.axes.Axes.relim` to
+        update the axes limits if desired.
+
+        Note: `~.axes.Axes.relim` will not see collections even if the
+        collection was added to the axes with *autolim* = True.
+
+        Note: there is no support for removing the artist's legend entry.
+        """
+
+        # There is no method to set the callback.  Instead, the parent should
+        # set the _remove_method attribute directly.  This would be a
+        # protected attribute if Python supported that sort of thing.  The
+        # callback has one parameter, which is the child to be removed.
+        if self._remove_method is not None:
+            self._remove_method(self)
+            # clear stale callback
+            self.stale_callback = None
+            _ax_flag = False
+            if hasattr(self, 'axes') and self.axes:
+                # remove from the mouse hit list
+                self.axes._mouseover_set.discard(self)
+                self.axes.stale = True
+                self.axes = None  # decouple the artist from the Axes
+                _ax_flag = True
+
+            if self.figure:
+                self.figure = None
+                if not _ax_flag:
+                    self.figure = True
+
+        else:
+            raise NotImplementedError('cannot remove artist')
+
+--- Chunk 5 ---
+File: lib/matplotlib/figure.py
+Lines: 967-981
+Symbol: FigureBase.clf
+
+    def clf(self, keep_observers=False):
+        """
+        [*Discouraged*] Alias for the `clear()` method.
+
+        .. admonition:: Discouraged
+
+            The use of ``clf()`` is discouraged. Use ``clear()`` instead.
+
+        Parameters
+        ----------
+        keep_observers: bool, default: False
+            Set *keep_observers* to True if, for example,
+            a gui widget is tracking the Axes in the figure.
+        """
+        return self.clear(keep_observers=keep_observers)
+
+--- Chunk 6 ---
+File: lib/matplotlib/axes/_base.py
+Lines: 3166-3174
+Symbol: _AxesBase.redraw_in_frame
+
+    def redraw_in_frame(self):
+        """
+        Efficiently redraw Axes data, but not axis ticks, labels, etc.
+        """
+        with ExitStack() as stack:
+            for artist in [*self._axis_map.values(),
+                           self.title, self._left_title, self._right_title]:
+                stack.enter_context(artist._cm_set(visible=False))
+            self.draw(self.figure.canvas.get_renderer())
+
+--- Chunk 7 ---
+File: lib/matplotlib/axes/_base.py
+Lines: 2293-2312
+Symbol: _AxesBase.add_artist
+
+    def add_artist(self, a):
+        """
+        Add an `.Artist` to the Axes; return the artist.
+
+        Use `add_artist` only for artists for which there is no dedicated
+        "add" method; and if necessary, use a method such as `update_datalim`
+        to manually update the dataLim if the artist is to be included in
+        autoscaling.
+
+        If no ``transform`` has been specified when creating the artist (e.g.
+        ``artist.get_transform() == None``) then the transform is set to
+        ``ax.transData``.
+        """
+        a.axes = self
+        self._children.append(a)
+        a._remove_method = self._children.remove
+        self._set_artist_props(a)
+        a.set_clip_path(self.patch)
+        self.stale = True
+        return a
+
+--- Chunk 8 ---
+File: lib/matplotlib/axes/_base.py
+Lines: 1271-1393
+Symbol: _AxesBase.__clear
+
+    def __clear(self):
+        """Clear the Axes."""
+        # The actual implementation of clear() as long as clear() has to be
+        # an adapter delegating to the correct implementation.
+        # The implementation can move back into clear() when the
+        # deprecation on cla() subclassing expires.
+
+        # stash the current visibility state
+        if hasattr(self, 'patch'):
+            patch_visible = self.patch.get_visible()
+        else:
+            patch_visible = True
+
+        xaxis_visible = self.xaxis.get_visible()
+        yaxis_visible = self.yaxis.get_visible()
+
+        for axis in self._axis_map.values():
+            axis.clear()  # Also resets the scale to linear.
+        for spine in self.spines.values():
+            spine.clear()
+
+        self.ignore_existing_data_limits = True
+        self.callbacks = cbook.CallbackRegistry(
+            signals=["xlim_changed", "ylim_changed", "zlim_changed"])
+
+        # update the minor locator for x and y axis based on rcParams
+        if mpl.rcParams['xtick.minor.visible']:
+            self.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+        if mpl.rcParams['ytick.minor.visible']:
+            self.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+
+        self._xmargin = mpl.rcParams['axes.xmargin']
+        self._ymargin = mpl.rcParams['axes.ymargin']
+        self._tight = None
+        self._use_sticky_edges = True
+
+        self._get_lines = _process_plot_var_args(self)
+        self._get_patches_for_fill = _process_plot_var_args(self, 'fill')
+
+        self._gridOn = mpl.rcParams['axes.grid']
+        self._children = []
+        self._mouseover_set = _OrderedSet()
+        self.child_axes = []
+        self._current_image = None  # strictly for pyplot via _sci, _gci
+        self._projection_init = None  # strictly for pyplot.subplot
+        self.legend_ = None
+        self.containers = []
+
+        self.grid(False)  # Disable grid on init to use rcParameter
+        self.grid(self._gridOn, which=mpl.rcParams['axes.grid.which'],
+                  axis=mpl.rcParams['axes.grid.axis'])
+        props = font_manager.FontProperties(
+            size=mpl.rcParams['axes.titlesize'],
+            weight=mpl.rcParams['axes.titleweight'])
+
+        y = mpl.rcParams['axes.titley']
+        if y is None:
+            y = 1.0
+            self._autotitlepos = True
+        else:
+            self._autotitlepos = False
+
+        self.title = mtext.Text(
+            x=0.5, y=y, text='',
+            fontproperties=props,
+            verticalalignment='baseline',
+            horizontalalignment='center',
+            )
+        self._left_title = mtext.Text(
+            x=0.0, y=y, text='',
+            fontproperties=props.copy(),
+            verticalalignment='baseline',
+            horizontalalignment='left', )
+        self._right_title = mtext.Text(
+            x=1.0, y=y, text='',
+            fontproperties=props.copy(),
+            verticalalignment='baseline',
+            horizontalalignment='right',
+            )
+        title_offset_points = mpl.rcParams['axes.titlepad']
+        # refactor this out so it can be called in ax.set_title if
+        # pad argument used...
+        self._set_title_offset_trans(title_offset_points)
+
+        for _title in (self.title, self._left_title, self._right_title):
+            self._set_artist_props(_title)
+
+        # The patch draws the background of the Axes.  We want this to be below
+        # the other artists.  We use the frame to draw the edges so we are
+        # setting the edgecolor to None.
+        self.patch = self._gen_axes_patch()
+        self.patch.set_figure(self.figure)
+        self.patch.set_facecolor(self._facecolor)
+        self.patch.set_edgecolor('none')
+        self.patch.set_linewidth(0)
+        self.patch.set_transform(self.transAxes)
+
+        self.set_axis_on()
+
+        self.xaxis.set_clip_path(self.patch)
+        self.yaxis.set_clip_path(self.patch)
+
+        self._shared_axes["x"].clean()
+        self._shared_axes["y"].clean()
+        if self._sharex is not None:
+            self.xaxis.set_visible(xaxis_visible)
+            self.patch.set_visible(patch_visible)
+        if self._sharey is not None:
+            self.yaxis.set_visible(yaxis_visible)
+            self.patch.set_visible(patch_visible)
+
+        # This comes last, as the call to _set_lim may trigger an autoscale (in
+        # case of shared axes), requiring children to be already set up.
+        for name, axis in self._axis_map.items():
+            share = getattr(self, f"_share{name}")
+            if share is not None:
+                getattr(self, f"share{name}")(share)
+            else:
+                axis._set_scale("linear")
+                axis._set_lim(0, 1, auto=True)
+        self._update_transScale()
+
+        self.stale = True
+
+--- Chunk 9 ---
+File: lib/mpl_toolkits/mplot3d/tests/test_axes3d.py
+Lines: 1375-1392
+Symbol: test_inverted_cla
+
+def test_inverted_cla():
+    # GitHub PR #5450. Setting autoscale should reset
+    # axes to be non-inverted.
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    # 1. test that a new axis is not inverted per default
+    assert not ax.xaxis_inverted()
+    assert not ax.yaxis_inverted()
+    assert not ax.zaxis_inverted()
+    ax.set_xlim(1, 0)
+    ax.set_ylim(1, 0)
+    ax.set_zlim(1, 0)
+    assert ax.xaxis_inverted()
+    assert ax.yaxis_inverted()
+    assert ax.zaxis_inverted()
+    ax.cla()
+    assert not ax.xaxis_inverted()
+    assert not ax.yaxis_inverted()
+    assert not ax.zaxis_inverted()
+
+--- Chunk 10 ---
+File: lib/matplotlib/tests/test_axes.py
+Lines: 498-500
+Symbol: test_subclass_clear_cla.ClaAxes.cla
+
+            def cla(self):
+                nonlocal called
+                called = True
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

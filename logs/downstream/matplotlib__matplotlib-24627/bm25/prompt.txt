@@ -1,0 +1,738 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+cla(), clf() should unset the `.axes` and `.figure` attributes of deparented artists
+mpl2.0b3: Removing an artist from its axes unsets its `.axes` attribute, but clearing the axes does not do so.
+
+```
+In [11]: f, a = plt.subplots(); l, = a.plot([1, 2]); l.remove(); print(l.axes)
+None
+
+In [12]: f, a = plt.subplots(); l, = a.plot([1, 2]); a.cla(); print(l.axes)
+Axes(0.125,0.11;0.775x0.77)
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: lib/matplotlib/tests/test_widgets.py
+Lines: 1503-1535
+Symbol: test_MultiCursor
+
+def test_MultiCursor(horizOn, vertOn):
+    (ax1, ax3) = plt.figure().subplots(2, sharex=True)
+    ax2 = plt.figure().subplots()
+
+    # useblit=false to avoid having to draw the figure to cache the renderer
+    multi = widgets.MultiCursor(
+        None, (ax1, ax2), useblit=False, horizOn=horizOn, vertOn=vertOn
+    )
+
+    # Only two of the axes should have a line drawn on them.
+    assert len(multi.vlines) == (2 if vertOn else 0)
+    assert len(multi.hlines) == (2 if horizOn else 0)
+
+    # mock a motion_notify_event
+    # Can't use `do_event` as that helper requires the widget
+    # to have a single .ax attribute.
+    event = mock_event(ax1, xdata=.5, ydata=.25)
+    multi.onmove(event)
+
+    # the lines in the first two ax should both move
+    for l in multi.vlines:
+        assert l.get_xdata() == (.5, .5)
+    for l in multi.hlines:
+        assert l.get_ydata() == (.25, .25)
+
+    # test a move event in an Axes not part of the MultiCursor
+    # the lines in ax1 and ax2 should not have moved.
+    event = mock_event(ax3, xdata=.75, ydata=.75)
+    multi.onmove(event)
+    for l in multi.vlines:
+        assert l.get_xdata() == (.5, .5)
+    for l in multi.hlines:
+        assert l.get_ydata() == (.25, .25)
+
+--- Chunk 2 ---
+File: lib/matplotlib/tests/test_axes.py
+Lines: 438-487
+Symbol: test_inverted_cla
+
+def test_inverted_cla():
+    # GitHub PR #5450. Setting autoscale should reset
+    # axes to be non-inverted.
+    # plotting an image, then 1d graph, axis is now down
+    fig = plt.figure(0)
+    ax = fig.gca()
+    # 1. test that a new axis is not inverted per default
+    assert not ax.xaxis_inverted()
+    assert not ax.yaxis_inverted()
+    img = np.random.random((100, 100))
+    ax.imshow(img)
+    # 2. test that a image axis is inverted
+    assert not ax.xaxis_inverted()
+    assert ax.yaxis_inverted()
+    # 3. test that clearing and plotting a line, axes are
+    # not inverted
+    ax.cla()
+    x = np.linspace(0, 2*np.pi, 100)
+    ax.plot(x, np.cos(x))
+    assert not ax.xaxis_inverted()
+    assert not ax.yaxis_inverted()
+
+    # 4. autoscaling should not bring back axes to normal
+    ax.cla()
+    ax.imshow(img)
+    plt.autoscale()
+    assert not ax.xaxis_inverted()
+    assert ax.yaxis_inverted()
+
+    for ax in fig.axes:
+        ax.remove()
+    # 5. two shared axes. Inverting the leader axis should invert the shared
+    # axes; clearing the leader axis should bring axes in shared
+    # axes back to normal.
+    ax0 = plt.subplot(211)
+    ax1 = plt.subplot(212, sharey=ax0)
+    ax0.yaxis.set_inverted(True)
+    assert ax1.yaxis_inverted()
+    ax1.plot(x, np.cos(x))
+    ax0.cla()
+    assert not ax1.yaxis_inverted()
+    ax1.cla()
+    # 6. clearing the follower should not touch limits
+    ax0.imshow(img)
+    ax1.plot(x, np.cos(x))
+    ax1.cla()
+    assert ax.yaxis_inverted()
+
+    # clean up
+    plt.close(fig)
+
+--- Chunk 3 ---
+File: lib/matplotlib/tests/test_figure.py
+Lines: 691-769
+Symbol: test_figure_clear
+
+def test_figure_clear(clear_meth):
+    # we test the following figure clearing scenarios:
+    fig = plt.figure()
+
+    # a) an empty figure
+    fig.clear()
+    assert fig.axes == []
+
+    # b) a figure with a single unnested axes
+    ax = fig.add_subplot(111)
+    getattr(fig, clear_meth)()
+    assert fig.axes == []
+
+    # c) a figure multiple unnested axes
+    axes = [fig.add_subplot(2, 1, i+1) for i in range(2)]
+    getattr(fig, clear_meth)()
+    assert fig.axes == []
+
+    # d) a figure with a subfigure
+    gs = fig.add_gridspec(ncols=2, nrows=1)
+    subfig = fig.add_subfigure(gs[0])
+    subaxes = subfig.add_subplot(111)
+    getattr(fig, clear_meth)()
+    assert subfig not in fig.subfigs
+    assert fig.axes == []
+
+    # e) a figure with a subfigure and a subplot
+    subfig = fig.add_subfigure(gs[0])
+    subaxes = subfig.add_subplot(111)
+    mainaxes = fig.add_subplot(gs[1])
+
+    # e.1) removing just the axes leaves the subplot
+    mainaxes.remove()
+    assert fig.axes == [subaxes]
+
+    # e.2) removing just the subaxes leaves the subplot
+    # and subfigure
+    mainaxes = fig.add_subplot(gs[1])
+    subaxes.remove()
+    assert fig.axes == [mainaxes]
+    assert subfig in fig.subfigs
+
+    # e.3) clearing the subfigure leaves the subplot
+    subaxes = subfig.add_subplot(111)
+    assert mainaxes in fig.axes
+    assert subaxes in fig.axes
+    getattr(subfig, clear_meth)()
+    assert subfig in fig.subfigs
+    assert subaxes not in subfig.axes
+    assert subaxes not in fig.axes
+    assert mainaxes in fig.axes
+
+    # e.4) clearing the whole thing
+    subaxes = subfig.add_subplot(111)
+    getattr(fig, clear_meth)()
+    assert fig.axes == []
+    assert fig.subfigs == []
+
+    # f) multiple subfigures
+    subfigs = [fig.add_subfigure(gs[i]) for i in [0, 1]]
+    subaxes = [sfig.add_subplot(111) for sfig in subfigs]
+    assert all(ax in fig.axes for ax in subaxes)
+    assert all(sfig in fig.subfigs for sfig in subfigs)
+
+    # f.1) clearing only one subfigure
+    getattr(subfigs[0], clear_meth)()
+    assert subaxes[0] not in fig.axes
+    assert subaxes[1] in fig.axes
+    assert subfigs[1] in fig.subfigs
+
+    # f.2) clearing the whole thing
+    getattr(subfigs[1], clear_meth)()
+    subfigs = [fig.add_subfigure(gs[i]) for i in [0, 1]]
+    subaxes = [sfig.add_subplot(111) for sfig in subfigs]
+    assert all(ax in fig.axes for ax in subaxes)
+    assert all(sfig in fig.subfigs for sfig in subfigs)
+    getattr(fig, clear_meth)()
+    assert fig.subfigs == []
+    assert fig.axes == []
+
+--- Chunk 4 ---
+File: examples/style_sheets/grayscale.py
+Lines: 18-24
+Symbol: color_cycle_example
+
+def color_cycle_example(ax):
+    L = 6
+    x = np.linspace(0, L)
+    ncolors = len(plt.rcParams['axes.prop_cycle'])
+    shift = np.linspace(0, L, ncolors, endpoint=False)
+    for s in shift:
+        ax.plot(x, np.sin(x + s), 'o-')
+
+--- Chunk 5 ---
+File: lib/matplotlib/figure.py
+Lines: 990-1122
+Symbol: FigureBase.legend
+
+    def legend(self, *args, **kwargs):
+        """
+        Place a legend on the figure.
+
+        Call signatures::
+
+            legend()
+            legend(handles, labels)
+            legend(handles=handles)
+            legend(labels)
+
+        The call signatures correspond to the following different ways to use
+        this method:
+
+        **1. Automatic detection of elements to be shown in the legend**
+
+        The elements to be added to the legend are automatically determined,
+        when you do not pass in any extra arguments.
+
+        In this case, the labels are taken from the artist. You can specify
+        them either at artist creation or by calling the
+        :meth:`~.Artist.set_label` method on the artist::
+
+            ax.plot([1, 2, 3], label='Inline label')
+            fig.legend()
+
+        or::
+
+            line, = ax.plot([1, 2, 3])
+            line.set_label('Label via method')
+            fig.legend()
+
+        Specific lines can be excluded from the automatic legend element
+        selection by defining a label starting with an underscore.
+        This is default for all artists, so calling `.Figure.legend` without
+        any arguments and without setting the labels manually will result in
+        no legend being drawn.
+
+
+        **2. Explicitly listing the artists and labels in the legend**
+
+        For full control of which artists have a legend entry, it is possible
+        to pass an iterable of legend artists followed by an iterable of
+        legend labels respectively::
+
+            fig.legend([line1, line2, line3], ['label1', 'label2', 'label3'])
+
+
+        **3. Explicitly listing the artists in the legend**
+
+        This is similar to 2, but the labels are taken from the artists'
+        label properties. Example::
+
+            line1, = ax1.plot([1, 2, 3], label='label1')
+            line2, = ax2.plot([1, 2, 3], label='label2')
+            fig.legend(handles=[line1, line2])
+
+
+        **4. Labeling existing plot elements**
+
+        .. admonition:: Discouraged
+
+            This call signature is discouraged, because the relation between
+            plot elements and labels is only implicit by their order and can
+            easily be mixed up.
+
+        To make a legend for all artists on all Axes, call this function with
+        an iterable of strings, one for each legend item. For example::
+
+            fig, (ax1, ax2) = plt.subplots(1, 2)
+            ax1.plot([1, 3, 5], color='blue')
+            ax2.plot([2, 4, 6], color='red')
+            fig.legend(['the blues', 'the reds'])
+
+
+        Parameters
+        ----------
+        handles : list of `.Artist`, optional
+            A list of Artists (lines, patches) to be added to the legend.
+            Use this together with *labels*, if you need full control on what
+            is shown in the legend and the automatic mechanism described above
+            is not sufficient.
+
+            The length of handles and labels should be the same in this
+            case. If they are not, they are truncated to the smaller length.
+
+        labels : list of str, optional
+            A list of labels to show next to the artists.
+            Use this together with *handles*, if you need full control on what
+            is shown in the legend and the automatic mechanism described above
+            is not sufficient.
+
+        Returns
+        -------
+        `~matplotlib.legend.Legend`
+
+        Other Parameters
+        ----------------
+        %(_legend_kw_doc)s
+
+        See Also
+        --------
+        .Axes.legend
+
+        Notes
+        -----
+        Some artists are not supported by this function.  See
+        :doc:`/tutorials/intermediate/legend_guide` for details.
+        """
+
+        handles, labels, extra_args, kwargs = mlegend._parse_legend_args(
+                self.axes,
+                *args,
+                **kwargs)
+        # check for third arg
+        if len(extra_args):
+            # _api.warn_deprecated(
+            #     "2.1",
+            #     message="Figure.legend will accept no more than two "
+            #     "positional arguments in the future.  Use "
+            #     "'fig.legend(handles, labels, loc=location)' "
+            #     "instead.")
+            # kwargs['loc'] = extra_args[0]
+            # extra_args = extra_args[1:]
+            pass
+        transform = kwargs.pop('bbox_transform', self.transSubfigure)
+        # explicitly set the bbox transform if the user hasn't.
+        l = mlegend.Legend(self, handles, labels, *extra_args,
+                           bbox_transform=transform, **kwargs)
+        self.legends.append(l)
+        l._remove_method = self.legends.remove
+        self.stale = True
+        return l
+
+--- Chunk 6 ---
+File: lib/matplotlib/axes/_axes.py
+Lines: 768-833
+Symbol: Axes.axvline
+
+    def axvline(self, x=0, ymin=0, ymax=1, **kwargs):
+        """
+        Add a vertical line across the Axes.
+
+        Parameters
+        ----------
+        x : float, default: 0
+            x position in data coordinates of the vertical line.
+
+        ymin : float, default: 0
+            Should be between 0 and 1, 0 being the bottom of the plot, 1 the
+            top of the plot.
+
+        ymax : float, default: 1
+            Should be between 0 and 1, 0 being the bottom of the plot, 1 the
+            top of the plot.
+
+        Returns
+        -------
+        `~matplotlib.lines.Line2D`
+
+        Other Parameters
+        ----------------
+        **kwargs
+            Valid keyword arguments are `.Line2D` properties, except for
+            'transform':
+
+            %(Line2D:kwdoc)s
+
+        See Also
+        --------
+        vlines : Add vertical lines in data coordinates.
+        axvspan : Add a vertical span (rectangle) across the axis.
+        axline : Add a line with an arbitrary slope.
+
+        Examples
+        --------
+        * draw a thick red vline at *x* = 0 that spans the yrange::
+
+            >>> axvline(linewidth=4, color='r')
+
+        * draw a default vline at *x* = 1 that spans the yrange::
+
+            >>> axvline(x=1)
+
+        * draw a default vline at *x* = .5 that spans the middle half of
+          the yrange::
+
+            >>> axvline(x=.5, ymin=0.25, ymax=0.75)
+        """
+        self._check_no_units([ymin, ymax], ['ymin', 'ymax'])
+        if "transform" in kwargs:
+            raise ValueError("'transform' is not allowed as a keyword "
+                             "argument; axvline generates its own transform.")
+        xmin, xmax = self.get_xbound()
+
+        # Strip away the units for comparison with non-unitized bounds.
+        xx, = self._process_unit_info([("x", x)], kwargs)
+        scalex = (xx < xmin) or (xx > xmax)
+
+        trans = self.get_xaxis_transform(which='grid')
+        l = mlines.Line2D([x, x], [ymin, ymax], transform=trans, **kwargs)
+        self.add_line(l)
+        if scalex:
+            self._request_autoscale_view("x")
+        return l
+
+--- Chunk 7 ---
+File: lib/matplotlib/axes/_axes.py
+Lines: 700-765
+Symbol: Axes.axhline
+
+    def axhline(self, y=0, xmin=0, xmax=1, **kwargs):
+        """
+        Add a horizontal line across the Axes.
+
+        Parameters
+        ----------
+        y : float, default: 0
+            y position in data coordinates of the horizontal line.
+
+        xmin : float, default: 0
+            Should be between 0 and 1, 0 being the far left of the plot, 1 the
+            far right of the plot.
+
+        xmax : float, default: 1
+            Should be between 0 and 1, 0 being the far left of the plot, 1 the
+            far right of the plot.
+
+        Returns
+        -------
+        `~matplotlib.lines.Line2D`
+
+        Other Parameters
+        ----------------
+        **kwargs
+            Valid keyword arguments are `.Line2D` properties, except for
+            'transform':
+
+            %(Line2D:kwdoc)s
+
+        See Also
+        --------
+        hlines : Add horizontal lines in data coordinates.
+        axhspan : Add a horizontal span (rectangle) across the axis.
+        axline : Add a line with an arbitrary slope.
+
+        Examples
+        --------
+        * draw a thick red hline at 'y' = 0 that spans the xrange::
+
+            >>> axhline(linewidth=4, color='r')
+
+        * draw a default hline at 'y' = 1 that spans the xrange::
+
+            >>> axhline(y=1)
+
+        * draw a default hline at 'y' = .5 that spans the middle half of
+          the xrange::
+
+            >>> axhline(y=.5, xmin=0.25, xmax=0.75)
+        """
+        self._check_no_units([xmin, xmax], ['xmin', 'xmax'])
+        if "transform" in kwargs:
+            raise ValueError("'transform' is not allowed as a keyword "
+                             "argument; axhline generates its own transform.")
+        ymin, ymax = self.get_ybound()
+
+        # Strip away the units for comparison with non-unitized bounds.
+        yy, = self._process_unit_info([("y", y)], kwargs)
+        scaley = (yy < ymin) or (yy > ymax)
+
+        trans = self.get_yaxis_transform(which='grid')
+        l = mlines.Line2D([xmin, xmax], [y, y], transform=trans, **kwargs)
+        self.add_line(l)
+        if scaley:
+            self._request_autoscale_view("y")
+        return l
+
+--- Chunk 8 ---
+File: lib/matplotlib/tests/test_artist.py
+Lines: 127-142
+Symbol: test_clipping_zoom
+
+def test_clipping_zoom(fig_test, fig_ref):
+    # This test places the Axes and sets its limits such that the clip path is
+    # outside the figure entirely. This should not break the clip path.
+    ax_test = fig_test.add_axes([0, 0, 1, 1])
+    l, = ax_test.plot([-3, 3], [-3, 3])
+    # Explicit Path instead of a Rectangle uses clip path processing, instead
+    # of a clip box optimization.
+    p = mpath.Path([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]])
+    p = mpatches.PathPatch(p, transform=ax_test.transData)
+    l.set_clip_path(p)
+
+    ax_ref = fig_ref.add_axes([0, 0, 1, 1])
+    ax_ref.plot([-3, 3], [-3, 3])
+
+    ax_ref.set(xlim=(0.5, 0.75), ylim=(0.5, 0.75))
+    ax_test.set(xlim=(0.5, 0.75), ylim=(0.5, 0.75))
+
+--- Chunk 9 ---
+File: lib/matplotlib/pyplot.py
+Lines: 1126-1323
+Symbol: subplot
+
+def subplot(*args, **kwargs):
+    """
+    Add an Axes to the current figure or retrieve an existing Axes.
+
+    This is a wrapper of `.Figure.add_subplot` which provides additional
+    behavior when working with the implicit API (see the notes section).
+
+    Call signatures::
+
+       subplot(nrows, ncols, index, **kwargs)
+       subplot(pos, **kwargs)
+       subplot(**kwargs)
+       subplot(ax)
+
+    Parameters
+    ----------
+    *args : int, (int, int, *index*), or `.SubplotSpec`, default: (1, 1, 1)
+        The position of the subplot described by one of
+
+        - Three integers (*nrows*, *ncols*, *index*). The subplot will take the
+          *index* position on a grid with *nrows* rows and *ncols* columns.
+          *index* starts at 1 in the upper left corner and increases to the
+          right. *index* can also be a two-tuple specifying the (*first*,
+          *last*) indices (1-based, and including *last*) of the subplot, e.g.,
+          ``fig.add_subplot(3, 1, (1, 2))`` makes a subplot that spans the
+          upper 2/3 of the figure.
+        - A 3-digit integer. The digits are interpreted as if given separately
+          as three single-digit integers, i.e. ``fig.add_subplot(235)`` is the
+          same as ``fig.add_subplot(2, 3, 5)``. Note that this can only be used
+          if there are no more than 9 subplots.
+        - A `.SubplotSpec`.
+
+    projection : {None, 'aitoff', 'hammer', 'lambert', 'mollweide', \
+'polar', 'rectilinear', str}, optional
+        The projection type of the subplot (`~.axes.Axes`). *str* is the name
+        of a custom projection, see `~matplotlib.projections`. The default
+        None results in a 'rectilinear' projection.
+
+    polar : bool, default: False
+        If True, equivalent to projection='polar'.
+
+    sharex, sharey : `~.axes.Axes`, optional
+        Share the x or y `~matplotlib.axis` with sharex and/or sharey. The
+        axis will have the same limits, ticks, and scale as the axis of the
+        shared axes.
+
+    label : str
+        A label for the returned axes.
+
+    Returns
+    -------
+    `~.axes.Axes`
+
+        The Axes of the subplot. The returned Axes can actually be an instance
+        of a subclass, such as `.projections.polar.PolarAxes` for polar
+        projections.
+
+    Other Parameters
+    ----------------
+    **kwargs
+        This method also takes the keyword arguments for the returned axes
+        base class; except for the *figure* argument. The keyword arguments
+        for the rectilinear base class `~.axes.Axes` can be found in
+        the following table but there might also be other keyword
+        arguments if another projection is used.
+
+        %(Axes:kwdoc)s
+
+    Notes
+    -----
+    Creating a new Axes will delete any preexisting Axes that
+    overlaps with it beyond sharing a boundary::
+
+        import matplotlib.pyplot as plt
+        # plot a line, implicitly creating a subplot(111)
+        plt.plot([1, 2, 3])
+        # now create a subplot which represents the top plot of a grid
+        # with 2 rows and 1 column. Since this subplot will overlap the
+        # first, the plot (and its axes) previously created, will be removed
+        plt.subplot(211)
+
+    If you do not want this behavior, use the `.Figure.add_subplot` method
+    or the `.pyplot.axes` function instead.
+
+    If no *kwargs* are passed and there exists an Axes in the location
+    specified by *args* then that Axes will be returned rather than a new
+    Axes being created.
+
+    If *kwargs* are passed and there exists an Axes in the location
+    specified by *args*, the projection type is the same, and the
+    *kwargs* match with the existing Axes, then the existing Axes is
+    returned.  Otherwise a new Axes is created with the specified
+    parameters.  We save a reference to the *kwargs* which we use
+    for this comparison.  If any of the values in *kwargs* are
+    mutable we will not detect the case where they are mutated.
+    In these cases we suggest using `.Figure.add_subplot` and the
+    explicit Axes API rather than the implicit pyplot API.
+
+    See Also
+    --------
+    .Figure.add_subplot
+    .pyplot.subplots
+    .pyplot.axes
+    .Figure.subplots
+
+    Examples
+    --------
+    ::
+
+        plt.subplot(221)
+
+        # equivalent but more general
+        ax1 = plt.subplot(2, 2, 1)
+
+        # add a subplot with no frame
+        ax2 = plt.subplot(222, frameon=False)
+
+        # add a polar subplot
+        plt.subplot(223, projection='polar')
+
+        # add a red subplot that shares the x-axis with ax1
+        plt.subplot(224, sharex=ax1, facecolor='red')
+
+        # delete ax2 from the figure
+        plt.delaxes(ax2)
+
+        # add ax2 to the figure again
+        plt.subplot(ax2)
+
+        # make the first axes "current" again
+        plt.subplot(221)
+
+    """
+    # Here we will only normalize `polar=True` vs `projection='polar'` and let
+    # downstream code deal with the rest.
+    unset = object()
+    projection = kwargs.get('projection', unset)
+    polar = kwargs.pop('polar', unset)
+    if polar is not unset and polar:
+        # if we got mixed messages from the user, raise
+        if projection is not unset and projection != 'polar':
+            raise ValueError(
+                f"polar={polar}, yet projection={projection!r}. "
+                "Only one of these arguments should be supplied."
+            )
+        kwargs['projection'] = projection = 'polar'
+
+    # if subplot called without arguments, create subplot(1, 1, 1)
+    if len(args) == 0:
+        args = (1, 1, 1)
+
+    # This check was added because it is very easy to type subplot(1, 2, False)
+    # when subplots(1, 2, False) was intended (sharex=False, that is). In most
+    # cases, no error will ever occur, but mysterious behavior can result
+    # because what was intended to be the sharex argument is instead treated as
+    # a subplot index for subplot()
+    if len(args) >= 3 and isinstance(args[2], bool):
+        _api.warn_external("The subplot index argument to subplot() appears "
+                           "to be a boolean. Did you intend to use "
+                           "subplots()?")
+    # Check for nrows and ncols, which are not valid subplot args:
+    if 'nrows' in kwargs or 'ncols' in kwargs:
+        raise TypeError("subplot() got an unexpected keyword argument 'ncols' "
+                        "and/or 'nrows'.  Did you intend to call subplots()?")
+
+    fig = gcf()
+
+    # First, search for an existing subplot with a matching spec.
+    key = SubplotSpec._from_subplot_args(fig, args)
+
+    for ax in fig.axes:
+        # if we found an Axes at the position sort out if we can re-use it
+        if ax.get_subplotspec() == key:
+            # if the user passed no kwargs, re-use
+            if kwargs == {}:
+                break
+            # if the axes class and kwargs are identical, reuse
+            elif ax._projection_init == fig._process_projection_requirements(
+                *args, **kwargs
+            ):
+                break
+    else:
+        # we have exhausted the known Axes and none match, make a new one!
+        ax = fig.add_subplot(*args, **kwargs)
+
+    fig.sca(ax)
+
+    axes_to_delete = [other for other in fig.axes
+                      if other != ax and ax.bbox.fully_overlaps(other.bbox)]
+    if axes_to_delete:
+        _api.warn_deprecated(
+            "3.6", message="Auto-removal of overlapping axes is deprecated "
+            "since %(since)s and will be removed %(removal)s; explicitly call "
+            "ax.remove() as needed.")
+    for ax_to_del in axes_to_delete:
+        delaxes(ax_to_del)
+
+    return ax
+
+--- Chunk 10 ---
+File: lib/matplotlib/tests/test_lines.py
+Lines: 203-208
+Symbol: test_markerfacecolor_fillstyle
+
+def test_markerfacecolor_fillstyle():
+    """Test that markerfacecolor does not override fillstyle='none'."""
+    l, = plt.plot([1, 3, 2], marker=MarkerStyle('o', fillstyle='none'),
+                  markerfacecolor='red')
+    assert l.get_fillstyle() == 'none'
+    assert l.get_markerfacecolor() == 'none'
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

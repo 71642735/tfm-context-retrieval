@@ -1,0 +1,14 @@
+{
+  "task_id": "psf__requests-5414",
+  "repository": "psf/requests",
+  "base_commit": "39d0fdd9096f7dceccbc8f82e1eda7dd64717a8e",
+  "retrieval_method": "bm25",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 3947,
+  "output_tokens": 171,
+  "thinking_tokens": 0,
+  "total_tokens": 4118
+}

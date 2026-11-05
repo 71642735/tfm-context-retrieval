@@ -1,0 +1,13 @@
+```diff
+--- src/_pytest/unittest.py
++++ src/_pytest/unittest.py
+@@ -147,7 +147,7 @@
+             if not self.config.getoption("usepdb"):
+                 self._explicit_tearDown()
+             else:
+-                if getattr(self, "__unittest_skip__", False):
++                if self._find_relevant_skip() is not None:
+                     return
+ 
+                 # __unittest_skip__ is False or not set
+```

@@ -1,0 +1,14 @@
+```diff
+diff --git a/langchain/output_parsers/pydantic.py b/langchain/output_parsers/pydantic.py
+--- a/langchain/output_parsers/pydantic.py
++++ b/langchain/output_parsers/pydantic.py
+@@ -10,7 +10,7 @@
+ PYDANTIC_FORMAT_INSTRUCTIONS = """The output should be a markdown code snippet formatted in the following schema, including the leading and trailing "```json" and "```":
+ 
+ ```json
+-{schema}
++{schema}\n\nNote: Ensure any control characters (like newlines) in string values are properly escaped (e.g., \\n).
+ ```"""
+ 
+ 
+```

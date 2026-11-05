@@ -1,0 +1,15 @@
+--- yt_dlp/YoutubeDL.py
++++ yt_dlp/YoutubeDL.py
+@@ -1949,5 +1949,5 @@
+             if self.params.get('format'):
+                 return self.params['format']
+-            if self.params.get('simulate') and not self.params.get('paths'):
++            if self.params.get('simulate') and not self.params.get('paths') and not self.params.get('outtmpl', '').startswith('-'):
+                 return 'best'
+             if not FFmpegFD.available():
+@@ -1955,5 +1955,5 @@
+             if info_dict.get('is_live') and not self.params.get('live_from_start'):
+                 return 'best'
+             return 'bestvideo*+bestaudio/best'
+ 
+         format_selector = self.params.get('format') or get_default_format()

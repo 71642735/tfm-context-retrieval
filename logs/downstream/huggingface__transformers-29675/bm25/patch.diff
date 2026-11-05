@@ -1,0 +1,13 @@
+```diff
+diff --git a/src/transformers/generation/configuration_utils.py b/src/transformers/generation/configuration_utils.py
+--- a/src/transformers/generation/configuration_utils.py
++++ b/src/transformers/generation/configuration_utils.py
+@@ -375,6 +375,7 @@ class GenerationConfig(PushToHubMixin):
+         # 4. Other attributes
+         for key, value in kwargs.items():
+             setattr(self, key, value)
++        self.validate()
+ 
+     def __repr__(self):
+         return json.dumps(self.to_dict(), indent=2) + "\n"
+```

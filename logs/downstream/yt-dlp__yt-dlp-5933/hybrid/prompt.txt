@@ -1,0 +1,838 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+[Version 2023.01.02] /etc/yt-dlp.conf is not loaded
+### DO NOT REMOVE OR SKIP THE ISSUE TEMPLATE
+
+- [X] I understand that I will be **blocked** if I remove or skip any mandatory\* field
+
+### Checklist
+
+- [X] I'm reporting a bug unrelated to a specific site
+- [X] I've verified that I'm running yt-dlp version **2023.01.02** ([update instructions](https://github.com/yt-dlp/yt-dlp#update)) or later (specify commit)
+- [X] I've checked that all provided URLs are playable in a browser with the same IP and same login details
+- [X] I've checked that all URLs and arguments with special characters are [properly quoted or escaped](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#video-url-contains-an-ampersand--and-im-getting-some-strange-output-1-2839-or-v-is-not-recognized-as-an-internal-or-external-command)
+- [X] I've searched the [bugtracker](https://github.com/yt-dlp/yt-dlp/issues?q=) for similar issues **including closed ones**. DO NOT post duplicates
+- [X] I've read the [guidelines for opening an issue](https://github.com/yt-dlp/yt-dlp/blob/master/CONTRIBUTING.md#opening-an-issue)
+
+### Provide a description that is worded well enough to be understood
+
+Hi,
+it seems that since version 2023.01.02 the upload date from YouTube-Videos can't (?) be extracted by the following output template:
+
+-o %(title)s_[%(upload_date>%Y-%m-%d)s]_[%(id)s].%(ext)s
+
+Title and ID are extracted correectly.
+Template configuration is stored in stored in /etc/yt-dlp.conf and worked until New Years Eve.
+
+Can anybody confirm?
+Best Regards /M.
+
+### Provide verbose output that clearly demonstrates the problem
+
+- [X] Run **your** yt-dlp command with **-vU** flag added (`yt-dlp -vU <your command line>`)
+- [X] Copy the WHOLE output (starting with `[debug] Command-line config`) and insert it below
+
+### Complete Verbose Output
+
+```shell
+~/!_temp$ yt-dlp -vU aqz-KE-bpKQ
+[debug] Command-line config: ['-vU', 'aqz-KE-bpKQ']
+[debug] User config: []
+[debug] System config: []
+[debug] Encodings: locale UTF-8, fs utf-8, pref UTF-8, out utf-8, error utf-8, screen utf-8
+[debug] yt-dlp version 2023.01.02 [d83b0ad] (zip)
+[debug] Python 3.8.6 (CPython x86_64 64bit) - Linux-3.10.105-x86_64-with-glibc2.2.5 (OpenSSL 1.0.2u-fips  20 Dec 2019, glibc 2.20-2014.11)
+[debug] exe versions: ffmpeg 2.7.7 (needs_adtstoasc)
+[debug] Optional libraries: sqlite3-2.6.0
+[debug] Proxy map: {}
+[debug] Loaded 1754 extractors
+[debug] Fetching release info: https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
+Latest version: 2023.01.02, Current version: 2023.01.02
+yt-dlp is up to date (2023.01.02)
+[youtube] Extracting URL: aqz-KE-bpKQ
+[youtube] aqz-KE-bpKQ: Downloading webpage
+[youtube] aqz-KE-bpKQ: Downloading android player API JSON
+[youtube] aqz-KE-bpKQ: Downloading player e5f6cbd5
+[debug] Saving youtube-nsig.e5f6cbd5 to cache
+[debug] [youtube] Decrypted nsig KM0AnFlHKvzynxTEb => M-TXZDH19wD2Gw
+[debug] Sort order given by extractor: quality, res, fps, hdr:12, source, vcodec:vp9.2, channels, acodec, lang, proto
+[debug] Formats sorted by: hasvid, ie_pref, quality, res, fps, hdr:12(7), source, vcodec:vp9.2(10), channels, acodec, lang, proto, filesize, fs_approx, tbr, vbr, abr, asr, vext, aext, hasaud, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] aqz-KE-bpKQ: Downloading 1 format(s): 315+258
+[debug] Invoking http downloader on "https://rr5---sn-4g5edn6r.googlevideo.com/videoplayback?expire=1672887224&ei=WOe1Y-yXAYi-1wKk6IXQAg&ip=2003%3Aea%3Aef05%3Aeb96%3A211%3A32ff%3Afe6c%3A2425&id=o-AGvLJndvkTeT6li5AUwg5mnE6UUjuUVETaKwyvERggfH&itag=315&source=youtube&requiressl=yes&mh=aP&mm=31%2C26&mn=sn-4g5edn6r%2Csn-5hnekn7k&ms=au%2Conr&mv=m&mvi=5&pl=35&initcwndbps=1205000&spc=zIddbFRRa6UKdjxzwGyjfRYDNLe4VyE&vprv=1&svpuc=1&mime=video%2Fwebm&gir=yes&clen=1536155487&dur=634.566&lmt=1662347928284893&mt=1672865118&fvip=5&keepalive=yes&fexp=24007246&c=ANDROID&txp=553C434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRgIhANdZpV1XvXGH7Wmns5qLfBZUvdbSk3G7y9ssW_O9g6q7AiEAw4ybzvEiuBk5zrgiz286CiYAJe-IYqa0Jexz9Ulp7jc%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRAIgNqrEiAh7LhPh0amLC0Ogq90mTTFBi-YcGLcUUE0IOHMCID_TozeBlYc0f2LfvwLf03VbnL4U7iaMYL9DFKg-u81K"
+[download] Destination: Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f315.webm
+[download] 100% of    1.43GiB in 00:03:55 at 6.23MiB/s
+[debug] Invoking http downloader on "https://rr5---sn-4g5edn6r.googlevideo.com/videoplayback?expire=1672887224&ei=WOe1Y-yXAYi-1wKk6IXQAg&ip=2003%3Aea%3Aef05%3Aeb96%3A211%3A32ff%3Afe6c%3A2425&id=o-AGvLJndvkTeT6li5AUwg5mnE6UUjuUVETaKwyvERggfH&itag=258&source=youtube&requiressl=yes&mh=aP&mm=31%2C26&mn=sn-4g5edn6r%2Csn-5hnekn7k&ms=au%2Conr&mv=m&mvi=5&pl=35&initcwndbps=1205000&spc=zIddbFRRa6UKdjxzwGyjfRYDNLe4VyE&vprv=1&svpuc=1&mime=audio%2Fmp4&gir=yes&clen=30767520&dur=634.624&lmt=1662204997981909&mt=1672865118&fvip=5&keepalive=yes&fexp=24007246&c=ANDROID&txp=5532434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRQIgRDJv5TpU6rOr20YsqgG-4CrdYdBVYX9KBaR_WpbyXMgCIQDkaCtNYYB3xn2XdiwW0Ur5G6EBfyOQ2s5y-vX9VUvSjQ%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRAIgNqrEiAh7LhPh0amLC0Ogq90mTTFBi-YcGLcUUE0IOHMCID_TozeBlYc0f2LfvwLf03VbnL4U7iaMYL9DFKg-u81K"
+[download] Destination: Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f258.m4a
+[download] 100% of   29.34MiB in 00:00:04 at 6.16MiB/s
+[Merger] Merging formats into "Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].mkv"
+[debug] ffmpeg command line: ffmpeg -y -loglevel repeat+info -i 'file:Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f315.webm' -i 'file:Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f258.m4a' -c copy -map 0:v:0 -map 1:a:0 -movflags +faststart 'file:Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].temp.mkv'
+Deleting original file Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f315.webm (pass -k to keep)
+Deleting original file Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f258.m4a (pass -k to keep)
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: setup.py
+Lines: 118-169
+Symbol: main
+
+def main():
+    if sys.argv[1:2] == ['py2exe']:
+        params = py2exe_params()
+        try:
+            from py2exe import freeze
+        except ImportError:
+            import py2exe  # noqa: F401
+            warnings.warn('You are using an outdated version of py2exe. Support for this version will be removed in the future')
+            params['console'][0].update(params.pop('version_info'))
+            params['options'] = {'py2exe': params.pop('options')}
+        else:
+            return freeze(**params)
+    else:
+        params = build_params()
+
+    setup(
+        name='yt-dlp',
+        version=VERSION,
+        maintainer='pukkandan',
+        maintainer_email='pukkandan.ytdlp@gmail.com',
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        long_description_content_type='text/markdown',
+        url='https://github.com/yt-dlp/yt-dlp',
+        packages=packages(),
+        install_requires=REQUIREMENTS,
+        python_requires='>=3.7',
+        project_urls={
+            'Documentation': 'https://github.com/yt-dlp/yt-dlp#readme',
+            'Source': 'https://github.com/yt-dlp/yt-dlp',
+            'Tracker': 'https://github.com/yt-dlp/yt-dlp/issues',
+            'Funding': 'https://github.com/yt-dlp/yt-dlp/blob/master/Collaborators.md#collaborators',
+        },
+        classifiers=[
+            'Topic :: Multimedia :: Video',
+            'Development Status :: 5 - Production/Stable',
+            'Environment :: Console',
+            'Programming Language :: Python',
+            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10',
+            'Programming Language :: Python :: 3.11',
+            'Programming Language :: Python :: Implementation',
+            'Programming Language :: Python :: Implementation :: CPython',
+            'Programming Language :: Python :: Implementation :: PyPy',
+            'License :: Public Domain',
+            'Operating System :: OS Independent',
+        ],
+        cmdclass={'build_lazy_extractors': build_lazy_extractors},
+        **params
+    )
+
+--- Chunk 2 ---
+File: yt_dlp/postprocessor/ffmpeg.py
+Lines: 592-662
+Symbol: FFmpegEmbedSubtitlePP.run
+
+    def run(self, info):
+        if info['ext'] not in self.SUPPORTED_EXTS:
+            self.to_screen(f'Subtitles can only be embedded in {", ".join(self.SUPPORTED_EXTS)} files')
+            return [], info
+        subtitles = info.get('requested_subtitles')
+        if not subtitles:
+            self.to_screen('There aren\'t any subtitles to embed')
+            return [], info
+
+        filename = info['filepath']
+
+        # Disabled temporarily. There needs to be a way to override this
+        # in case of duration actually mismatching in extractor
+        # See: https://github.com/yt-dlp/yt-dlp/issues/1870, https://github.com/yt-dlp/yt-dlp/issues/1385
+        '''
+        if info.get('duration') and not info.get('__real_download') and self._duration_mismatch(
+                self._get_real_video_duration(filename, False), info['duration']):
+            self.to_screen(f'Skipping {self.pp_key()} since the real and expected durations mismatch')
+            return [], info
+        '''
+
+        ext = info['ext']
+        sub_langs, sub_names, sub_filenames = [], [], []
+        webm_vtt_warn = False
+        mp4_ass_warn = False
+
+        for lang, sub_info in subtitles.items():
+            if not os.path.exists(sub_info.get('filepath', '')):
+                self.report_warning(f'Skipping embedding {lang} subtitle because the file is missing')
+                continue
+            sub_ext = sub_info['ext']
+            if sub_ext == 'json':
+                self.report_warning('JSON subtitles cannot be embedded')
+            elif ext != 'webm' or ext == 'webm' and sub_ext == 'vtt':
+                sub_langs.append(lang)
+                sub_names.append(sub_info.get('name'))
+                sub_filenames.append(sub_info['filepath'])
+            else:
+                if not webm_vtt_warn and ext == 'webm' and sub_ext != 'vtt':
+                    webm_vtt_warn = True
+                    self.report_warning('Only WebVTT subtitles can be embedded in webm files')
+            if not mp4_ass_warn and ext == 'mp4' and sub_ext == 'ass':
+                mp4_ass_warn = True
+                self.report_warning('ASS subtitles cannot be properly embedded in mp4 files; expect issues')
+
+        if not sub_langs:
+            return [], info
+
+        input_files = [filename] + sub_filenames
+
+        opts = [
+            *self.stream_copy_opts(ext=info['ext']),
+            # Don't copy the existing subtitles, we may be running the
+            # postprocessor a second time
+            '-map', '-0:s',
+        ]
+        for i, (lang, name) in enumerate(zip(sub_langs, sub_names)):
+            opts.extend(['-map', '%d:0' % (i + 1)])
+            lang_code = ISO639Utils.short2long(lang) or lang
+            opts.extend(['-metadata:s:s:%d' % i, 'language=%s' % lang_code])
+            if name:
+                opts.extend(['-metadata:s:s:%d' % i, 'handler_name=%s' % name,
+                             '-metadata:s:s:%d' % i, 'title=%s' % name])
+
+        temp_filename = prepend_extension(filename, 'temp')
+        self.to_screen('Embedding subtitles in "%s"' % filename)
+        self.run_ffmpeg_multiple_files(input_files, temp_filename, opts)
+        os.replace(temp_filename, filename)
+
+        files_to_delete = [] if self._already_have_subtitle else sub_filenames
+        return files_to_delete, info
+
+--- Chunk 3 ---
+File: yt_dlp/__init__.py
+Lines: 911-963
+Symbol: _real_main
+
+def _real_main(argv=None):
+    setproctitle('yt-dlp')
+
+    parser, opts, all_urls, ydl_opts = parse_options(argv)
+
+    # Dump user agent
+    if opts.dump_user_agent:
+        ua = traverse_obj(opts.headers, 'User-Agent', casesense=False, default=std_headers['User-Agent'])
+        write_string(f'{ua}\n', out=sys.stdout)
+        return
+
+    if print_extractor_information(opts, all_urls):
+        return
+
+    # We may need ffmpeg_location without having access to the YoutubeDL instance
+    # See https://github.com/yt-dlp/yt-dlp/issues/2191
+    if opts.ffmpeg_location:
+        FFmpegPostProcessor._ffmpeg_location.set(opts.ffmpeg_location)
+
+    with YoutubeDL(ydl_opts) as ydl:
+        pre_process = opts.update_self or opts.rm_cachedir
+        actual_use = all_urls or opts.load_info_filename
+
+        if opts.rm_cachedir:
+            ydl.cache.remove()
+
+        updater = Updater(ydl)
+        if opts.update_self and updater.update() and actual_use:
+            if updater.cmd:
+                return updater.restart()
+            # This code is reachable only for zip variant in py < 3.10
+            # It makes sense to exit here, but the old behavior is to continue
+            ydl.report_warning('Restart yt-dlp to use the updated version')
+            # return 100, 'ERROR: The program must exit for the update to complete'
+
+        if not actual_use:
+            if pre_process:
+                return ydl._download_retcode
+
+            ydl.warn_if_short_id(sys.argv[1:] if argv is None else argv)
+            parser.error(
+                'You must provide at least one URL.\n'
+                'Type yt-dlp --help to see a list of all options.')
+
+        parser.destroy()
+        try:
+            if opts.load_info_filename is not None:
+                return ydl.download_with_info_file(expand_path(opts.load_info_filename))
+            else:
+                return ydl.download(all_urls)
+        except DownloadCancelled:
+            ydl.to_screen('Aborting remaining downloads')
+            return 101
+
+--- Chunk 4 ---
+File: yt_dlp/extractor/youtube.py
+Lines: 3095-3116
+Symbol: YoutubeIE._extract_from_webpage
+
+    def _extract_from_webpage(cls, url, webpage):
+        # Invidious Instances
+        # https://github.com/yt-dlp/yt-dlp/issues/195
+        # https://github.com/iv-org/invidious/pull/1730
+        mobj = re.search(
+            r'<link rel="alternate" href="(?P<url>https://www\.youtube\.com/watch\?v=[0-9A-Za-z_-]{11})"',
+            webpage)
+        if mobj:
+            yield cls.url_result(mobj.group('url'), cls)
+            raise cls.StopExtraction()
+
+        yield from super()._extract_from_webpage(url, webpage)
+
+        # lazyYT YouTube embed
+        for id_ in re.findall(r'class="lazyYT" data-youtube-id="([^"]+)"', webpage):
+            yield cls.url_result(unescapeHTML(id_), cls, id_)
+
+        # Wordpress "YouTube Video Importer" plugin
+        for m in re.findall(r'''(?x)<div[^>]+
+                class=(?P<q1>[\'"])[^\'"]*\byvii_single_video_player\b[^\'"]*(?P=q1)[^>]+
+                data-video_id=(?P<q2>[\'"])([^\'"]+)(?P=q2)''', webpage):
+            yield cls.url_result(m[-1], cls, m[-1])
+
+--- Chunk 5 ---
+File: yt_dlp/utils.py
+Lines: 984-1044
+Symbol: make_HTTPS_handler
+
+def make_HTTPS_handler(params, **kwargs):
+    opts_check_certificate = not params.get('nocheckcertificate')
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = opts_check_certificate
+    if params.get('legacyserverconnect'):
+        context.options |= 4  # SSL_OP_LEGACY_SERVER_CONNECT
+        # Allow use of weaker ciphers in Python 3.10+. See https://bugs.python.org/issue43998
+        context.set_ciphers('DEFAULT')
+    elif (
+        sys.version_info < (3, 10)
+        and ssl.OPENSSL_VERSION_INFO >= (1, 1, 1)
+        and not ssl.OPENSSL_VERSION.startswith('LibreSSL')
+    ):
+        # Backport the default SSL ciphers and minimum TLS version settings from Python 3.10 [1].
+        # This is to ensure consistent behavior across Python versions, and help avoid fingerprinting
+        # in some situations [2][3].
+        # Python 3.10 only supports OpenSSL 1.1.1+ [4]. Because this change is likely
+        # untested on older versions, we only apply this to OpenSSL 1.1.1+ to be safe.
+        # LibreSSL is excluded until further investigation due to cipher support issues [5][6].
+        # 1. https://github.com/python/cpython/commit/e983252b516edb15d4338b0a47631b59ef1e2536
+        # 2. https://github.com/yt-dlp/yt-dlp/issues/4627
+        # 3. https://github.com/yt-dlp/yt-dlp/pull/5294
+        # 4. https://peps.python.org/pep-0644/
+        # 5. https://peps.python.org/pep-0644/#libressl-support
+        # 6. https://github.com/yt-dlp/yt-dlp/commit/5b9f253fa0aee996cf1ed30185d4b502e00609c4#commitcomment-89054368
+        context.set_ciphers('@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM')
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+
+    context.verify_mode = ssl.CERT_REQUIRED if opts_check_certificate else ssl.CERT_NONE
+    if opts_check_certificate:
+        if has_certifi and 'no-certifi' not in params.get('compat_opts', []):
+            context.load_verify_locations(cafile=certifi.where())
+        else:
+            try:
+                context.load_default_certs()
+                # Work around the issue in load_default_certs when there are bad certificates. See:
+                # https://github.com/yt-dlp/yt-dlp/issues/1060,
+                # https://bugs.python.org/issue35665, https://bugs.python.org/issue45312
+            except ssl.SSLError:
+                # enum_certificates is not present in mingw python. See https://github.com/yt-dlp/yt-dlp/issues/1151
+                if sys.platform == 'win32' and hasattr(ssl, 'enum_certificates'):
+                    for storename in ('CA', 'ROOT'):
+                        _ssl_load_windows_store_certs(context, storename)
+                context.set_default_verify_paths()
+
+    client_certfile = params.get('client_certificate')
+    if client_certfile:
+        try:
+            context.load_cert_chain(
+                client_certfile, keyfile=params.get('client_certificate_key'),
+                password=params.get('client_certificate_password'))
+        except ssl.SSLError:
+            raise YoutubeDLError('Unable to load client certificate')
+
+    # Some servers may reject requests if ALPN extension is not sent. See:
+    # https://github.com/python/cpython/issues/85140
+    # https://github.com/yt-dlp/yt-dlp/issues/3878
+    with contextlib.suppress(NotImplementedError):
+        context.set_alpn_protocols(['http/1.1'])
+
+    return YoutubeDLHTTPSHandler(params, context=context, **kwargs)
+
+--- Chunk 6 ---
+File: yt_dlp/extractor/youtube.py
+Lines: 860-910
+Symbol: YoutubeBaseInfoExtractor._extract_response
+
+    def _extract_response(self, item_id, query, note='Downloading API JSON', headers=None,
+                          ytcfg=None, check_get_keys=None, ep='browse', fatal=True, api_hostname=None,
+                          default_client='web'):
+        for retry in self.RetryManager():
+            try:
+                response = self._call_api(
+                    ep=ep, fatal=True, headers=headers,
+                    video_id=item_id, query=query, note=note,
+                    context=self._extract_context(ytcfg, default_client),
+                    api_key=self._extract_api_key(ytcfg, default_client),
+                    api_hostname=api_hostname, default_client=default_client)
+            except ExtractorError as e:
+                if not isinstance(e.cause, network_exceptions):
+                    return self._error_or_warning(e, fatal=fatal)
+                elif not isinstance(e.cause, urllib.error.HTTPError):
+                    retry.error = e
+                    continue
+
+                first_bytes = e.cause.read(512)
+                if not is_html(first_bytes):
+                    yt_error = try_get(
+                        self._parse_json(
+                            self._webpage_read_content(e.cause, None, item_id, prefix=first_bytes) or '{}', item_id, fatal=False),
+                        lambda x: x['error']['message'], str)
+                    if yt_error:
+                        self._report_alerts([('ERROR', yt_error)], fatal=False)
+                # Downloading page may result in intermittent 5xx HTTP error
+                # Sometimes a 404 is also recieved. See: https://github.com/ytdl-org/youtube-dl/issues/28289
+                # We also want to catch all other network exceptions since errors in later pages can be troublesome
+                # See https://github.com/yt-dlp/yt-dlp/issues/507#issuecomment-880188210
+                if e.cause.code not in (403, 429):
+                    retry.error = e
+                    continue
+                return self._error_or_warning(e, fatal=fatal)
+
+            try:
+                self._extract_and_report_alerts(response, only_once=True)
+            except ExtractorError as e:
+                # YouTube servers may return errors we want to retry on in a 200 OK response
+                # See: https://github.com/yt-dlp/yt-dlp/issues/839
+                if 'unknown error' in e.msg.lower():
+                    retry.error = e
+                    continue
+                return self._error_or_warning(e, fatal=fatal)
+            # Youtube sometimes sends incomplete data
+            # See: https://github.com/ytdl-org/youtube-dl/issues/28194
+            if not traverse_obj(response, *variadic(check_get_keys)):
+                retry.error = ExtractorError('Incomplete data received', expected=True)
+                continue
+
+            return response
+
+--- Chunk 7 ---
+File: yt_dlp/YoutubeDL.py
+Lines: 3732-3846
+Symbol: YoutubeDL.print_debug_header
+
+    def print_debug_header(self):
+        if not self.params.get('verbose'):
+            return
+
+        from . import _IN_CLI  # Must be delayed import
+
+        # These imports can be slow. So import them only as needed
+        from .extractor.extractors import _LAZY_LOADER
+        from .extractor.extractors import (
+            _PLUGIN_CLASSES as plugin_ies,
+            _PLUGIN_OVERRIDES as plugin_ie_overrides
+        )
+
+        def get_encoding(stream):
+            ret = str(getattr(stream, 'encoding', 'missing (%s)' % type(stream).__name__))
+            if not supports_terminal_sequences(stream):
+                from .utils import WINDOWS_VT_MODE  # Must be imported locally
+                ret += ' (No VT)' if WINDOWS_VT_MODE is False else ' (No ANSI)'
+            return ret
+
+        encoding_str = 'Encodings: locale %s, fs %s, pref %s, %s' % (
+            locale.getpreferredencoding(),
+            sys.getfilesystemencoding(),
+            self.get_encoding(),
+            ', '.join(
+                f'{key} {get_encoding(stream)}' for key, stream in self._out_files.items_
+                if stream is not None and key != 'console')
+        )
+
+        logger = self.params.get('logger')
+        if logger:
+            write_debug = lambda msg: logger.debug(f'[debug] {msg}')
+            write_debug(encoding_str)
+        else:
+            write_string(f'[debug] {encoding_str}\n', encoding=None)
+            write_debug = lambda msg: self._write_string(f'[debug] {msg}\n')
+
+        source = detect_variant()
+        if VARIANT not in (None, 'pip'):
+            source += '*'
+        write_debug(join_nonempty(
+            f'{"yt-dlp" if REPOSITORY == "yt-dlp/yt-dlp" else REPOSITORY} version',
+            __version__,
+            f'[{RELEASE_GIT_HEAD}]' if RELEASE_GIT_HEAD else '',
+            '' if source == 'unknown' else f'({source})',
+            '' if _IN_CLI else 'API',
+            delim=' '))
+
+        if not _IN_CLI:
+            write_debug(f'params: {self.params}')
+
+        if not _LAZY_LOADER:
+            if os.environ.get('YTDLP_NO_LAZY_EXTRACTORS'):
+                write_debug('Lazy loading extractors is forcibly disabled')
+            else:
+                write_debug('Lazy loading extractors is disabled')
+        if self.params['compat_opts']:
+            write_debug('Compatibility options: %s' % ', '.join(self.params['compat_opts']))
+
+        if current_git_head():
+            write_debug(f'Git HEAD: {current_git_head()}')
+        write_debug(system_identifier())
+
+        exe_versions, ffmpeg_features = FFmpegPostProcessor.get_versions_and_features(self)
+        ffmpeg_features = {key for key, val in ffmpeg_features.items() if val}
+        if ffmpeg_features:
+            exe_versions['ffmpeg'] += ' (%s)' % ','.join(sorted(ffmpeg_features))
+
+        exe_versions['rtmpdump'] = rtmpdump_version()
+        exe_versions['phantomjs'] = PhantomJSwrapper._version()
+        exe_str = ', '.join(
+            f'{exe} {v}' for exe, v in sorted(exe_versions.items()) if v
+        ) or 'none'
+        write_debug('exe versions: %s' % exe_str)
+
+        from .compat.compat_utils import get_package_info
+        from .dependencies import available_dependencies
+
+        write_debug('Optional libraries: %s' % (', '.join(sorted({
+            join_nonempty(*get_package_info(m)) for m in available_dependencies.values()
+        })) or 'none'))
+
+        self._setup_opener()
+        proxy_map = {}
+        for handler in self._opener.handlers:
+            if hasattr(handler, 'proxies'):
+                proxy_map.update(handler.proxies)
+        write_debug(f'Proxy map: {proxy_map}')
+
+        for plugin_type, plugins in {'Extractor': plugin_ies, 'Post-Processor': plugin_pps}.items():
+            display_list = ['%s%s' % (
+                klass.__name__, '' if klass.__name__ == name else f' as {name}')
+                for name, klass in plugins.items()]
+            if plugin_type == 'Extractor':
+                display_list.extend(f'{plugins[-1].IE_NAME.partition("+")[2]} ({parent.__name__})'
+                                    for parent, plugins in plugin_ie_overrides.items())
+            if not display_list:
+                continue
+            write_debug(f'{plugin_type} Plugins: {", ".join(sorted(display_list))}')
+
+        plugin_dirs = plugin_directories()
+        if plugin_dirs:
+            write_debug(f'Plugin directories: {plugin_dirs}')
+
+        # Not implemented
+        if False and self.params.get('call_home'):
+            ipaddr = self.urlopen('https://yt-dl.org/ip').read().decode()
+            write_debug('Public IP address: %s' % ipaddr)
+            latest_version = self.urlopen(
+                'https://yt-dl.org/latest/version').read().decode()
+            if version_tuple(latest_version) > version_tuple(__version__):
+                self.report_warning(
+                    'You are using an outdated version (newest version: %s)! '
+                    'See https://yt-dl.org/update if you need help updating.' %
+                    latest_version)
+
+--- Chunk 8 ---
+File: yt_dlp/downloader/hls.py
+Lines: 24-53
+Symbol: HlsFD.can_download
+
+    def can_download(manifest, info_dict, allow_unplayable_formats=False):
+        UNSUPPORTED_FEATURES = [
+            # r'#EXT-X-BYTERANGE',  # playlists composed of byte ranges of media files [2]
+
+            # Live streams heuristic does not always work (e.g. geo restricted to Germany
+            # http://hls-geo.daserste.de/i/videoportal/Film/c_620000/622873/format,716451,716457,716450,716458,716459,.mp4.csmil/index_4_av.m3u8?null=0)
+            # r'#EXT-X-MEDIA-SEQUENCE:(?!0$)',  # live streams [3]
+
+            # This heuristic also is not correct since segments may not be appended as well.
+            # Twitch vods of finished streams have EXT-X-PLAYLIST-TYPE:EVENT despite
+            # no segments will definitely be appended to the end of the playlist.
+            # r'#EXT-X-PLAYLIST-TYPE:EVENT',  # media segments may be appended to the end of
+            #                                 # event media playlists [4]
+            # r'#EXT-X-MAP:',  # media initialization [5]
+            # 1. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.4
+            # 2. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.2
+            # 3. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.2
+            # 4. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.5
+            # 5. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.5
+        ]
+        if not allow_unplayable_formats:
+            UNSUPPORTED_FEATURES += [
+                r'#EXT-X-KEY:METHOD=(?!NONE|AES-128)',  # encrypted streams [1]
+            ]
+
+        def check_results():
+            yield not info_dict.get('is_live')
+            for feature in UNSUPPORTED_FEATURES:
+                yield not re.search(feature, manifest)
+        return all(check_results())
+
+--- Chunk 9 ---
+File: yt_dlp/extractor/generic.py
+Lines: 2331-2523
+Symbol: GenericIE._real_extract
+
+    def _real_extract(self, url):
+        if url.startswith('//'):
+            return self.url_result(self.http_scheme() + url)
+
+        parsed_url = urllib.parse.urlparse(url)
+        if not parsed_url.scheme:
+            default_search = self.get_param('default_search')
+            if default_search is None:
+                default_search = 'fixup_error'
+
+            if default_search in ('auto', 'auto_warning', 'fixup_error'):
+                if re.match(r'^[^\s/]+\.[^\s/]+/', url):
+                    self.report_warning('The url doesn\'t specify the protocol, trying with http')
+                    return self.url_result('http://' + url)
+                elif default_search != 'fixup_error':
+                    if default_search == 'auto_warning':
+                        if re.match(r'^(?:url|URL)$', url):
+                            raise ExtractorError(
+                                'Invalid URL:  %r . Call yt-dlp like this:  yt-dlp -v "https://www.youtube.com/watch?v=BaW_jenozKc"  ' % url,
+                                expected=True)
+                        else:
+                            self.report_warning(
+                                'Falling back to youtube search for  %s . Set --default-search "auto" to suppress this warning.' % url)
+                    return self.url_result('ytsearch:' + url)
+
+            if default_search in ('error', 'fixup_error'):
+                raise ExtractorError(
+                    '%r is not a valid URL. '
+                    'Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:%s" ) to search YouTube'
+                    % (url, url), expected=True)
+            else:
+                if ':' not in default_search:
+                    default_search += ':'
+                return self.url_result(default_search + url)
+
+        original_url = url
+        url, smuggled_data = unsmuggle_url(url, {})
+        force_videoid = None
+        is_intentional = smuggled_data.get('to_generic')
+        if 'force_videoid' in smuggled_data:
+            force_videoid = smuggled_data['force_videoid']
+            video_id = force_videoid
+        else:
+            video_id = self._generic_id(url)
+
+        # Some webservers may serve compressed content of rather big size (e.g. gzipped flac)
+        # making it impossible to download only chunk of the file (yet we need only 512kB to
+        # test whether it's HTML or not). According to yt-dlp default Accept-Encoding
+        # that will always result in downloading the whole file that is not desirable.
+        # Therefore for extraction pass we have to override Accept-Encoding to any in order
+        # to accept raw bytes and being able to download only a chunk.
+        # It may probably better to solve this by checking Content-Type for application/octet-stream
+        # after a HEAD request, but not sure if we can rely on this.
+        full_response = self._request_webpage(url, video_id, headers={
+            'Accept-Encoding': 'identity',
+            **smuggled_data.get('http_headers', {})
+        })
+        new_url = full_response.geturl()
+        if new_url == urllib.parse.urlparse(url)._replace(scheme='https').geturl():
+            url = new_url
+        elif url != new_url:
+            self.report_following_redirect(new_url)
+            if force_videoid:
+                new_url = smuggle_url(new_url, {'force_videoid': force_videoid})
+            return self.url_result(new_url)
+
+        info_dict = {
+            'id': video_id,
+            'title': self._generic_title(url),
+            'timestamp': unified_timestamp(full_response.headers.get('Last-Modified'))
+        }
+
+        # Check for direct link to a video
+        content_type = full_response.headers.get('Content-Type', '').lower()
+        m = re.match(r'^(?P<type>audio|video|application(?=/(?:ogg$|(?:vnd\.apple\.|x-)?mpegurl)))/(?P<format_id>[^;\s]+)', content_type)
+        if m:
+            self.report_detected('direct video link')
+            headers = smuggled_data.get('http_headers', {})
+            format_id = str(m.group('format_id'))
+            subtitles = {}
+            if format_id.endswith('mpegurl'):
+                formats, subtitles = self._extract_m3u8_formats_and_subtitles(url, video_id, 'mp4', headers=headers)
+                info_dict.update(self._fragment_query(url))
+            elif format_id.endswith('mpd') or format_id.endswith('dash+xml'):
+                formats, subtitles = self._extract_mpd_formats_and_subtitles(url, video_id, headers=headers)
+                info_dict.update(self._fragment_query(url))
+            elif format_id == 'f4m':
+                formats = self._extract_f4m_formats(url, video_id, headers=headers)
+            else:
+                formats = [{
+                    'format_id': format_id,
+                    'url': url,
+                    'vcodec': 'none' if m.group('type') == 'audio' else None
+                }]
+                info_dict['direct'] = True
+            info_dict.update({
+                'formats': formats,
+                'subtitles': subtitles,
+                'http_headers': headers or None,
+            })
+            return info_dict
+
+        if not self.get_param('test', False) and not is_intentional:
+            force = self.get_param('force_generic_extractor', False)
+            self.report_warning('%s generic information extractor' % ('Forcing' if force else 'Falling back on'))
+
+        first_bytes = full_response.read(512)
+
+        # Is it an M3U playlist?
+        if first_bytes.startswith(b'#EXTM3U'):
+            self.report_detected('M3U playlist')
+            info_dict['formats'], info_dict['subtitles'] = self._extract_m3u8_formats_and_subtitles(url, video_id, 'mp4')
+            info_dict.update(self._fragment_query(url))
+            return info_dict
+
+        # Maybe it's a direct link to a video?
+        # Be careful not to download the whole thing!
+        if not is_html(first_bytes):
+            self.report_warning(
+                'URL could be a direct video link, returning it as such.')
+            info_dict.update({
+                'direct': True,
+                'url': url,
+            })
+            return info_dict
+
+        webpage = self._webpage_read_content(
+            full_response, url, video_id, prefix=first_bytes)
+
+        if '<title>DPG Media Privacy Gate</title>' in webpage:
+            webpage = self._download_webpage(url, video_id)
+
+        self.report_extraction(video_id)
+
+        # Is it an RSS feed, a SMIL file, an XSPF playlist or a MPD manifest?
+        try:
+            try:
+                doc = compat_etree_fromstring(webpage)
+            except xml.etree.ElementTree.ParseError:
+                doc = compat_etree_fromstring(webpage.encode('utf-8'))
+            if doc.tag == 'rss':
+                self.report_detected('RSS feed')
+                return self._extract_rss(url, video_id, doc)
+            elif doc.tag == 'SmoothStreamingMedia':
+                info_dict['formats'], info_dict['subtitles'] = self._parse_ism_formats_and_subtitles(doc, url)
+                self.report_detected('ISM manifest')
+                return info_dict
+            elif re.match(r'^(?:{[^}]+})?smil$', doc.tag):
+                smil = self._parse_smil(doc, url, video_id)
+                self.report_detected('SMIL file')
+                return smil
+            elif doc.tag == '{http://xspf.org/ns/0/}playlist':
+                self.report_detected('XSPF playlist')
+                return self.playlist_result(
+                    self._parse_xspf(
+                        doc, video_id, xspf_url=url,
+                        xspf_base_url=full_response.geturl()),
+                    video_id)
+            elif re.match(r'(?i)^(?:{[^}]+})?MPD$', doc.tag):
+                info_dict['formats'], info_dict['subtitles'] = self._parse_mpd_formats_and_subtitles(
+                    doc,
+                    mpd_base_url=full_response.geturl().rpartition('/')[0],
+                    mpd_url=url)
+                info_dict.update(self._fragment_query(url))
+                self.report_detected('DASH manifest')
+                return info_dict
+            elif re.match(r'^{http://ns\.adobe\.com/f4m/[12]\.0}manifest$', doc.tag):
+                info_dict['formats'] = self._parse_f4m_formats(doc, url, video_id)
+                self.report_detected('F4M manifest')
+                return info_dict
+        except xml.etree.ElementTree.ParseError:
+            pass
+
+        info_dict.update({
+            # it's tempting to parse this further, but you would
+            # have to take into account all the variations like
+            #   Video Title - Site Name
+            #   Site Name | Video Title
+            #   Video Title - Tagline | Site Name
+            # and so on and so forth; it's just not practical
+            'title': self._generic_title('', webpage, default='video'),
+            'description': self._og_search_description(webpage, default=None),
+            'thumbnail': self._og_search_thumbnail(webpage, default=None),
+            'age_limit': self._rta_search(webpage),
+        })
+
+        self._downloader.write_debug('Looking for embeds')
+        embeds = list(self._extract_embeds(original_url, webpage, urlh=full_response, info_dict=info_dict))
+        if len(embeds) == 1:
+            return {**info_dict, **embeds[0]}
+        elif embeds:
+            return self.playlist_result(embeds, **info_dict)
+        raise UnsupportedError(url)
+
+--- Chunk 10 ---
+File: yt_dlp/extractor/common.py
+Lines: 2015-2060
+Symbol: InfoExtractor._parse_m3u8_formats_and_subtitles.extract_media
+
+        def extract_media(x_media_line):
+            media = parse_m3u8_attributes(x_media_line)
+            # As per [1, 4.3.4.1] TYPE, GROUP-ID and NAME are REQUIRED
+            media_type, group_id, name = media.get('TYPE'), media.get('GROUP-ID'), media.get('NAME')
+            if not (media_type and group_id and name):
+                return
+            groups.setdefault(group_id, []).append(media)
+            # <https://tools.ietf.org/html/rfc8216#section-4.3.4.1>
+            if media_type == 'SUBTITLES':
+                # According to RFC 8216 §4.3.4.2.1, URI is REQUIRED in the
+                # EXT-X-MEDIA tag if the media type is SUBTITLES.
+                # However, lack of URI has been spotted in the wild.
+                # e.g. NebulaIE; see https://github.com/yt-dlp/yt-dlp/issues/339
+                if not media.get('URI'):
+                    return
+                url = format_url(media['URI'])
+                sub_info = {
+                    'url': url,
+                    'ext': determine_ext(url),
+                }
+                if sub_info['ext'] == 'm3u8':
+                    # Per RFC 8216 §3.1, the only possible subtitle format m3u8
+                    # files may contain is WebVTT:
+                    # <https://tools.ietf.org/html/rfc8216#section-3.1>
+                    sub_info['ext'] = 'vtt'
+                    sub_info['protocol'] = 'm3u8_native'
+                lang = media.get('LANGUAGE') or 'und'
+                subtitles.setdefault(lang, []).append(sub_info)
+            if media_type not in ('VIDEO', 'AUDIO'):
+                return
+            media_url = media.get('URI')
+            if media_url:
+                manifest_url = format_url(media_url)
+                formats.extend({
+                    'format_id': join_nonempty(m3u8_id, group_id, name, idx),
+                    'format_note': name,
+                    'format_index': idx,
+                    'url': manifest_url,
+                    'manifest_url': m3u8_url,
+                    'language': media.get('LANGUAGE'),
+                    'ext': ext,
+                    'protocol': entry_protocol,
+                    'preference': preference,
+                    'quality': quality,
+                    'vcodec': 'none' if media_type == 'AUDIO' else None,
+                } for idx in _extract_m3u8_playlist_indices(manifest_url))
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

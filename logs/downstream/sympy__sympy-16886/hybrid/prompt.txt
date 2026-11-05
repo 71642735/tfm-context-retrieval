@@ -1,0 +1,514 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Morse encoding for "1" is not correct
+The current Morse mapping in simpy.crypto.crypto contains an incorrect mapping of 
+`"----": "1"`   
+
+The correct mapping is `".----": "1"`.
+
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sympy/crypto/crypto.py
+Lines: 1586-1617
+Symbol: decode_morse
+
+def decode_morse(msg, sep='|', mapping=None):
+    """
+    Decodes a Morse Code with letters separated by `sep`
+    (default is '|') and words by `word_sep` (default is '||)
+    into plaintext.
+
+    References
+    ==========
+
+    .. [1] https://en.wikipedia.org/wiki/Morse_code
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import decode_morse
+    >>> mc = '--|---|...-|.||.|.-|...|-'
+    >>> decode_morse(mc)
+    'MOVE EAST'
+
+    """
+
+    mapping = mapping or morse_char
+    word_sep = 2*sep
+    characterstring = []
+    words = msg.strip(word_sep).split(word_sep)
+    for word in words:
+        letters = word.split(sep)
+        chars = [mapping[c] for c in letters]
+        word = ''.join(chars)
+        characterstring.append(word)
+    rv = " ".join(characterstring)
+    return rv
+
+--- Chunk 2 ---
+File: sympy/crypto/crypto.py
+Lines: 1539-1583
+Symbol: encode_morse
+
+def encode_morse(msg, sep='|', mapping=None):
+    """
+    Encodes a plaintext into popular Morse Code with letters
+    separated by `sep` and words by a double `sep`.
+
+    References
+    ==========
+
+    .. [1] https://en.wikipedia.org/wiki/Morse_code
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encode_morse
+    >>> msg = 'ATTACK RIGHT FLANK'
+    >>> encode_morse(msg)
+    '.-|-|-|.-|-.-.|-.-||.-.|..|--.|....|-||..-.|.-..|.-|-.|-.-'
+
+    """
+
+    mapping = mapping or char_morse
+    assert sep not in mapping
+    word_sep = 2*sep
+    mapping[" "] = word_sep
+    suffix = msg and msg[-1] in whitespace
+
+    # normalize whitespace
+    msg = (' ' if word_sep else '').join(msg.split())
+    # omit unmapped chars
+    chars = set(''.join(msg.split()))
+    ok = set(mapping.keys())
+    msg = translate(msg, None, ''.join(chars - ok))
+
+    morsestring = []
+    words = msg.split()
+    for word in words:
+        morseword = []
+        for letter in word:
+            morseletter = mapping[letter]
+            morseword.append(morseletter)
+
+        word = sep.join(morseword)
+        morsestring.append(word)
+
+    return word_sep.join(morsestring) + (word_sep if suffix else '')
+
+--- Chunk 3 ---
+File: sympy/crypto/crypto.py
+Lines: 379-399
+Symbol: decipher_affine
+
+def decipher_affine(msg, key, symbols=None):
+    r"""
+    Return the deciphered text that was made from the mapping,
+    `x \rightarrow ax+b` (mod `N`), where ``N`` is the
+    number of characters in the alphabet. Deciphering is done by
+    reciphering with a new key: `x \rightarrow cx+d` (mod `N`),
+    where `c = a^{-1}` (mod `N`) and `d = -a^{-1}b` (mod `N`).
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_affine, decipher_affine
+    >>> msg = "GO NAVY BEAT ARMY"
+    >>> key = (3, 1)
+    >>> encipher_affine(msg, key)
+    'TROBMVENBGBALV'
+    >>> decipher_affine(_, key)
+    'GONAVYBEATARMY'
+
+    """
+    return encipher_affine(msg, key, symbols, _inverse=True)
+
+--- Chunk 4 ---
+File: sympy/crypto/crypto.py
+Lines: 788-849
+Symbol: decipher_hill
+
+def decipher_hill(msg, key, symbols=None):
+    """
+    Deciphering is the same as enciphering but using the inverse of the
+    key matrix.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_hill, decipher_hill
+    >>> from sympy import Matrix
+
+    >>> key = Matrix([[1, 2], [3, 5]])
+    >>> encipher_hill("meet me on monday", key)
+    'UEQDUEODOCTCWQ'
+    >>> decipher_hill(_, key)
+    'MEETMEONMONDAY'
+
+    When the length of the plaintext (stripped of invalid characters)
+    is not a multiple of the key dimension, extra characters will
+    appear at the end of the enciphered and deciphered text. In order to
+    decipher the text, those characters must be included in the text to
+    be deciphered. In the following, the key has a dimension of 4 but
+    the text is 2 short of being a multiple of 4 so two characters will
+    be added.
+
+    >>> key = Matrix([[1, 1, 1, 2], [0, 1, 1, 0],
+    ...               [2, 2, 3, 4], [1, 1, 0, 1]])
+    >>> msg = "ST"
+    >>> encipher_hill(msg, key)
+    'HJEB'
+    >>> decipher_hill(_, key)
+    'STQQ'
+    >>> encipher_hill(msg, key, pad="Z")
+    'ISPK'
+    >>> decipher_hill(_, key)
+    'STZZ'
+
+    If the last two characters of the ciphertext were ignored in
+    either case, the wrong plaintext would be recovered:
+
+    >>> decipher_hill("HD", key)
+    'ORMV'
+    >>> decipher_hill("IS", key)
+    'UIKY'
+
+    """
+    assert key.is_square
+    msg, _, A = _prep(msg, '', symbols)
+    map = {c: i for i, c in enumerate(A)}
+    C = [map[c] for c in msg]
+    N = len(A)
+    k = key.cols
+    n = len(C)
+    m, r = divmod(n, k)
+    if r:
+        C = C + [0]*(k - r)
+        m += 1
+    key_inv = key.inv_mod(N)
+    rv = ''.join([A[p % N] for j in range(m) for p in
+        list(key_inv*Matrix(
+        k, 1, [C[i] for i in range(k*j, k*(j + 1))]))])
+    return rv
+
+--- Chunk 5 ---
+File: sympy/crypto/crypto.py
+Lines: 452-502
+Symbol: encipher_substitution
+
+def encipher_substitution(msg, old, new=None):
+    r"""
+    Returns the ciphertext obtained by replacing each character that
+    appears in ``old`` with the corresponding character in ``new``.
+    If ``old`` is a mapping, then new is ignored and the replacements
+    defined by ``old`` are used.
+
+    Notes
+    =====
+
+    This is a more general than the affine cipher in that the key can
+    only be recovered by determining the mapping for each symbol.
+    Though in practice, once a few symbols are recognized the mappings
+    for other characters can be quickly guessed.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_substitution, AZ
+    >>> old = 'OEYAG'
+    >>> new = '034^6'
+    >>> msg = AZ("go navy! beat army!")
+    >>> ct = encipher_substitution(msg, old, new); ct
+    '60N^V4B3^T^RM4'
+
+    To decrypt a substitution, reverse the last two arguments:
+
+    >>> encipher_substitution(ct, new, old)
+    'GONAVYBEATARMY'
+
+    In the special case where ``old`` and ``new`` are a permutation of
+    order 2 (representing a transposition of characters) their order
+    is immaterial:
+
+    >>> old = 'NAVY'
+    >>> new = 'ANYV'
+    >>> encipher = lambda x: encipher_substitution(x, old, new)
+    >>> encipher('NAVY')
+    'ANYV'
+    >>> encipher(_)
+    'NAVY'
+
+    The substitution cipher, in general, is a method
+    whereby "units" (not necessarily single characters) of plaintext
+    are replaced with ciphertext according to a regular system.
+
+    >>> ords = dict(zip('abc', ['\\%i' % ord(i) for i in 'abc']))
+    >>> print(encipher_substitution('abc', ords))
+    \97\98\99
+    """
+    return translate(msg, old, new)
+
+--- Chunk 6 ---
+File: sympy/crypto/crypto.py
+Lines: 237-260
+Symbol: decipher_shift
+
+def decipher_shift(msg, key, symbols=None):
+    """
+    Return the text by shifting the characters of ``msg`` to the
+    left by the amount given by ``key``.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_shift, decipher_shift
+    >>> msg = "GONAVYBEATARMY"
+    >>> ct = encipher_shift(msg, 1); ct
+    'HPOBWZCFBUBSNZ'
+
+    To decipher the shifted text, change the sign of the key:
+
+    >>> encipher_shift(ct, -1)
+    'GONAVYBEATARMY'
+
+    Or use this function with the original key:
+
+    >>> decipher_shift(ct, 1)
+    'GONAVYBEATARMY'
+    """
+    return encipher_shift(msg, -key, symbols)
+
+--- Chunk 7 ---
+File: sympy/crypto/crypto.py
+Lines: 176-234
+Symbol: encipher_shift
+
+def encipher_shift(msg, key, symbols=None):
+    """
+    Performs shift cipher encryption on plaintext msg, and returns the
+    ciphertext.
+
+    Notes
+    =====
+
+    The shift cipher is also called the Caesar cipher, after
+    Julius Caesar, who, according to Suetonius, used it with a
+    shift of three to protect messages of military significance.
+    Caesar's nephew Augustus reportedly used a similar cipher, but
+    with a right shift of 1.
+
+
+    ALGORITHM:
+
+        INPUT:
+
+            ``key``: an integer (the secret key)
+
+            ``msg``: plaintext of upper-case letters
+
+        OUTPUT:
+
+            ``ct``: ciphertext of upper-case letters
+
+        STEPS:
+            0. Number the letters of the alphabet from 0, ..., N
+            1. Compute from the string ``msg`` a list ``L1`` of
+               corresponding integers.
+            2. Compute from the list ``L1`` a new list ``L2``, given by
+               adding ``(k mod 26)`` to each element in ``L1``.
+            3. Compute from the list ``L2`` a string ``ct`` of
+               corresponding letters.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_shift, decipher_shift
+    >>> msg = "GONAVYBEATARMY"
+    >>> ct = encipher_shift(msg, 1); ct
+    'HPOBWZCFBUBSNZ'
+
+    To decipher the shifted text, change the sign of the key:
+
+    >>> encipher_shift(ct, -1)
+    'GONAVYBEATARMY'
+
+    There is also a convenience function that does this with the
+    original key:
+
+    >>> decipher_shift(ct, 1)
+    'GONAVYBEATARMY'
+    """
+    msg, _, A = _prep(msg, '', symbols)
+    shift = len(A) - key % len(A)
+    key = A[shift:] + A[:shift]
+    return translate(msg, key, A)
+
+--- Chunk 8 ---
+File: sympy/crypto/crypto.py
+Lines: 401-420
+Symbol: encipher_atbash
+
+def encipher_atbash(msg, symbols=None):
+    r"""
+    Enciphers a given ``msg`` into its Atbash ciphertext and returns it.
+
+    Notes
+    =====
+
+    Atbash is a substitution cipher originally used to encrypt the Hebrew
+    alphabet. Atbash works on the principle of mapping each alphabet to its
+    reverse / counterpart (i.e. a would map to z, b to y etc.)
+
+    Atbash is functionally equivalent to the affine cipher with ``a = 25``
+    and ``b = 25``
+
+    See Also
+    ========
+
+    decipher_atbash
+    """
+    return encipher_affine(msg, (25,25), symbols)
+
+--- Chunk 9 ---
+File: sympy/crypto/crypto.py
+Lines: 1034-1126
+Symbol: encipher_bifid5
+
+def encipher_bifid5(msg, key):
+    r"""
+    Performs the Bifid cipher encryption on plaintext ``msg``, and
+    returns the ciphertext.
+
+    This is the version of the Bifid cipher that uses the `5 \times 5`
+    Polybius square. The letter "J" is ignored so it must be replaced
+    with something else (traditionally an "I") before encryption.
+
+    Notes
+    =====
+
+    The Bifid cipher was invented around 1901 by Felix Delastelle.
+    It is a *fractional substitution* cipher, where letters are
+    replaced by pairs of symbols from a smaller alphabet. The
+    cipher uses a `5 \times 5` square filled with some ordering of the
+    alphabet, except that "J" is replaced with "I" (this is a so-called
+    Polybius square; there is a `6 \times 6` analog if you add back in
+    "J" and also append onto the usual 26 letter alphabet, the digits
+    0, 1, ..., 9).
+    According to Helen Gaines' book *Cryptanalysis*, this type of cipher
+    was used in the field by the German Army during World War I.
+
+    ALGORITHM: (5x5 case)
+
+        INPUT:
+
+            ``msg``: plaintext string; converted to upper case and
+            filtered of anything but all letters except J.
+
+            ``key``: short string for key; non-alphabetic letters, J
+            and duplicated characters are ignored and then, if the
+            length is less than 25 characters, it is padded with other
+            letters of the alphabet (in alphabetical order).
+
+        OUTPUT:
+
+            ciphertext (all caps, no spaces)
+
+        STEPS:
+            0. Create the `5 \times 5` Polybius square ``S`` associated
+               to ``key`` as follows:
+
+                a) moving from left-to-right, top-to-bottom,
+                   place the letters of the key into a `5 \times 5`
+                   matrix,
+                b) if the key has less than 25 letters, add the
+                   letters of the alphabet not in the key until the
+                   `5 \times 5` square is filled.
+
+            1. Create a list ``P`` of pairs of numbers which are the
+               coordinates in the Polybius square of the letters in
+               ``msg``.
+            2. Let ``L1`` be the list of all first coordinates of ``P``
+               (length of ``L1 = n``), let ``L2`` be the list of all
+               second coordinates of ``P`` (so the length of ``L2``
+               is also ``n``).
+            3. Let ``L`` be the concatenation of ``L1`` and ``L2``
+               (length ``L = 2*n``), except that consecutive numbers
+               are paired ``(L[2*i], L[2*i + 1])``. You can regard
+               ``L`` as a list of pairs of length ``n``.
+            4. Let ``C`` be the list of all letters which are of the
+               form ``S[i, j]``, for all ``(i, j)`` in ``L``. As a
+               string, this is the ciphertext of ``msg``.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import (
+    ...     encipher_bifid5, decipher_bifid5)
+
+    "J" will be omitted unless it is replaced with something else:
+
+    >>> round_trip = lambda m, k: \
+    ...     decipher_bifid5(encipher_bifid5(m, k), k)
+    >>> key = 'a'
+    >>> msg = "JOSIE"
+    >>> round_trip(msg, key)
+    'OSIE'
+    >>> round_trip(msg.replace("J", "I"), key)
+    'IOSIE'
+    >>> j = "QIQ"
+    >>> round_trip(msg.replace("J", j), key).replace(j, "J")
+    'JOSIE'
+
+    See Also
+    ========
+    decipher_bifid5, encipher_bifid
+
+    """
+    msg, key, _ = _prep(msg.upper(), key.upper(), None, bifid5)
+    key = padded_key(key, bifid5)
+    return encipher_bifid(msg, '', key)
+
+--- Chunk 10 ---
+File: sympy/crypto/crypto.py
+Lines: 1262-1288
+Symbol: bifid6_square
+
+def bifid6_square(key=None):
+    r"""
+    6x6 Polybius square.
+
+    Produces the Polybius square for the `6 \times 6` Bifid cipher.
+    Assumes alphabet of symbols is "A", ..., "Z", "0", ..., "9".
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import bifid6_square
+    >>> key = "gold bug"
+    >>> bifid6_square(key)
+    Matrix([
+    [G, O, L, D, B, U],
+    [A, C, E, F, H, I],
+    [J, K, M, N, P, Q],
+    [R, S, T, V, W, X],
+    [Y, Z, 0, 1, 2, 3],
+    [4, 5, 6, 7, 8, 9]])
+    """
+    if not key:
+        key = bifid6
+    else:
+        _, key, _ = _prep('', key.upper(), None, bifid6)
+        key = padded_key(key, bifid6)
+    return bifid_square(key)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

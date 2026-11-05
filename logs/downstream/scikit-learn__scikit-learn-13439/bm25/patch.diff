@@ -1,0 +1,22 @@
+--- sklearn/pipeline.py
++++ sklearn/pipeline.py
+@@ -194,6 +194,9 @@
+     def __getitem__(self, ind):
+         return self.steps[ind][1]
+ 
++    def __len__(self):
++        return len(self.steps)
++
+     @property
+     def named_steps(self):
+         """Access the steps by name.
+--- sklearn/tests/test_pipeline.py
++++ sklearn/tests/test_pipeline.py
+@@ -536,6 +536,7 @@
+                      ('clf', FitParamT())])
+     pipe2 = pipe[:-1]
+     assert isinstance(pipe2, Pipeline)
++    assert len(pipe) == 3
+     assert pipe2.steps == pipe.steps[:-1]
+     assert 2 == len(pipe2.named_steps)
+     assert_raises(ValueError, lambda: pipe[::-1])

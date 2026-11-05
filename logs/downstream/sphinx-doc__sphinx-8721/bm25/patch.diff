@@ -1,0 +1,13 @@
+```diff
+--- sphinx/ext/viewcode.py
++++ sphinx/ext/viewcode.py
+@@ -233,6 +233,8 @@
+ 
+ 
+ def collect_pages(app: Sphinx) -> Iterator[Tuple[str, Dict[str, Any], str]]:
++    if not app.config.viewcode_enable_epub and 'epub' in app.builder.tags:
++        return
+     env = app.builder.env
+     if not hasattr(env, '_viewcode_modules'):
+         return
+```

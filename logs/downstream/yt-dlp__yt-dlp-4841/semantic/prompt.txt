@@ -1,0 +1,1194 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+DiscoveryPlusItaly error 403: Forbidden
+### Checklist
+
+- [X] I'm reporting a broken site
+- [X] I've verified that I'm running yt-dlp version **2022.06.22.1** ([update instructions](https://github.com/yt-dlp/yt-dlp#update)) or later (specify commit)
+- [X] I've checked that all provided URLs are playable in a browser with the same IP and same login details
+- [X] I've checked that all URLs and arguments with special characters are [properly quoted or escaped](https://github.com/ytdl-org/youtube-dl#video-url-contains-an-ampersand-and-im-getting-some-strange-output-1-2839-or-v-is-not-recognized-as-an-internal-or-external-command)
+- [X] I've searched the [bugtracker](https://github.com/yt-dlp/yt-dlp/issues?q=) for similar issues including closed ones. DO NOT post duplicates
+- [X] I've read the [guidelines for opening an issue](https://github.com/yt-dlp/yt-dlp/blob/master/CONTRIBUTING.md#opening-an-issue)
+- [X] I've read about [sharing account credentials](https://github.com/yt-dlp/yt-dlp/blob/master/CONTRIBUTING.md#are-you-willing-to-share-account-details-if-needed) and I'm willing to share it if required
+
+### Region
+
+Italy
+
+### Description
+
+Hi, for first thanks for your work.
+
+With DiscoveryPlusItaly there is some problem.
+With the same link https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione i obtain url with domain dplus-it-cloudfront.prod-vod.h264.io (an the error 403 forbidden) another time with another file i obtain url domain  dplus-it-prod-vod.akamaized.net (with download ok).
+Yesterday night i get same error with similar url and google cloud domain...
+
+Anyone can help me?
+Thanks
+
+### Verbose log
+
+```shell
+F:\>yt-dlp.exe -Uv --no-geo-bypass --cookies-from-browser firefox https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione
+[debug] Command-line config: ['-Uv', '--no-geo-bypass', '--cookies-from-browser', 'firefox', 'https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out utf-8, error utf-8, screen utf-8
+[debug] yt-dlp version 2022.06.22.1 [a86e01e] (win32_exe)
+[debug] Python version 3.8.10 (CPython 64bit) - Windows-10-10.0.22621-SP0
+[debug] Checking exe version: ffmpeg -bsfs
+[debug] Checking exe version: ffprobe -bsfs
+[debug] Checking exe version: avprobe -bsfs
+[debug] exe versions: ffmpeg 5.0.1-full_build-www.gyan.dev (setts)
+[debug] Optional libraries: Cryptodome-3.14.1, brotli-1.0.9, certifi-2022.06.15, mutagen-1.45.1, sqlite3-2.6.0, websockets-10.3
+[Cookies] Extracting cookies from firefox
+[debug] Extracting cookies from: "C:\Users\Lepitrust\AppData\Roaming\Mozilla\Firefox\Profiles\bwd4mkhg.default-release\cookies.sqlite"
+[Cookies] Extracted 44 cookies from firefox
+[debug] Proxy map: {}
+[debug] Fetching release info: https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
+Latest version: 2022.06.22.1, Current version: 2022.06.22.1
+yt-dlp is up to date (2022.06.22.1)
+[debug] [DiscoveryPlusItaly] Extracting URL: https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione
+[DiscoveryPlusItaly] killer-of-the-cosmos/stagione-1-collisione: Downloading JSON metadata
+[DiscoveryPlusItaly] 564088: Downloading JSON metadata
+[DiscoveryPlusItaly] killer-of-the-cosmos/stagione-1-collisione: Downloading MPD manifest
+[debug] Formats sorted by: hasvid, ie_pref, lang, quality, res, fps, hdr:12(7), vcodec:vp9.2(10), acodec, filesize, fs_approx, tbr, vbr, abr, asr, proto, vext, aext, hasaud, source, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] 564088: Downloading 1 format(s): dash-video=6369520+dash-audio_eng=160000
+[debug] Invoking dashsegments downloader on "https://dplus-it-cloudfront.prod-vod.h264.io/90902a8f-ca80-4385-9c88-e8d81407253e/dbcb9fcb-ba71-4f73-b959-976b88227cb6/dash_clear_fmp4/x-discovery-token=Expires=1656240923&KeyName=primary&Signature=iida0AdPfjG2eZmWfIjPZ0SqU3U/master.mpd"
+[dashsegments] Total fragments: 1324
+[download] Destination: Collisione [564088].fdash-video=6369520.mp4
+[debug] File locking is not supported. Proceeding without locking
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 1 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 2 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 3 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 4 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 5 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 6 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 7 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 8 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 9 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 10 of 10) ...
+ERROR: Giving up after 10 fragment retries
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 522, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 478, in download_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+
+ERROR: fragment 1 not found, unable to continue
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 523, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 487, in append_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+
+
+[debug] Invoking dashsegments downloader on "https://dplus-it-cloudfront.prod-vod.h264.io/90902a8f-ca80-4385-9c88-e8d81407253e/dbcb9fcb-ba71-4f73-b959-976b88227cb6/dash_clear_fmp4/x-discovery-token=Expires=1656240923&KeyName=primary&Signature=iida0AdPfjG2eZmWfIjPZ0SqU3U/master.mpd"
+[dashsegments] Total fragments: 1324
+[download] Destination: Collisione [564088].fdash-audio_eng=160000.m4a
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 1 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 2 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 3 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 4 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 5 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 6 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 7 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 8 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 9 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 10 of 10) ...
+ERROR: Giving up after 10 fragment retries
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 522, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 478, in download_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+
+ERROR: fragment 1 not found, unable to continue
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 523, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 487, in append_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+```
+
+TRY without --no-geo-bypass: getting same error with google cloud url
+```shell
+F:\>yt-dlp.exe -Uv --cookies-from-browser firefox https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione
+[debug] Command-line config: ['-Uv', '--cookies-from-browser', 'firefox', 'https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out utf-8, error utf-8, screen utf-8
+[debug] yt-dlp version 2022.06.22.1 [a86e01e] (win32_exe)
+[debug] Python version 3.8.10 (CPython 64bit) - Windows-10-10.0.22621-SP0
+[debug] Checking exe version: ffmpeg -bsfs
+[debug] Checking exe version: ffprobe -bsfs
+[debug] Checking exe version: avprobe -bsfs
+[debug] exe versions: ffmpeg 5.0.1-full_build-www.gyan.dev (setts)
+[debug] Optional libraries: Cryptodome-3.14.1, brotli-1.0.9, certifi-2022.06.15, mutagen-1.45.1, sqlite3-2.6.0, websockets-10.3
+[Cookies] Extracting cookies from firefox
+[debug] Extracting cookies from: "C:\Users\Lepitrust\AppData\Roaming\Mozilla\Firefox\Profiles\bwd4mkhg.default-release\cookies.sqlite"
+[Cookies] Extracted 45 cookies from firefox
+[debug] Proxy map: {}
+[debug] Fetching release info: https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
+Latest version: 2022.06.22.1, Current version: 2022.06.22.1
+yt-dlp is up to date (2022.06.22.1)
+[debug] [DiscoveryPlusItaly] Extracting URL: https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione
+[debug] Using fake IP 79.48.22.233 (IT) as X-Forwarded-For
+[DiscoveryPlusItaly] killer-of-the-cosmos/stagione-1-collisione: Downloading JSON metadata
+[DiscoveryPlusItaly] 564088: Downloading JSON metadata
+[DiscoveryPlusItaly] killer-of-the-cosmos/stagione-1-collisione: Downloading MPD manifest
+[debug] Formats sorted by: hasvid, ie_pref, lang, quality, res, fps, hdr:12(7), vcodec:vp9.2(10), acodec, filesize, fs_approx, tbr, vbr, abr, asr, proto, vext, aext, hasaud, source, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] 564088: Downloading 1 format(s): dash-video=6369520+dash-audio_eng=160000
+[debug] Invoking dashsegments downloader on "https://dplus-it-google-v2.prod-vod.h264.io/90902a8f-ca80-4385-9c88-e8d81407253e/dbcb9fcb-ba71-4f73-b959-976b88227cb6/dash_clear_fmp4/x-goog-token=Expires=1656241208&KeyName=prod-sign-url-key-eu&Signature=h6ET8IWbm5cz_jq0YZLRbtegYLo/master.mpd"
+[dashsegments] Total fragments: 1324
+[download] Destination: Collisione [564088].fdash-video=6369520.mp4
+[debug] File locking is not supported. Proceeding without locking
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 1 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 2 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 3 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 4 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 5 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 6 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 7 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 8 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 9 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 10 of 10) ...
+ERROR: Giving up after 10 fragment retries
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 522, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 478, in download_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+
+ERROR: fragment 1 not found, unable to continue
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 523, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 487, in append_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+
+
+[debug] Invoking dashsegments downloader on "https://dplus-it-google-v2.prod-vod.h264.io/90902a8f-ca80-4385-9c88-e8d81407253e/dbcb9fcb-ba71-4f73-b959-976b88227cb6/dash_clear_fmp4/x-goog-token=Expires=1656241208&KeyName=prod-sign-url-key-eu&Signature=h6ET8IWbm5cz_jq0YZLRbtegYLo/master.mpd"
+[dashsegments] Total fragments: 1324
+[download] Destination: Collisione [564088].fdash-audio_eng=160000.m4a
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 1 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 2 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 3 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 4 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 5 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 6 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 7 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 8 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 9 of 10) ...
+[download] Got server HTTP error: HTTP Error 403: Forbidden. Retrying fragment 1 (attempt 10 of 10) ...
+ERROR: Giving up after 10 fragment retries
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 522, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 478, in download_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+
+ERROR: fragment 1 not found, unable to continue
+  File "yt_dlp\__main__.py", line 16, in <module>
+  File "yt_dlp\__init__.py", line 919, in main
+  File "yt_dlp\__init__.py", line 911, in _real_main
+  File "yt_dlp\YoutubeDL.py", line 3247, in download
+  File "yt_dlp\YoutubeDL.py", line 3223, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1418, in extract_info
+  File "yt_dlp\YoutubeDL.py", line 1427, in wrapper
+  File "yt_dlp\YoutubeDL.py", line 1511, in __extract_info
+  File "yt_dlp\YoutubeDL.py", line 1568, in process_ie_result
+  File "yt_dlp\YoutubeDL.py", line 2628, in process_video_result
+  File "yt_dlp\YoutubeDL.py", line 3109, in process_info
+  File "yt_dlp\YoutubeDL.py", line 2827, in dl
+  File "yt_dlp\downloader\common.py", line 444, in download
+  File "yt_dlp\downloader\dash.py", line 54, in real_download
+  File "yt_dlp\downloader\fragment.py", line 370, in download_and_append_fragments_multiple
+  File "yt_dlp\downloader\fragment.py", line 523, in download_and_append_fragments
+  File "yt_dlp\downloader\fragment.py", line 487, in append_fragment
+  File "yt_dlp\YoutubeDL.py", line 969, in report_error
+  File "yt_dlp\YoutubeDL.py", line 901, in trouble
+```
+
+AKAMAIZED is OK!
+```shell
+F:\>yt-dlp.exe -Uv --no-geo-bypass --cookies-from-browser firefox https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione
+[debug] Command-line config: ['-Uv', '--no-geo-bypass', '--cookies-from-browser', 'firefox', 'https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out utf-8, error utf-8, screen utf-8
+[debug] yt-dlp version 2022.06.22.1 [a86e01e] (win32_exe)
+[debug] Python version 3.8.10 (CPython 64bit) - Windows-10-10.0.22621-SP0
+[debug] Checking exe version: ffmpeg -bsfs
+[debug] Checking exe version: ffprobe -bsfs
+[debug] Checking exe version: avprobe -bsfs
+[debug] exe versions: ffmpeg 5.0.1-full_build-www.gyan.dev (setts)
+[debug] Optional libraries: Cryptodome-3.14.1, brotli-1.0.9, certifi-2022.06.15, mutagen-1.45.1, sqlite3-2.6.0, websockets-10.3
+[Cookies] Extracting cookies from firefox
+[debug] Extracting cookies from: "C:\Users\Lepitrust\AppData\Roaming\Mozilla\Firefox\Profiles\bwd4mkhg.default-release\cookies.sqlite"
+[Cookies] Extracted 45 cookies from firefox
+[debug] Proxy map: {}
+[debug] Fetching release info: https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
+Latest version: 2022.06.22.1, Current version: 2022.06.22.1
+yt-dlp is up to date (2022.06.22.1)
+[debug] [DiscoveryPlusItaly] Extracting URL: https://www.discoveryplus.com/it/video/killer-of-the-cosmos/stagione-1-collisione
+[DiscoveryPlusItaly] killer-of-the-cosmos/stagione-1-collisione: Downloading JSON metadata
+[DiscoveryPlusItaly] 564088: Downloading JSON metadata
+[DiscoveryPlusItaly] killer-of-the-cosmos/stagione-1-collisione: Downloading MPD manifest
+[debug] Formats sorted by: hasvid, ie_pref, lang, quality, res, fps, hdr:12(7), vcodec:vp9.2(10), acodec, filesize, fs_approx, tbr, vbr, abr, asr, proto, vext, aext, hasaud, source, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] 564088: Downloading 1 format(s): dash-video=6369520+dash-audio_eng=160000
+[debug] Invoking dashsegments downloader on "https://dplus-it-prod-vod.akamaized.net/90902a8f-ca80-4385-9c88-e8d81407253e/dbcb9fcb-ba71-4f73-b959-976b88227cb6/dash_clear_fmp4/hdntl=exp=1656241315~acl=/90902a8f-ca80-4385-9c88-e8d81407253e/dbcb9fcb-ba71-4f73-b959-976b88227cb6/dash_clear_fmp4/*~data=hdntl~hmac=ab864b1d7baf327ba03d13c89c296efd0c7c20c963a4c6a7e4c9ef09d5043739/master.mpd"
+[dashsegments] Total fragments: 1324
+[download] Destination: Collisione [564088].fdash-video=6369520.mp4
+[debug] File locking is not supported. Proceeding without locking
+[download]   2.2% of ~1.87GiB at    3.13MiB/s ETA 08:22 (frag 29/1324)
+.......
+```
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: yt_dlp/extractor/brightcove.py
+Lines: 409-467
+Symbol: BrightcoveNewIE._extract_brightcove_urls
+
+    def _extract_brightcove_urls(ie, webpage):
+        # Reference:
+        # 1. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/publish-video.html#setvideoiniframe
+        # 2. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/publish-video.html#tag
+        # 3. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/publish-video.html#setvideousingjavascript
+        # 4. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/in-page-embed-player-implementation.html
+        # 5. https://support.brightcove.com/en/video-cloud/docs/dynamically-assigning-videos-player
+
+        entries = []
+
+        # Look for iframe embeds [1]
+        for _, url in re.findall(
+                r'<iframe[^>]+src=(["\'])((?:https?:)?//players\.brightcove\.net/\d+/[^/]+/index\.html.+?)\1', webpage):
+            entries.append(url if url.startswith('http') else 'http:' + url)
+
+        # Look for <video> tags [2] and embed_in_page embeds [3]
+        # [2] looks like:
+        for video, script_tag, account_id, player_id, embed in re.findall(
+                r'''(?isx)
+                    (<video(?:-js)?\s+[^>]*\bdata-video-id\s*=\s*['"]?[^>]+>)
+                    (?:.*?
+                        (<script[^>]+
+                            src=["\'](?:https?:)?//players\.brightcove\.net/
+                            (\d+)/([^/]+)_([^/]+)/index(?:\.min)?\.js
+                        )
+                    )?
+                ''', webpage):
+            attrs = extract_attributes(video)
+
+            # According to examples from [4] it's unclear whether video id
+            # may be optional and what to do when it is
+            video_id = attrs.get('data-video-id')
+            if not video_id:
+                continue
+
+            account_id = account_id or attrs.get('data-account')
+            if not account_id:
+                continue
+
+            player_id = player_id or attrs.get('data-player') or 'default'
+            embed = embed or attrs.get('data-embed') or 'default'
+
+            bc_url = 'http://players.brightcove.net/%s/%s_%s/index.html?videoId=%s' % (
+                account_id, player_id, embed, video_id)
+
+            # Some brightcove videos may be embedded with video tag only and
+            # without script tag or any mentioning of brightcove at all. Such
+            # embeds are considered ambiguous since they are matched based only
+            # on data-video-id and data-account attributes and in the wild may
+            # not be brightcove embeds at all. Let's check reconstructed
+            # brightcove URLs in case of such embeds and only process valid
+            # ones. By this we ensure there is indeed a brightcove embed.
+            if not script_tag and not ie._is_valid_url(
+                    bc_url, video_id, 'possible brightcove video'):
+                continue
+
+            entries.append(bc_url)
+
+        return entries
+
+--- Chunk 2 ---
+File: yt_dlp/extractor/youku.py
+Lines: 140-213
+Symbol: YoukuIE._real_extract
+
+    def _real_extract(self, url):
+        video_id = self._match_id(url)
+
+        self._set_cookie('youku.com', '__ysuid', self.get_ysuid())
+        self._set_cookie('youku.com', 'xreferrer', 'http://www.youku.com')
+
+        _, urlh = self._download_webpage_handle(
+            'https://log.mmstat.com/eg.js', video_id, 'Retrieving cna info')
+        # The etag header is '"foobar"'; let's remove the double quotes
+        cna = urlh.headers['etag'][1:-1]
+
+        # request basic data
+        basic_data_params = {
+            'vid': video_id,
+            'ccode': '0532',
+            'client_ip': '192.168.1.1',
+            'utid': cna,
+            'client_ts': time.time() / 1000,
+        }
+
+        video_password = self.get_param('videopassword')
+        if video_password:
+            basic_data_params['password'] = video_password
+
+        headers = {
+            'Referer': url,
+        }
+        headers.update(self.geo_verification_headers())
+        data = self._download_json(
+            'https://ups.youku.com/ups/get.json', video_id,
+            'Downloading JSON metadata',
+            query=basic_data_params, headers=headers)['data']
+
+        error = data.get('error')
+        if error:
+            error_note = error.get('note')
+            if error_note is not None and '因版权原因无法观看此视频' in error_note:
+                raise ExtractorError(
+                    'Youku said: Sorry, this video is available in China only', expected=True)
+            elif error_note and '该视频被设为私密' in error_note:
+                raise ExtractorError(
+                    'Youku said: Sorry, this video is private', expected=True)
+            else:
+                msg = 'Youku server reported error %i' % error.get('code')
+                if error_note is not None:
+                    msg += ': ' + error_note
+                raise ExtractorError(msg)
+
+        # get video title
+        video_data = data['video']
+        title = video_data['title']
+
+        formats = [{
+            'url': stream['m3u8_url'],
+            'format_id': self.get_format_name(stream.get('stream_type')),
+            'ext': 'mp4',
+            'protocol': 'm3u8_native',
+            'filesize': int(stream.get('size')),
+            'width': stream.get('width'),
+            'height': stream.get('height'),
+        } for stream in data['stream'] if stream.get('channel_type') != 'tail']
+        self._sort_formats(formats)
+
+        return {
+            'id': video_id,
+            'title': title,
+            'formats': formats,
+            'duration': video_data.get('seconds'),
+            'thumbnail': video_data.get('logo'),
+            'uploader': video_data.get('username'),
+            'uploader_id': str_or_none(video_data.get('userid')),
+            'uploader_url': data.get('uploader', {}).get('homepage'),
+            'tags': video_data.get('tags'),
+        }
+
+--- Chunk 3 ---
+File: yt_dlp/extractor/dailymotion.py
+Lines: 220-333
+Symbol: DailymotionIE._real_extract
+
+    def _real_extract(self, url):
+        url, smuggled_data = unsmuggle_url(url)
+        video_id, playlist_id = self._match_valid_url(url).groups()
+
+        if playlist_id:
+            if self._yes_playlist(playlist_id, video_id):
+                return self.url_result(
+                    'http://www.dailymotion.com/playlist/' + playlist_id,
+                    'DailymotionPlaylist', playlist_id)
+
+        password = self.get_param('videopassword')
+        media = self._call_api(
+            'media', video_id, '''... on Video {
+      %s
+      stats {
+        likes {
+          total
+        }
+        views {
+          total
+        }
+      }
+    }
+    ... on Live {
+      %s
+      audienceCount
+      isOnAir
+    }''' % (self._COMMON_MEDIA_FIELDS, self._COMMON_MEDIA_FIELDS), 'Downloading media JSON metadata',
+            'password: "%s"' % self.get_param('videopassword') if password else None)
+        xid = media['xid']
+
+        metadata = self._download_json(
+            'https://www.dailymotion.com/player/metadata/video/' + xid,
+            xid, 'Downloading metadata JSON',
+            query=traverse_obj(smuggled_data, 'query') or {'app': 'com.dailymotion.neon'})
+
+        error = metadata.get('error')
+        if error:
+            title = error.get('title') or error['raw_message']
+            # See https://developer.dailymotion.com/api#access-error
+            if error.get('code') == 'DM007':
+                allowed_countries = try_get(media, lambda x: x['geoblockedCountries']['allowed'], list)
+                self.raise_geo_restricted(msg=title, countries=allowed_countries)
+            raise ExtractorError(
+                '%s said: %s' % (self.IE_NAME, title), expected=True)
+
+        title = metadata['title']
+        is_live = media.get('isOnAir')
+        formats = []
+        for quality, media_list in metadata['qualities'].items():
+            for m in media_list:
+                media_url = m.get('url')
+                media_type = m.get('type')
+                if not media_url or media_type == 'application/vnd.lumberjack.manifest':
+                    continue
+                if media_type == 'application/x-mpegURL':
+                    formats.extend(self._extract_m3u8_formats(
+                        media_url, video_id, 'mp4', live=is_live, m3u8_id='hls', fatal=False))
+                else:
+                    f = {
+                        'url': media_url,
+                        'format_id': 'http-' + quality,
+                    }
+                    m = re.search(r'/H264-(\d+)x(\d+)(?:-(60)/)?', media_url)
+                    if m:
+                        width, height, fps = map(int_or_none, m.groups())
+                        f.update({
+                            'fps': fps,
+                            'height': height,
+                            'width': width,
+                        })
+                    formats.append(f)
+        for f in formats:
+            f['url'] = f['url'].split('#')[0]
+            if not f.get('fps') and f['format_id'].endswith('@60'):
+                f['fps'] = 60
+        self._sort_formats(formats)
+
+        subtitles = {}
+        subtitles_data = try_get(metadata, lambda x: x['subtitles']['data'], dict) or {}
+        for subtitle_lang, subtitle in subtitles_data.items():
+            subtitles[subtitle_lang] = [{
+                'url': subtitle_url,
+            } for subtitle_url in subtitle.get('urls', [])]
+
+        thumbnails = []
+        for height, poster_url in metadata.get('posters', {}).items():
+            thumbnails.append({
+                'height': int_or_none(height),
+                'id': height,
+                'url': poster_url,
+            })
+
+        owner = metadata.get('owner') or {}
+        stats = media.get('stats') or {}
+        get_count = lambda x: int_or_none(try_get(stats, lambda y: y[x + 's']['total']))
+
+        return {
+            'id': video_id,
+            'title': title,
+            'description': clean_html(media.get('description')),
+            'thumbnails': thumbnails,
+            'duration': int_or_none(metadata.get('duration')) or None,
+            'timestamp': int_or_none(metadata.get('created_time')),
+            'uploader': owner.get('screenname'),
+            'uploader_id': owner.get('id') or metadata.get('screenname'),
+            'age_limit': 18 if metadata.get('explicit') else 0,
+            'tags': metadata.get('tags'),
+            'view_count': get_count('view') or int_or_none(media.get('audienceCount')),
+            'like_count': get_count('like'),
+            'formats': formats,
+            'subtitles': subtitles,
+            'is_live': is_live,
+        }
+
+--- Chunk 4 ---
+File: yt_dlp/downloader/hls.py
+Lines: 24-53
+Symbol: HlsFD.can_download
+
+    def can_download(manifest, info_dict, allow_unplayable_formats=False):
+        UNSUPPORTED_FEATURES = [
+            # r'#EXT-X-BYTERANGE',  # playlists composed of byte ranges of media files [2]
+
+            # Live streams heuristic does not always work (e.g. geo restricted to Germany
+            # http://hls-geo.daserste.de/i/videoportal/Film/c_620000/622873/format,716451,716457,716450,716458,716459,.mp4.csmil/index_4_av.m3u8?null=0)
+            # r'#EXT-X-MEDIA-SEQUENCE:(?!0$)',  # live streams [3]
+
+            # This heuristic also is not correct since segments may not be appended as well.
+            # Twitch vods of finished streams have EXT-X-PLAYLIST-TYPE:EVENT despite
+            # no segments will definitely be appended to the end of the playlist.
+            # r'#EXT-X-PLAYLIST-TYPE:EVENT',  # media segments may be appended to the end of
+            #                                 # event media playlists [4]
+            # r'#EXT-X-MAP:',  # media initialization [5]
+            # 1. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.4
+            # 2. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.2
+            # 3. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.2
+            # 4. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.5
+            # 5. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.5
+        ]
+        if not allow_unplayable_formats:
+            UNSUPPORTED_FEATURES += [
+                r'#EXT-X-KEY:METHOD=(?!NONE|AES-128)',  # encrypted streams [1]
+            ]
+
+        def check_results():
+            yield not info_dict.get('is_live')
+            for feature in UNSUPPORTED_FEATURES:
+                yield not re.search(feature, manifest)
+        return all(check_results())
+
+--- Chunk 5 ---
+File: yt_dlp/extractor/youtube.py
+Lines: 6130-6137
+Symbol: YoutubeTruncatedURLIE._real_extract
+
+    def _real_extract(self, url):
+        raise ExtractorError(
+            'Did you forget to quote the URL? Remember that & is a meta '
+            'character in most shells, so you want to put the URL in quotes, '
+            'like  youtube-dl '
+            '"https://www.youtube.com/watch?feature=foo&v=BaW_jenozKc" '
+            ' or simply  youtube-dl BaW_jenozKc  .',
+            expected=True)
+
+--- Chunk 6 ---
+File: yt_dlp/extractor/afreecatv.py
+Lines: 185-221
+Symbol: AfreecaTVIE._perform_login
+
+    def _perform_login(self, username, password):
+        login_form = {
+            'szWork': 'login',
+            'szType': 'json',
+            'szUid': username,
+            'szPassword': password,
+            'isSaveId': 'false',
+            'szScriptVar': 'oLoginRet',
+            'szAction': '',
+        }
+
+        response = self._download_json(
+            'https://login.afreecatv.com/app/LoginAction.php', None,
+            'Logging in', data=urlencode_postdata(login_form))
+
+        _ERRORS = {
+            -4: 'Your account has been suspended due to a violation of our terms and policies.',
+            -5: 'https://member.afreecatv.com/app/user_delete_progress.php',
+            -6: 'https://login.afreecatv.com/membership/changeMember.php',
+            -8: "Hello! AfreecaTV here.\nThe username you have entered belongs to \n an account that requires a legal guardian's consent. \nIf you wish to use our services without restriction, \nplease make sure to go through the necessary verification process.",
+            -9: 'https://member.afreecatv.com/app/pop_login_block.php',
+            -11: 'https://login.afreecatv.com/afreeca/second_login.php',
+            -12: 'https://member.afreecatv.com/app/user_security.php',
+            0: 'The username does not exist or you have entered the wrong password.',
+            -1: 'The username does not exist or you have entered the wrong password.',
+            -3: 'You have entered your username/password incorrectly.',
+            -7: 'You cannot use your Global AfreecaTV account to access Korean AfreecaTV.',
+            -10: 'Sorry for the inconvenience. \nYour account has been blocked due to an unauthorized access. \nPlease contact our Help Center for assistance.',
+            -32008: 'You have failed to log in. Please contact our Help Center.',
+        }
+
+        result = int_or_none(response.get('RESULT'))
+        if result != 1:
+            error = _ERRORS.get(result, 'You have failed to log in.')
+            raise ExtractorError(
+                'Unable to login: %s said: %s' % (self.IE_NAME, error),
+                expected=True)
+
+--- Chunk 7 ---
+File: yt_dlp/extractor/vimeo.py
+Lines: 832-1004
+Symbol: VimeoIE._real_extract
+
+    def _real_extract(self, url):
+        url, data, headers = self._unsmuggle_headers(url)
+        if 'Referer' not in headers:
+            headers['Referer'] = url
+
+        # Extract ID from URL
+        mobj = self._match_valid_url(url).groupdict()
+        video_id, unlisted_hash = mobj['id'], mobj.get('unlisted_hash')
+        if unlisted_hash:
+            return self._extract_from_api(video_id, unlisted_hash)
+
+        orig_url = url
+        is_pro = 'vimeopro.com/' in url
+        if is_pro:
+            # some videos require portfolio_id to be present in player url
+            # https://github.com/ytdl-org/youtube-dl/issues/20070
+            url = self._extract_url(url, self._download_webpage(url, video_id))
+            if not url:
+                url = 'https://vimeo.com/' + video_id
+        elif any(p in url for p in ('play_redirect_hls', 'moogaloop.swf')):
+            url = 'https://vimeo.com/' + video_id
+
+        self._try_album_password(url)
+        try:
+            # Retrieve video webpage to extract further information
+            webpage, urlh = self._download_webpage_handle(
+                url, video_id, headers=headers)
+            redirect_url = urlh.geturl()
+        except ExtractorError as ee:
+            if isinstance(ee.cause, compat_HTTPError) and ee.cause.code == 403:
+                errmsg = ee.cause.read()
+                if b'Because of its privacy settings, this video cannot be played here' in errmsg:
+                    raise ExtractorError(
+                        'Cannot download embed-only video without embedding '
+                        'URL. Please call yt-dlp with the URL of the page '
+                        'that embeds this video.',
+                        expected=True)
+            raise
+
+        if '://player.vimeo.com/video/' in url:
+            config = self._parse_json(self._search_regex(
+                r'\bconfig\s*=\s*({.+?})\s*;', webpage, 'info section'), video_id)
+            if config.get('view') == 4:
+                config = self._verify_player_video_password(
+                    redirect_url, video_id, headers)
+            info = self._parse_config(config, video_id)
+            self._vimeo_sort_formats(info['formats'])
+            return info
+
+        if re.search(r'<form[^>]+?id="pw_form"', webpage):
+            video_password = self._get_video_password()
+            token, vuid = self._extract_xsrft_and_vuid(webpage)
+            webpage = self._verify_video_password(
+                redirect_url, video_id, video_password, token, vuid)
+
+        vimeo_config = self._extract_vimeo_config(webpage, video_id, default=None)
+        if vimeo_config:
+            seed_status = vimeo_config.get('seed_status') or {}
+            if seed_status.get('state') == 'failed':
+                raise ExtractorError(
+                    '%s said: %s' % (self.IE_NAME, seed_status['title']),
+                    expected=True)
+
+        cc_license = None
+        timestamp = None
+        video_description = None
+        info_dict = {}
+        config_url = None
+
+        channel_id = self._search_regex(
+            r'vimeo\.com/channels/([^/]+)', url, 'channel id', default=None)
+        if channel_id:
+            config_url = self._html_search_regex(
+                r'\bdata-config-url="([^"]+)"', webpage, 'config URL', default=None)
+            video_description = clean_html(get_element_by_class('description', webpage))
+            info_dict.update({
+                'channel_id': channel_id,
+                'channel_url': 'https://vimeo.com/channels/' + channel_id,
+            })
+        if not config_url:
+            page_config = self._parse_json(self._search_regex(
+                r'vimeo\.(?:clip|vod_title)_page_config\s*=\s*({.+?});',
+                webpage, 'page config', default='{}'), video_id, fatal=False)
+            if not page_config:
+                return self._extract_from_api(video_id)
+            config_url = page_config['player']['config_url']
+            cc_license = page_config.get('cc_license')
+            clip = page_config.get('clip') or {}
+            timestamp = clip.get('uploaded_on')
+            video_description = clean_html(
+                clip.get('description') or page_config.get('description_html_escaped'))
+        config = self._download_json(config_url, video_id)
+        video = config.get('video') or {}
+        vod = video.get('vod') or {}
+
+        def is_rented():
+            if '>You rented this title.<' in webpage:
+                return True
+            if try_get(config, lambda x: x['user']['purchased']):
+                return True
+            for purchase_option in (vod.get('purchase_options') or []):
+                if purchase_option.get('purchased'):
+                    return True
+                label = purchase_option.get('label_string')
+                if label and (label.startswith('You rented this') or label.endswith(' remaining')):
+                    return True
+            return False
+
+        if is_rented() and vod.get('is_trailer'):
+            feature_id = vod.get('feature_id')
+            if feature_id and not data.get('force_feature_id', False):
+                return self.url_result(smuggle_url(
+                    'https://player.vimeo.com/player/%s' % feature_id,
+                    {'force_feature_id': True}), 'Vimeo')
+
+        if not video_description:
+            video_description = self._html_search_regex(
+                r'(?s)<div\s+class="[^"]*description[^"]*"[^>]*>(.*?)</div>',
+                webpage, 'description', default=None)
+        if not video_description:
+            video_description = self._html_search_meta(
+                ['description', 'og:description', 'twitter:description'],
+                webpage, default=None)
+        if not video_description and is_pro:
+            orig_webpage = self._download_webpage(
+                orig_url, video_id,
+                note='Downloading webpage for description',
+                fatal=False)
+            if orig_webpage:
+                video_description = self._html_search_meta(
+                    'description', orig_webpage, default=None)
+        if not video_description:
+            self.report_warning('Cannot find video description')
+
+        if not timestamp:
+            timestamp = self._search_regex(
+                r'<time[^>]+datetime="([^"]+)"', webpage,
+                'timestamp', default=None)
+
+        view_count = int_or_none(self._search_regex(r'UserPlays:(\d+)', webpage, 'view count', default=None))
+        like_count = int_or_none(self._search_regex(r'UserLikes:(\d+)', webpage, 'like count', default=None))
+        comment_count = int_or_none(self._search_regex(r'UserComments:(\d+)', webpage, 'comment count', default=None))
+
+        formats = []
+
+        source_format = self._extract_original_format(
+            'https://vimeo.com/' + video_id, video_id, video.get('unlisted_hash'))
+        if source_format:
+            formats.append(source_format)
+
+        info_dict_config = self._parse_config(config, video_id)
+        formats.extend(info_dict_config['formats'])
+        self._vimeo_sort_formats(formats)
+
+        json_ld = self._search_json_ld(webpage, video_id, default={})
+
+        if not cc_license:
+            cc_license = self._search_regex(
+                r'<link[^>]+rel=["\']license["\'][^>]+href=(["\'])(?P<license>(?:(?!\1).)+)\1',
+                webpage, 'license', default=None, group='license')
+
+        info_dict.update({
+            'formats': formats,
+            'timestamp': unified_timestamp(timestamp),
+            'description': video_description,
+            'webpage_url': url,
+            'view_count': view_count,
+            'like_count': like_count,
+            'comment_count': comment_count,
+            'license': cc_license,
+        })
+
+        return merge_dicts(info_dict, info_dict_config, json_ld)
+
+--- Chunk 8 ---
+File: yt_dlp/extractor/youtube.py
+Lines: 777-827
+Symbol: YoutubeBaseInfoExtractor._extract_response
+
+    def _extract_response(self, item_id, query, note='Downloading API JSON', headers=None,
+                          ytcfg=None, check_get_keys=None, ep='browse', fatal=True, api_hostname=None,
+                          default_client='web'):
+        for retry in self.RetryManager():
+            try:
+                response = self._call_api(
+                    ep=ep, fatal=True, headers=headers,
+                    video_id=item_id, query=query, note=note,
+                    context=self._extract_context(ytcfg, default_client),
+                    api_key=self._extract_api_key(ytcfg, default_client),
+                    api_hostname=api_hostname, default_client=default_client)
+            except ExtractorError as e:
+                if not isinstance(e.cause, network_exceptions):
+                    return self._error_or_warning(e, fatal=fatal)
+                elif not isinstance(e.cause, urllib.error.HTTPError):
+                    retry.error = e
+                    continue
+
+                first_bytes = e.cause.read(512)
+                if not is_html(first_bytes):
+                    yt_error = try_get(
+                        self._parse_json(
+                            self._webpage_read_content(e.cause, None, item_id, prefix=first_bytes) or '{}', item_id, fatal=False),
+                        lambda x: x['error']['message'], str)
+                    if yt_error:
+                        self._report_alerts([('ERROR', yt_error)], fatal=False)
+                # Downloading page may result in intermittent 5xx HTTP error
+                # Sometimes a 404 is also recieved. See: https://github.com/ytdl-org/youtube-dl/issues/28289
+                # We also want to catch all other network exceptions since errors in later pages can be troublesome
+                # See https://github.com/yt-dlp/yt-dlp/issues/507#issuecomment-880188210
+                if e.cause.code not in (403, 429):
+                    retry.error = e
+                    continue
+                return self._error_or_warning(e, fatal=fatal)
+
+            try:
+                self._extract_and_report_alerts(response, only_once=True)
+            except ExtractorError as e:
+                # YouTube servers may return errors we want to retry on in a 200 OK response
+                # See: https://github.com/yt-dlp/yt-dlp/issues/839
+                if 'unknown error' in e.msg.lower():
+                    retry.error = e
+                    continue
+                return self._error_or_warning(e, fatal=fatal)
+            # Youtube sometimes sends incomplete data
+            # See: https://github.com/ytdl-org/youtube-dl/issues/28194
+            if not traverse_obj(response, *variadic(check_get_keys)):
+                retry.error = ExtractorError('Incomplete data received', expected=True)
+                continue
+
+            return response
+
+--- Chunk 9 ---
+File: yt_dlp/extractor/sbs.py
+Lines: 68-96
+Symbol: SBSIE._real_extract
+
+    def _real_extract(self, url):
+        video_id = self._match_id(url)
+        player_params = self._download_json(
+            'http://www.sbs.com.au/api/video_pdkvars/id/%s?form=json' % video_id, video_id)
+
+        error = player_params.get('error')
+        if error:
+            error_message = 'Sorry, The video you are looking for does not exist.'
+            video_data = error.get('results') or {}
+            error_code = error.get('errorCode')
+            if error_code == 'ComingSoon':
+                error_message = '%s is not yet available.' % video_data.get('title', '')
+            elif error_code in ('Forbidden', 'intranetAccessOnly'):
+                error_message = 'Sorry, This video cannot be accessed via this website'
+            elif error_code == 'Expired':
+                error_message = 'Sorry, %s is no longer available.' % video_data.get('title', '')
+            raise ExtractorError('%s said: %s' % (self.IE_NAME, error_message), expected=True)
+
+        urls = player_params['releaseUrls']
+        theplatform_url = (urls.get('progressive') or urls.get('html')
+                           or urls.get('standard') or player_params['relatedItemsURL'])
+
+        return {
+            '_type': 'url_transparent',
+            'ie_key': 'ThePlatform',
+            'id': video_id,
+            'url': smuggle_url(self._proto_relative_url(theplatform_url), {'force_smil_url': True}),
+            'is_live': player_params.get('streamType') == 'live',
+        }
+
+--- Chunk 10 ---
+File: test/test_InfoExtractor.py
+Lines: 318-524
+Symbol: TestInfoExtractor.test_parse_html5_media_entries
+
+    def test_parse_html5_media_entries(self):
+        # inline video tag
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://127.0.0.1/video.html',
+                r'<html><video src="/vid.mp4" /></html>', None)[0],
+            {
+                'formats': [{
+                    'url': 'https://127.0.0.1/vid.mp4',
+                }],
+            })
+
+        # from https://www.r18.com/
+        # with kpbs in label
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://www.r18.com/',
+                r'''
+                <video id="samplevideo_amateur" class="js-samplevideo video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" width="400" height="225" poster="//pics.r18.com/digital/amateur/mgmr105/mgmr105jp.jpg">
+                    <source id="video_source" src="https://awscc3001.r18.com/litevideo/freepv/m/mgm/mgmr105/mgmr105_sm_w.mp4" type="video/mp4"  res="240" label="300kbps">
+                    <source id="video_source" src="https://awscc3001.r18.com/litevideo/freepv/m/mgm/mgmr105/mgmr105_dm_w.mp4" type="video/mp4"  res="480" label="1000kbps">
+                    <source id="video_source" src="https://awscc3001.r18.com/litevideo/freepv/m/mgm/mgmr105/mgmr105_dmb_w.mp4" type="video/mp4"  res="740" label="1500kbps">
+                    <p>Your browser does not support the video tag.</p>
+                </video>
+                ''', None)[0],
+            {
+                'formats': [{
+                    'url': 'https://awscc3001.r18.com/litevideo/freepv/m/mgm/mgmr105/mgmr105_sm_w.mp4',
+                    'ext': 'mp4',
+                    'format_id': '300kbps',
+                    'height': 240,
+                    'tbr': 300,
+                }, {
+                    'url': 'https://awscc3001.r18.com/litevideo/freepv/m/mgm/mgmr105/mgmr105_dm_w.mp4',
+                    'ext': 'mp4',
+                    'format_id': '1000kbps',
+                    'height': 480,
+                    'tbr': 1000,
+                }, {
+                    'url': 'https://awscc3001.r18.com/litevideo/freepv/m/mgm/mgmr105/mgmr105_dmb_w.mp4',
+                    'ext': 'mp4',
+                    'format_id': '1500kbps',
+                    'height': 740,
+                    'tbr': 1500,
+                }],
+                'thumbnail': '//pics.r18.com/digital/amateur/mgmr105/mgmr105jp.jpg'
+            })
+
+        # from https://www.csfd.cz/
+        # with width and height
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://www.csfd.cz/',
+                r'''
+                <video width="770" height="328" preload="none" controls  poster="https://img.csfd.cz/files/images/film/video/preview/163/344/163344118_748d20.png?h360" >
+                    <source src="https://video.csfd.cz/files/videos/157/750/157750813/163327358_eac647.mp4" type="video/mp4" width="640" height="360">
+                    <source src="https://video.csfd.cz/files/videos/157/750/157750813/163327360_3d2646.mp4" type="video/mp4" width="1280" height="720">
+                    <source src="https://video.csfd.cz/files/videos/157/750/157750813/163327356_91f258.mp4" type="video/mp4" width="1920" height="1080">
+                    <source src="https://video.csfd.cz/files/videos/157/750/157750813/163327359_962b4a.webm" type="video/webm" width="640" height="360">
+                    <source src="https://video.csfd.cz/files/videos/157/750/157750813/163327361_6feee0.webm" type="video/webm" width="1280" height="720">
+                    <source src="https://video.csfd.cz/files/videos/157/750/157750813/163327357_8ab472.webm" type="video/webm" width="1920" height="1080">
+                    <track src="https://video.csfd.cz/files/subtitles/163/344/163344115_4c388b.srt" type="text/x-srt" kind="subtitles" srclang="cs" label="cs">
+                </video>
+                ''', None)[0],
+            {
+                'formats': [{
+                    'url': 'https://video.csfd.cz/files/videos/157/750/157750813/163327358_eac647.mp4',
+                    'ext': 'mp4',
+                    'width': 640,
+                    'height': 360,
+                }, {
+                    'url': 'https://video.csfd.cz/files/videos/157/750/157750813/163327360_3d2646.mp4',
+                    'ext': 'mp4',
+                    'width': 1280,
+                    'height': 720,
+                }, {
+                    'url': 'https://video.csfd.cz/files/videos/157/750/157750813/163327356_91f258.mp4',
+                    'ext': 'mp4',
+                    'width': 1920,
+                    'height': 1080,
+                }, {
+                    'url': 'https://video.csfd.cz/files/videos/157/750/157750813/163327359_962b4a.webm',
+                    'ext': 'webm',
+                    'width': 640,
+                    'height': 360,
+                }, {
+                    'url': 'https://video.csfd.cz/files/videos/157/750/157750813/163327361_6feee0.webm',
+                    'ext': 'webm',
+                    'width': 1280,
+                    'height': 720,
+                }, {
+                    'url': 'https://video.csfd.cz/files/videos/157/750/157750813/163327357_8ab472.webm',
+                    'ext': 'webm',
+                    'width': 1920,
+                    'height': 1080,
+                }],
+                'subtitles': {
+                    'cs': [{'url': 'https://video.csfd.cz/files/subtitles/163/344/163344115_4c388b.srt'}]
+                },
+                'thumbnail': 'https://img.csfd.cz/files/images/film/video/preview/163/344/163344118_748d20.png?h360'
+            })
+
+        # from https://tamasha.com/v/Kkdjw
+        # with height in label
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://tamasha.com/v/Kkdjw',
+                r'''
+                <video crossorigin="anonymous">
+                        <source src="https://s-v2.tamasha.com/statics/videos_file/19/8f/Kkdjw_198feff8577d0057536e905cce1fb61438dd64e0_n_240.mp4" type="video/mp4" label="AUTO" res="0"/>
+                                <source src="https://s-v2.tamasha.com/statics/videos_file/19/8f/Kkdjw_198feff8577d0057536e905cce1fb61438dd64e0_n_240.mp4" type="video/mp4"
+                                        label="240p" res="240"/>
+                                <source src="https://s-v2.tamasha.com/statics/videos_file/20/00/Kkdjw_200041c66f657fc967db464d156eafbc1ed9fe6f_n_144.mp4" type="video/mp4"
+                                        label="144p" res="144"/>
+                </video>
+                ''', None)[0],
+            {
+                'formats': [{
+                    'url': 'https://s-v2.tamasha.com/statics/videos_file/19/8f/Kkdjw_198feff8577d0057536e905cce1fb61438dd64e0_n_240.mp4',
+                }, {
+                    'url': 'https://s-v2.tamasha.com/statics/videos_file/19/8f/Kkdjw_198feff8577d0057536e905cce1fb61438dd64e0_n_240.mp4',
+                    'ext': 'mp4',
+                    'format_id': '240p',
+                    'height': 240,
+                }, {
+                    'url': 'https://s-v2.tamasha.com/statics/videos_file/20/00/Kkdjw_200041c66f657fc967db464d156eafbc1ed9fe6f_n_144.mp4',
+                    'ext': 'mp4',
+                    'format_id': '144p',
+                    'height': 144,
+                }]
+            })
+
+        # from https://www.directvnow.com
+        # with data-src
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://www.directvnow.com',
+                r'''
+                <video id="vid1" class="header--video-masked active" muted playsinline>
+                    <source data-src="https://cdn.directv.com/content/dam/dtv/prod/website_directvnow-international/videos/DTVN_hdr_HBO_v3.mp4" type="video/mp4" />
+                </video>
+                ''', None)[0],
+            {
+                'formats': [{
+                    'ext': 'mp4',
+                    'url': 'https://cdn.directv.com/content/dam/dtv/prod/website_directvnow-international/videos/DTVN_hdr_HBO_v3.mp4',
+                }]
+            })
+
+        # from https://www.directvnow.com
+        # with data-src
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://www.directvnow.com',
+                r'''
+                <video id="vid1" class="header--video-masked active" muted playsinline>
+                    <source data-src="https://cdn.directv.com/content/dam/dtv/prod/website_directvnow-international/videos/DTVN_hdr_HBO_v3.mp4" type="video/mp4" />
+                </video>
+                ''', None)[0],
+            {
+                'formats': [{
+                    'url': 'https://cdn.directv.com/content/dam/dtv/prod/website_directvnow-international/videos/DTVN_hdr_HBO_v3.mp4',
+                    'ext': 'mp4',
+                }]
+            })
+
+        # from https://www.klarna.com/uk/
+        # with data-video-src
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://www.directvnow.com',
+                r'''
+                <video loop autoplay muted class="responsive-video block-kl__video video-on-medium">
+                    <source src="" data-video-desktop data-video-src="https://www.klarna.com/uk/wp-content/uploads/sites/11/2019/01/KL062_Smooth3_0_DogWalking_5s_920x080_.mp4" type="video/mp4" />
+                </video>
+                ''', None)[0],
+            {
+                'formats': [{
+                    'url': 'https://www.klarna.com/uk/wp-content/uploads/sites/11/2019/01/KL062_Smooth3_0_DogWalking_5s_920x080_.mp4',
+                    'ext': 'mp4',
+                }],
+            })
+
+        # from https://0000.studio/
+        # with type attribute but without extension in URL
+        expect_dict(
+            self,
+            self.ie._parse_html5_media_entries(
+                'https://0000.studio',
+                r'''
+                <video src="https://d1ggyt9m8pwf3g.cloudfront.net/protected/ap-northeast-1:1864af40-28d5-492b-b739-b32314b1a527/archive/clip/838db6a7-8973-4cd6-840d-8517e4093c92"
+                    controls="controls" type="video/mp4" preload="metadata" autoplay="autoplay" playsinline class="object-contain">
+                </video>
+                ''', None)[0],
+            {
+                'formats': [{
+                    'url': 'https://d1ggyt9m8pwf3g.cloudfront.net/protected/ap-northeast-1:1864af40-28d5-492b-b739-b32314b1a527/archive/clip/838db6a7-8973-4cd6-840d-8517e4093c92',
+                    'ext': 'mp4',
+                }],
+            })
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

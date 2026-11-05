@@ -1,0 +1,28 @@
+--- sphinx/extension.py
++++ sphinx/extension.py
+@@ -1,6 +1,7 @@
+ """Extension management."""
+
+ import os
++from packaging.version import Version
+ from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+ from sphinx.config import Config
+@@ -14,6 +15,7 @@
+ if TYPE_CHECKING:
+     from sphinx.application import Sphinx
+
++
+ def verify_needs_extensions(app: "Sphinx", config: Config) -> None:
+     """Verify the required Sphinx extensions are loaded."""
+     if config.needs_extensions is None:
+@@ -26,7 +28,8 @@
+                               'but it is not loaded.'), extname)
+             continue
+
+-        if extension.version == 'unknown version' or reqversion > extension.version:
++        if (extension.version == 'unknown version' or
++                Version(reqversion) > Version(extension.version)):
+             raise VersionRequirementError(__('This project needs the extension %s at least in '
+                                              'version %s and therefore cannot be built with '
+                                              'the loaded version (%s).') %

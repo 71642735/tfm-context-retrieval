@@ -1,0 +1,14 @@
+```diff
+diff --git a/requests/models.py b/requests/models.py
+--- a/requests/models.py
++++ b/requests/models.py
+@@ -404,7 +404,7 @@
+         # non-ASCII characters. This allows users to automatically get the correct IDNA
+         # behaviour. For strings containing only ASCII characters, we need to also verify
+         # it doesn't start with a wildcard (*), before allowing the unencoded hostname.
+-        if not unicode_is_ascii(host):
++        if not unicode_is_ascii(host) or host.startswith(u'.'):
+             try:
+                 host = self._get_idna_encoded_host(host)
+             except UnicodeError:
+```

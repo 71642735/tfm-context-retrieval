@@ -1,0 +1,667 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+GenerationConfig.from_pretrained raise ValueError after training, maybe raise it earlier?
+### System Info
+
+- `transformers` version: 4.38.2
+- Platform: Linux-4.18.0-305.3.1.el8.x86_64-x86_64-with-glibc2.28
+- Python version: 3.10.13
+- Huggingface_hub version: 0.21.4
+- Safetensors version: 0.4.2
+- Accelerate version: 0.28.0
+- Accelerate config:    - compute_environment: LOCAL_MACHINE
+        - distributed_type: MULTI_GPU
+        - mixed_precision: no
+        - use_cpu: False                                                                                                                - debug: False
+        - num_processes: 8
+        - machine_rank: 0                                                                                                               - num_machines: 1
+        - gpu_ids: all
+        - rdzv_backend: static                                                                                                          - same_network: True                                                                                                            - main_training_function: main
+        - downcast_bf16: no
+        - tpu_use_cluster: False
+        - tpu_use_sudo: False
+        - tpu_env: []
+- PyTorch version (GPU?): 2.2.1 (True)
+- Tensorflow version (GPU?): not installed (NA)
+- Flax version (CPU?/GPU?/TPU?): not installed (NA)
+- Jax version: not installed
+- JaxLib version: not installed
+- Using GPU in script?: <fill in>
+- Using distributed or parallel set-up in script?: <fill in>
+
+### Who can help?
+
+@gante   @pacman100   @muellerzr 
+
+**Raise Errors as Early as Possible**: I noticed that `GenerationConfig.save_pretrained` in `transformers/generation/configuration_utils.py` will raise a `ValueError` if the config cannot pass the validation. I think it's better to raise the error earlier (e.g., after `self.validate` in `__init__`) instead of raising it in `Trainer._save`. Users might be upset after several hours of training and finding the model checkpoint is not saved.
+
+For example, finetuning [LLaVA](https://github.com/haotian-liu/LLaVA) will raise this error. [Issue#1252](https://github.com/haotian-liu/LLaVA/issues/1252#issue) and [issue#1144](https://github.com/haotian-liu/LLaVA/issues/1144#issue) meet the same phenomenon.
+
+
+Please correct me if I am wrong. Thanks!
+
+### Information
+
+- [ ] The official example scripts
+- [X] My own modified scripts
+
+### Tasks
+
+- [ ] An officially supported task in the `examples` folder (such as GLUE/SQuAD, ...)
+- [X] My own task or dataset (give details below)
+
+### Reproduction
+
+Maybe no reproduction is necessary.
+
+1. Install [LLaVA](https://github.com/haotian-liu/LLaVA) by following the [guide](https://github.com/haotian-liu/LLaVA#install).
+2. Train and finetune the model by following the [guide](https://github.com/haotian-liu/LLaVA#train). [Issue#1252](https://github.com/haotian-liu/LLaVA/issues/1252#issue) and [issue#1144](https://github.com/haotian-liu/LLaVA/issues/1144#issue) also give the training script.
+
+### Expected behavior
+
+Raise the ValueError before training if PretrainedConfig cannot pass the validation.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: src/transformers/modeling_utils.py
+Lines: 1440-1527
+Symbol: PreTrainedModel._check_and_enable_flash_attn_2
+
+    def _check_and_enable_flash_attn_2(
+        cls,
+        config,
+        torch_dtype: Optional[torch.dtype] = None,
+        device_map: Optional[Union[str, Dict[str, int]]] = None,
+        check_device_map: bool = True,
+        hard_check_only: bool = False,
+    ) -> PretrainedConfig:
+        """
+        Checks the availability of Flash Attention 2 and compatibility with the current model.
+
+        If all checks pass and `hard_check_only` is False, the method will set the config attribute `attn_implementation` to "flash_attention_2" so that the model can initialize the correct attention module.
+        """
+        if not cls._supports_flash_attn_2:
+            raise ValueError(
+                f"{cls.__name__} does not support Flash Attention 2.0 yet. Please request to add support where"
+                f" the model is hosted, on its model hub page: https://huggingface.co/{config._name_or_path}/discussions/new"
+                " or in the Transformers GitHub repo: https://github.com/huggingface/transformers/issues/new"
+            )
+
+        if not is_flash_attn_2_available():
+            preface = "FlashAttention2 has been toggled on, but it cannot be used due to the following error:"
+            install_message = "Please refer to the documentation of https://huggingface.co/docs/transformers/perf_infer_gpu_one#flashattention-2 to install Flash Attention 2."
+
+            if importlib.util.find_spec("flash_attn") is None:
+                raise ImportError(f"{preface} the package flash_attn seems to be not installed. {install_message}")
+
+            flash_attention_version = version.parse(importlib.metadata.version("flash_attn"))
+            if torch.version.cuda:
+                if flash_attention_version < version.parse("2.1.0"):
+                    raise ImportError(
+                        f"{preface} you need flash_attn package version to be greater or equal than 2.1.0. Detected version {flash_attention_version}. {install_message}"
+                    )
+                else:
+                    raise ImportError(f"{preface} Flash Attention 2 is not available. {install_message}")
+            elif torch.version.hip:
+                if flash_attention_version < version.parse("2.0.4"):
+                    raise ImportError(
+                        f"{preface} you need flash_attn package version to be greater or equal than 2.0.4. Make sure to have that version installed - detected version {flash_attention_version}. {install_message}"
+                    )
+                else:
+                    raise ImportError(f"{preface} Flash Attention 2 is not available. {install_message}")
+
+        _is_bettertransformer = getattr(cls, "use_bettertransformer", False)
+
+        if _is_bettertransformer:
+            raise ValueError(
+                "Flash Attention 2 and BetterTransformer API are not compatible. Please make sure to disable BetterTransformers by doing model.reverse_bettertransformer()"
+            )
+
+        if torch_dtype is None:
+            logger.warning_once(
+                "You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour"
+            )
+        elif torch_dtype is not None and torch_dtype not in [torch.float16, torch.bfloat16]:
+            logger.warning_once(
+                "Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but"
+                f" the current dype in {cls.__name__} is {torch_dtype}. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator,"
+                ' or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`'
+            )
+
+        # The check `torch.empty(0).device.type != "cuda"` is needed as the model may be initialized after `torch.set_default_device` has been called,
+        # or the model may be initialized under the context manager `with torch.device("cuda"):`.
+        if check_device_map and device_map is None and torch.empty(0).device.type != "cuda":
+            if torch.cuda.is_available():
+                logger.warning_once(
+                    "You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU"
+                    " after initializing it on CPU with `model.to('cuda')`."
+                )
+            else:
+                raise ValueError(
+                    "You are attempting to use Flash Attention 2.0 with a model not initialized on GPU and with no GPU available. "
+                    "This is not supported yet. Please make sure to have access to a GPU and either initialise the model on a GPU by passing a device_map "
+                    "or initialising the model on CPU and then moving it to GPU."
+                )
+        elif (
+            check_device_map
+            and device_map is not None
+            and isinstance(device_map, dict)
+            and ("cpu" in device_map.values() or "disk" in device_map.values())
+        ):
+            raise ValueError(
+                "You are attempting to use Flash Attention 2.0 with a model dispatched on CPU or disk. This is not supported. Please make sure to "
+                "initialise the model on a GPU by passing a device_map that contains only GPU devices as keys."
+            )
+        if not hard_check_only:
+            config._attn_implementation = "flash_attention_2"
+        return config
+
+--- Chunk 2 ---
+File: src/transformers/integrations/deepspeed.py
+Lines: 360-414
+Symbol: deepspeed_init
+
+def deepspeed_init(trainer, num_training_steps, inference=False):
+    """
+    Init DeepSpeed, after updating the DeepSpeed configuration with any relevant Trainer's args.
+
+    If `resume_from_checkpoint` was passed then an attempt to resume from a previously saved checkpoint will be made.
+
+    Args:
+        trainer: Trainer object
+        num_training_steps: per single gpu
+        resume_from_checkpoint: path to a checkpoint if to resume from after normal DeepSpeedEngine load
+        inference: launch in inference mode (no optimizer and no lr scheduler)
+        auto_find_batch_size: whether to ignore the `train_micro_batch_size_per_gpu` argument as it's being
+            set automatically by the auto batch size finder
+
+    Returns: optimizer, lr_scheduler
+
+    We may use `deepspeed_init` more than once during the life of Trainer, when we do - it's a temp hack based on:
+    https://github.com/microsoft/DeepSpeed/issues/1394#issuecomment-937405374 until Deepspeed fixes a bug where it
+    can't resume from a checkpoint after it did some stepping https://github.com/microsoft/DeepSpeed/issues/1612
+
+    """
+    from deepspeed.utils import logger as ds_logger
+
+    model = trainer.model
+    args = trainer.args
+
+    hf_deepspeed_config = trainer.accelerator.state.deepspeed_plugin.hf_ds_config
+
+    # resume config update - some bits like `model` and `num_training_steps` only become available during train
+    hf_deepspeed_config.trainer_config_finalize(args, model, num_training_steps)
+
+    # set the Deepspeed log level consistent with the Trainer
+    ds_logger.setLevel(args.get_process_log_level())
+
+    if inference:
+        # only Z3 makes sense for the inference
+        if not hf_deepspeed_config.is_zero3():
+            raise ValueError("ZeRO inference only makes sense with ZeRO Stage 3 - please adjust your config")
+
+        # in case the training config is re-used for inference
+        hf_deepspeed_config.del_config_sub_tree("optimizer")
+        hf_deepspeed_config.del_config_sub_tree("lr_scheduler")
+        optimizer, lr_scheduler = None, None
+        model_parameters = None
+    else:
+        trainer.optimizer = None  # important for when deepspeed_init is used as re-init
+        model_parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
+        optimizer, lr_scheduler = deepspeed_optim_sched(
+            trainer, hf_deepspeed_config, args, num_training_steps, model_parameters
+        )
+
+    # keep for quick debug:
+    # from pprint import pprint; pprint(config)
+
+    return optimizer, lr_scheduler
+
+--- Chunk 3 ---
+File: tests/deepspeed/test_deepspeed.py
+Lines: 929-1015
+Symbol: TrainerIntegrationDeepSpeed.test_load_best_model
+
+    def test_load_best_model(self, stage, dtype):
+        # Test that forced deepspeed reinit doesn't break the model. the forced re-init after
+        # loading the best model in Trainer is there to workaround this bug in Deepspeed
+        # https://github.com/microsoft/DeepSpeed/issues/1612
+        #
+        # The test is derived from a repro script submitted in this Issue:
+        # https://github.com/huggingface/transformers/issues/17114
+        #
+        # One additional feature of this test is that we use a non-AdamW optimizer to test that
+        # deepspeed doesn't fallback to AdamW, which would prevent the optimizer states from loading
+        # correctly
+
+        from transformers import T5ForConditionalGeneration, T5Tokenizer, Trainer  # noqa
+
+        output_dir = self.get_auto_remove_tmp_dir()  # "./xxx", after=False, before=False)
+
+        ds_config_dict = self.get_config_dict(stage)
+        del ds_config_dict["optimizer"]  # will use HF Trainer optimizer
+        del ds_config_dict["scheduler"]  # will use HF Trainer scheduler
+        ds_config_dict["zero_force_ds_cpu_optimizer"] = False  # offload is not efficient w/o CPUAdam
+        # must use this setting to get the reload path exercised
+        ds_config_dict["zero_optimization"]["stage3_gather_16bit_weights_on_model_save"] = True
+
+        with mockenv_context(**self.dist_env_1_gpu):
+            args_dict = {
+                "per_device_train_batch_size": 1,
+                "per_device_eval_batch_size": 1,
+                "gradient_accumulation_steps": 1,
+                "learning_rate": 1e-4,
+                "num_train_epochs": 1,
+                "do_train": True,
+                "do_eval": True,
+                "optim": "adafactor",
+                "evaluation_strategy": "steps",
+                "eval_steps": 1,
+                "save_strategy": "steps",
+                "save_steps": 1,
+                "load_best_model_at_end": True,
+                "max_steps": 1,
+                "deepspeed": ds_config_dict,
+                "report_to": "none",
+            }
+
+            training_args = TrainingArguments(output_dir, **args_dict)
+            tokenizer = T5Tokenizer.from_pretrained(T5_TINY)
+            model = T5ForConditionalGeneration.from_pretrained(T5_TINY)
+
+            def _add_eos_to_examples(example):
+                example["input_text"] = f"question: {example['question']}  context: {example['context']}"
+                example["target_text"] = example["answers"]["text"][0] if len(example["answers"]["text"]) > 0 else ""
+                return example
+
+            def _convert_to_features(example_batch):
+                input_encodings = tokenizer.batch_encode_plus(
+                    example_batch["input_text"], pad_to_max_length=True, max_length=512, truncation=True
+                )
+                target_encodings = tokenizer.batch_encode_plus(
+                    example_batch["target_text"], pad_to_max_length=True, max_length=16, truncation=True
+                )
+
+                encodings = {
+                    "input_ids": input_encodings["input_ids"],
+                    "attention_mask": input_encodings["attention_mask"],
+                    "labels": target_encodings["input_ids"],
+                }
+
+                return encodings
+
+            def get_dataset():
+                data_file = str(self.tests_dir / "fixtures/tests_samples/SQUAD/sample.json")
+                data_files = {"train": data_file, "validation": data_file}
+                raw_datasets = datasets.load_dataset("json", data_files=data_files, field="data")
+                train_dataset = raw_datasets["train"].map(_add_eos_to_examples).map(_convert_to_features, batched=True)
+                valid_dataset = deepcopy(train_dataset)
+                return train_dataset, valid_dataset
+
+            train_dataset, eval_dataset = get_dataset()
+
+            trainer = Trainer(
+                model=model,
+                tokenizer=tokenizer,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+            )
+            trainer.train()  # crash 1 was here
+            trainer.evaluate()  # crash 2 was here
+
+--- Chunk 4 ---
+File: tests/models/vipllava/test_modeling_vipllava.py
+Lines: 220-254
+Symbol: VipLlavaForConditionalGenerationIntegrationTest.test_vipllava_merge_inputs_error_bug
+
+    def test_vipllava_merge_inputs_error_bug(self):
+        # This is a reproducer of https://github.com/huggingface/transformers/pull/28333 and makes sure it does not happen anymore
+        model_id = "llava-hf/vip-llava-7b-hf"
+        model = VipLlavaForConditionalGeneration.from_pretrained(
+            model_id, torch_dtype=torch.float16, low_cpu_mem_usage=True
+        ).to(torch_device)
+
+        # Simulate some user inputs
+        pixel_values = torch.randn(
+            (2, 3, 336, 336),
+            dtype=torch.float,
+            device=torch_device,
+        )
+        input_ids = torch.tensor(
+            [
+                [32001, 32001, 1, 15043, 7084, 32000, 29871, 13, 7900],
+                [1, 15043, 7084, 29901, 29871, 32000, 29871, 13, 7900],
+            ],
+            dtype=torch.long,
+            device=torch_device,
+        )
+        attention_mask = torch.tensor(
+            [[0, 0, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1]],
+            dtype=torch.long,
+            device=torch_device,
+        )
+
+        # Make sure that the loss is properly computed
+        loss = model(
+            pixel_values=pixel_values,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            labels=input_ids,
+        ).loss
+        loss.backward()
+
+--- Chunk 5 ---
+File: tests/models/llava/test_modeling_llava.py
+Lines: 338-372
+Symbol: LlavaForConditionalGenerationIntegrationTest.test_llava_merge_inputs_error_bug
+
+    def test_llava_merge_inputs_error_bug(self):
+        # This is a reproducer of https://github.com/huggingface/transformers/pull/28333 and makes sure it does not happen anymore
+        model_id = "llava-hf/llava-1.5-7b-hf"
+        model = LlavaForConditionalGeneration.from_pretrained(
+            model_id, torch_dtype=torch.float16, low_cpu_mem_usage=True
+        ).to(torch_device)
+
+        # Simulate some user inputs
+        pixel_values = torch.randn(
+            (2, 3, 336, 336),
+            dtype=torch.float,
+            device=torch_device,
+        )
+        input_ids = torch.tensor(
+            [
+                [32001, 32001, 1, 15043, 7084, 32000, 29871, 13, 7900],
+                [1, 15043, 7084, 29901, 29871, 32000, 29871, 13, 7900],
+            ],
+            dtype=torch.long,
+            device=torch_device,
+        )
+        attention_mask = torch.tensor(
+            [[0, 0, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1]],
+            dtype=torch.long,
+            device=torch_device,
+        )
+
+        # Make sure that the loss is properly computed
+        loss = model(
+            pixel_values=pixel_values,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            labels=input_ids,
+        ).loss
+        loss.backward()
+
+--- Chunk 6 ---
+File: src/transformers/models/llava/modeling_llava.py
+Lines: 136-156
+Symbol: LlavaPreTrainedModel._init_weights
+
+    def _init_weights(self, module):
+        # important: this ported version of Llava isn't meant for training from scratch - only
+        # inference and fine-tuning - so the proper init weights code has been removed - the original codebase
+        # https://github.com/haotian-liu/LLaVA/tree/main/llava should serve for that purpose
+        std = (
+            self.config.initializer_range
+            if hasattr(self.config, "initializer_range")
+            else self.config.text_config.initializer_range
+        )
+
+        if hasattr(module, "class_embedding"):
+            module.class_embedding.data.normal_(mean=0.0, std=std)
+
+        if isinstance(module, (nn.Linear, nn.Conv2d)):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+
+--- Chunk 7 ---
+File: src/transformers/commands/env.py
+Lines: 56-139
+Symbol: EnvironmentCommand.run
+
+    def run(self):
+        safetensors_version = "not installed"
+        if is_safetensors_available():
+            import safetensors
+
+            safetensors_version = safetensors.__version__
+        elif importlib.util.find_spec("safetensors") is not None:
+            import safetensors
+
+            safetensors_version = f"{safetensors.__version__} but is ignored because of PyTorch version too old."
+
+        accelerate_version = "not installed"
+        accelerate_config = accelerate_config_str = "not found"
+        if is_accelerate_available():
+            import accelerate
+            from accelerate.commands.config import default_config_file, load_config_from_file
+
+            accelerate_version = accelerate.__version__
+            # Get the default from the config file.
+            if self._accelerate_config_file is not None or os.path.isfile(default_config_file):
+                accelerate_config = load_config_from_file(self._accelerate_config_file).to_dict()
+
+            accelerate_config_str = (
+                "\n".join([f"\t- {prop}: {val}" for prop, val in accelerate_config.items()])
+                if isinstance(accelerate_config, dict)
+                else f"\t{accelerate_config}"
+            )
+
+        pt_version = "not installed"
+        pt_cuda_available = "NA"
+        if is_torch_available():
+            import torch
+
+            pt_version = torch.__version__
+            pt_cuda_available = torch.cuda.is_available()
+
+        tf_version = "not installed"
+        tf_cuda_available = "NA"
+        if is_tf_available():
+            import tensorflow as tf
+
+            tf_version = tf.__version__
+            try:
+                # deprecated in v2.1
+                tf_cuda_available = tf.test.is_gpu_available()
+            except AttributeError:
+                # returns list of devices, convert to bool
+                tf_cuda_available = bool(tf.config.list_physical_devices("GPU"))
+
+        flax_version = "not installed"
+        jax_version = "not installed"
+        jaxlib_version = "not installed"
+        jax_backend = "NA"
+        if is_flax_available():
+            import flax
+            import jax
+            import jaxlib
+
+            flax_version = flax.__version__
+            jax_version = jax.__version__
+            jaxlib_version = jaxlib.__version__
+            jax_backend = jax.lib.xla_bridge.get_backend().platform
+
+        info = {
+            "`transformers` version": version,
+            "Platform": platform.platform(),
+            "Python version": platform.python_version(),
+            "Huggingface_hub version": huggingface_hub.__version__,
+            "Safetensors version": f"{safetensors_version}",
+            "Accelerate version": f"{accelerate_version}",
+            "Accelerate config": f"{accelerate_config_str}",
+            "PyTorch version (GPU?)": f"{pt_version} ({pt_cuda_available})",
+            "Tensorflow version (GPU?)": f"{tf_version} ({tf_cuda_available})",
+            "Flax version (CPU?/GPU?/TPU?)": f"{flax_version} ({jax_backend})",
+            "Jax version": f"{jax_version}",
+            "JaxLib version": f"{jaxlib_version}",
+            "Using GPU in script?": "<fill in>",
+            "Using distributed or parallel set-up in script?": "<fill in>",
+        }
+
+        print("\nCopy-and-paste the text below in your GitHub issue and FILL OUT the two last points.\n")
+        print(self.format_dict(info))
+
+        return info
+
+--- Chunk 8 ---
+File: src/transformers/integrations/integration_utils.py
+Lines: 691-757
+Symbol: WandbCallback.setup
+
+    def setup(self, args, state, model, **kwargs):
+        """
+        Setup the optional Weights & Biases (*wandb*) integration.
+
+        One can subclass and override this method to customize the setup if needed. Find more information
+        [here](https://docs.wandb.ai/guides/integrations/huggingface). You can also override the following environment
+        variables:
+
+        Environment:
+        - **WANDB_LOG_MODEL** (`str`, *optional*, defaults to `"false"`):
+            Whether to log model and checkpoints during training. Can be `"end"`, `"checkpoint"` or `"false"`. If set
+            to `"end"`, the model will be uploaded at the end of training. If set to `"checkpoint"`, the checkpoint
+            will be uploaded every `args.save_steps` . If set to `"false"`, the model will not be uploaded. Use along
+            with [`~transformers.TrainingArguments.load_best_model_at_end`] to upload best model.
+
+            <Deprecated version="5.0">
+
+            Setting `WANDB_LOG_MODEL` as `bool` will be deprecated in version 5 of 🤗 Transformers.
+
+            </Deprecated>
+        - **WANDB_WATCH** (`str`, *optional* defaults to `"false"`):
+            Can be `"gradients"`, `"all"`, `"parameters"`, or `"false"`. Set to `"all"` to log gradients and
+            parameters.
+        - **WANDB_PROJECT** (`str`, *optional*, defaults to `"huggingface"`):
+            Set this to a custom string to store results in a different project.
+        - **WANDB_DISABLED** (`bool`, *optional*, defaults to `False`):
+            Whether to disable wandb entirely. Set `WANDB_DISABLED=true` to disable.
+        """
+        if self._wandb is None:
+            return
+        self._initialized = True
+        if state.is_world_process_zero:
+            logger.info(
+                'Automatic Weights & Biases logging enabled, to disable set os.environ["WANDB_DISABLED"] = "true"'
+            )
+            combined_dict = {**args.to_dict()}
+
+            if hasattr(model, "config") and model.config is not None:
+                model_config = model.config.to_dict()
+                combined_dict = {**model_config, **combined_dict}
+            trial_name = state.trial_name
+            init_args = {}
+            if trial_name is not None:
+                init_args["name"] = trial_name
+                init_args["group"] = args.run_name
+            else:
+                if not (args.run_name is None or args.run_name == args.output_dir):
+                    init_args["name"] = args.run_name
+
+            if self._wandb.run is None:
+                self._wandb.init(
+                    project=os.getenv("WANDB_PROJECT", "huggingface"),
+                    **init_args,
+                )
+            # add config parameters (run may have been created manually)
+            self._wandb.config.update(combined_dict, allow_val_change=True)
+
+            # define default x-axis (for latest wandb versions)
+            if getattr(self._wandb, "define_metric", None):
+                self._wandb.define_metric("train/global_step")
+                self._wandb.define_metric("*", step_metric="train/global_step", step_sync=True)
+
+            # keep track of model topology and gradients, unsupported on TPU
+            _watch_model = os.getenv("WANDB_WATCH", "false")
+            if not is_torch_xla_available() and _watch_model in ("all", "parameters", "gradients"):
+                self._wandb.watch(model, log=_watch_model, log_freq=max(100, state.logging_steps))
+            self._wandb.run._label(code="transformers_trainer")
+
+--- Chunk 9 ---
+File: src/transformers/models/vipllava/modeling_vipllava.py
+Lines: 143-163
+Symbol: VipLlavaPreTrainedModel._init_weights
+
+    def _init_weights(self, module):
+        # important: this ported version of VipLlava isn't meant for training from scratch - only
+        # inference and fine-tuning - so the proper init weights code has been removed - the original codebase
+        # https://github.com/haotian-liu/LLaVA/tree/main/vipllava should serve for that purpose
+        std = (
+            self.config.initializer_range
+            if hasattr(self.config, "initializer_range")
+            else self.config.text_config.initializer_range
+        )
+
+        if hasattr(module, "class_embedding"):
+            module.class_embedding.data.normal_(mean=0.0, std=std)
+
+        if isinstance(module, (nn.Linear, nn.Conv2d)):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+
+--- Chunk 10 ---
+File: src/transformers/modeling_utils.py
+Lines: 1286-1326
+Symbol: PreTrainedModel._from_config
+
+    def _from_config(cls, config, **kwargs):
+        """
+        All context managers that the model should be initialized under go here.
+
+        Args:
+            torch_dtype (`torch.dtype`, *optional*):
+                Override the default `torch.dtype` and load the model under this dtype.
+        """
+        torch_dtype = kwargs.pop("torch_dtype", None)
+        use_flash_attention_2 = kwargs.pop("use_flash_attention_2", False)
+
+        # override default dtype if needed
+        dtype_orig = None
+        if torch_dtype is not None:
+            dtype_orig = cls._set_default_torch_dtype(torch_dtype)
+
+        config = copy.deepcopy(config)  # We do not want to modify the config inplace in _from_config.
+        config._attn_implementation = kwargs.pop("attn_implementation", None)
+        config = cls._autoset_attn_implementation(
+            config,
+            use_flash_attention_2=use_flash_attention_2,
+            check_device_map=False,
+            torch_dtype=torch_dtype,
+        )
+
+        if is_deepspeed_zero3_enabled():
+            import deepspeed
+
+            logger.info("Detected DeepSpeed ZeRO-3: activating zero.init() for this model")
+            # this immediately partitions the model across all gpus, to avoid the overhead in time
+            # and memory copying it on CPU or each GPU first
+            with deepspeed.zero.Init(config_dict_or_path=deepspeed_config()):
+                model = cls(config, **kwargs)
+        else:
+            model = cls(config, **kwargs)
+
+        # restore default dtype if it was modified
+        if dtype_orig is not None:
+            torch.set_default_dtype(dtype_orig)
+
+        return model
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

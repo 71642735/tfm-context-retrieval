@@ -1,0 +1,277 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+viewcode creates pages for epub even if `viewcode_enable_epub=False` on `make html epub`
+**Describe the bug**
+viewcode creates pages for epub even if `viewcode_enable_epub=False` on `make html epub`
+
+**To Reproduce**
+```
+$ make html epub
+```
+
+**Expected behavior**
+module pages should not be created for epub by default.
+
+**Your project**
+No
+
+**Screenshots**
+No
+
+**Environment info**
+- OS: Mac
+- Python version: 3.9.1
+- Sphinx version: HEAD of 3.x
+- Sphinx extensions:  sphinx.ext.viewcode
+- Extra tools: No
+
+**Additional context**
+No
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/test_quickstart.py
+Lines: 127-179
+Symbol: test_quickstart_all_answers
+
+def test_quickstart_all_answers(tempdir):
+    answers = {
+        'Root path': tempdir,
+        'Separate source and build': 'y',
+        'Name prefix for templates': '.',
+        'Project name': 'STASI™',
+        'Author name': 'Wolfgang Schäuble & G\'Beckstein',
+        'Project version': '2.0',
+        'Project release': '2.0.1',
+        'Project language': 'de',
+        'Source file suffix': '.txt',
+        'Name of your master document': 'contents',
+        'autodoc': 'y',
+        'doctest': 'yes',
+        'intersphinx': 'no',
+        'todo': 'y',
+        'coverage': 'no',
+        'imgmath': 'N',
+        'mathjax': 'no',
+        'ifconfig': 'no',
+        'viewcode': 'no',
+        'githubpages': 'no',
+        'Create Makefile': 'no',
+        'Create Windows command file': 'no',
+        'Do you want to use the epub builder': 'yes',
+    }
+    qs.term_input = mock_input(answers, needanswer=True)
+    d = {}
+    qs.ask_user(d)
+    qs.generate(d)
+
+    conffile = tempdir / 'source' / 'conf.py'
+    assert conffile.isfile()
+    ns = {}
+    execfile_(conffile, ns)
+    assert ns['extensions'] == [
+        'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo'
+    ]
+    assert ns['templates_path'] == ['.templates']
+    assert ns['source_suffix'] == '.txt'
+    assert ns['master_doc'] == 'contents'
+    assert ns['project'] == 'STASI™'
+    assert ns['copyright'] == '%s, Wolfgang Schäuble & G\'Beckstein' % \
+        time.strftime('%Y')
+    assert ns['version'] == '2.0'
+    assert ns['release'] == '2.0.1'
+    assert ns['todo_include_todos'] is True
+    assert ns['html_static_path'] == ['.static']
+
+    assert (tempdir / 'build').isdir()
+    assert (tempdir / 'source' / '.static').isdir()
+    assert (tempdir / 'source' / '.templates').isdir()
+    assert (tempdir / 'source' / 'contents.txt').isfile()
+
+--- Chunk 2 ---
+File: sphinx/builders/epub3.py
+Lines: 88-102
+Symbol: Epub3Builder.content_metadata
+
+    def content_metadata(self) -> Dict:
+        """Create a dictionary with all metadata for the content.opf
+        file properly escaped.
+        """
+        writing_mode = self.config.epub_writing_mode
+
+        metadata = super().content_metadata()
+        metadata['description'] = html.escape(self.config.epub_description)
+        metadata['contributor'] = html.escape(self.config.epub_contributor)
+        metadata['page_progression_direction'] = PAGE_PROGRESSION_DIRECTIONS.get(writing_mode)
+        metadata['ibook_scroll_axis'] = IBOOK_SCROLL_AXIS.get(writing_mode)
+        metadata['date'] = html.escape(format_date("%Y-%m-%dT%H:%M:%SZ"))
+        metadata['version'] = html.escape(self.config.version)
+        metadata['epub_version'] = self.config.epub_version
+        return metadata
+
+--- Chunk 3 ---
+File: tests/test_build_epub.py
+Lines: 385-396
+Symbol: test_run_epubcheck
+
+def test_run_epubcheck(app):
+    app.build()
+
+    epubcheck = os.environ.get('EPUBCHECK_PATH', '/usr/share/java/epubcheck.jar')
+    if runnable(['java', '-version']) and os.path.exists(epubcheck):
+        try:
+            subprocess.run(['java', '-jar', epubcheck, app.outdir / 'SphinxTests.epub'],
+                           stdout=PIPE, stderr=PIPE, check=True)
+        except CalledProcessError as exc:
+            print(exc.stdout.decode('utf-8'))
+            print(exc.stderr.decode('utf-8'))
+            assert False, 'epubcheck exited with return code %s' % exc.returncode
+
+--- Chunk 4 ---
+File: tests/test_environment_indexentries.py
+Lines: 96-105
+Symbol: test_create_see_index
+
+def test_create_see_index(app):
+    text = (".. index:: see: docutils; reStructuredText\n"
+            ".. index:: see: Python; interpreter\n"
+            ".. index:: see: Sphinx; documentation tool\n")
+    restructuredtext.parse(app, text)
+    index = IndexEntries(app.env).create_index(app.builder)
+    assert len(index) == 3
+    assert index[0] == ('D', [('docutils', [[], [('see reStructuredText', [])], None])])
+    assert index[1] == ('P', [('Python', [[], [('see interpreter', [])], None])])
+    assert index[2] == ('S', [('Sphinx', [[], [('see documentation tool', [])], None])])
+
+--- Chunk 5 ---
+File: tests/test_build_epub.py
+Lines: 361-373
+Symbol: test_html_download_role
+
+def test_html_download_role(app, status, warning):
+    app.build()
+    assert not (app.outdir / '_downloads' / 'dummy.dat').exists()
+
+    content = (app.outdir / 'index.xhtml').read_text()
+    assert ('<li><p><code class="xref download docutils literal notranslate">'
+            '<span class="pre">dummy.dat</span></code></p></li>' in content)
+    assert ('<li><p><code class="xref download docutils literal notranslate">'
+            '<span class="pre">not_found.dat</span></code></p></li>' in content)
+    assert ('<li><p><code class="xref download docutils literal notranslate">'
+            '<span class="pre">Sphinx</span> <span class="pre">logo</span></code>'
+            '<span class="link-target"> [http://www.sphinx-doc.org/en/master'
+            '/_static/sphinxheader.png]</span></p></li>' in content)
+
+--- Chunk 6 ---
+File: sphinx/builders/_epub_base.py
+Lines: 450-462
+Symbol: EpubBuilder.handle_page
+
+    def handle_page(self, pagename: str, addctx: Dict, templatename: str = 'page.html',
+                    outfilename: str = None, event_arg: Any = None) -> None:
+        """Create a rendered page.
+
+        This method is overwritten for genindex pages in order to fix href link
+        attributes.
+        """
+        if pagename.startswith('genindex') and 'genindexentries' in addctx:
+            if not self.use_index:
+                return
+            self.fix_genindex(addctx['genindexentries'])
+        addctx['doctype'] = self.doctype
+        super().handle_page(pagename, addctx, templatename, outfilename, event_arg)
+
+--- Chunk 7 ---
+File: tests/test_quickstart.py
+Lines: 96-124
+Symbol: test_quickstart_defaults
+
+def test_quickstart_defaults(tempdir):
+    answers = {
+        'Root path': tempdir,
+        'Project name': 'Sphinx Test',
+        'Author name': 'Georg Brandl',
+        'Project version': '0.1',
+    }
+    qs.term_input = mock_input(answers)
+    d = {}
+    qs.ask_user(d)
+    qs.generate(d)
+
+    conffile = tempdir / 'conf.py'
+    assert conffile.isfile()
+    ns = {}
+    execfile_(conffile, ns)
+    assert ns['extensions'] == []
+    assert ns['templates_path'] == ['_templates']
+    assert ns['project'] == 'Sphinx Test'
+    assert ns['copyright'] == '%s, Georg Brandl' % time.strftime('%Y')
+    assert ns['version'] == '0.1'
+    assert ns['release'] == '0.1'
+    assert ns['html_static_path'] == ['_static']
+
+    assert (tempdir / '_static').isdir()
+    assert (tempdir / '_templates').isdir()
+    assert (tempdir / 'index.rst').isfile()
+    assert (tempdir / 'Makefile').isfile()
+    assert (tempdir / 'make.bat').isfile()
+
+--- Chunk 8 ---
+File: tests/test_build_epub.py
+Lines: 344-355
+Symbol: test_epub_css_files
+
+def test_epub_css_files(app):
+    app.builder.build_all()
+
+    # epub_css_files
+    content = (app.outdir / 'index.xhtml').read_text()
+    assert '<link rel="stylesheet" type="text/css" href="_static/css/epub.css" />' in content
+
+    # files in html_css_files are not outputed
+    assert ('<link rel="stylesheet" type="text/css" href="_static/css/style.css" />'
+            not in content)
+    assert ('<link media="print" rel="stylesheet" title="title" type="text/css" '
+            'href="https://example.com/custom.css" />' not in content)
+
+--- Chunk 9 ---
+File: tests/test_build_epub.py
+Lines: 331-339
+Symbol: test_epub_assets
+
+def test_epub_assets(app):
+    app.builder.build_all()
+
+    # epub_sytlesheets (same as html_css_files)
+    content = (app.outdir / 'index.xhtml').read_text()
+    assert ('<link rel="stylesheet" type="text/css" href="_static/css/style.css" />'
+            in content)
+    assert ('<link media="print" rel="stylesheet" title="title" type="text/css" '
+            'href="https://example.com/custom.css" />' in content)
+
+--- Chunk 10 ---
+File: tests/test_environment_indexentries.py
+Lines: 109-118
+Symbol: test_create_seealso_index
+
+def test_create_seealso_index(app):
+    text = (".. index:: seealso: docutils; reStructuredText\n"
+            ".. index:: seealso: Python; interpreter\n"
+            ".. index:: seealso: Sphinx; documentation tool\n")
+    restructuredtext.parse(app, text)
+    index = IndexEntries(app.env).create_index(app.builder)
+    assert len(index) == 3
+    assert index[0] == ('D', [('docutils', [[], [('see also reStructuredText', [])], None])])
+    assert index[1] == ('P', [('Python', [[], [('see also interpreter', [])], None])])
+    assert index[2] == ('S', [('Sphinx', [[], [('see also documentation tool', [])], None])])
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

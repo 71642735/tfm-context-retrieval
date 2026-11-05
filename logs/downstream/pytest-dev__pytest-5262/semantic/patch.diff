@@ -1,0 +1,14 @@
+```patch
+diff --git a/src/_pytest/capture.py b/src/_pytest/capture.py
+--- a/src/_pytest/capture.py
++++ b/src/_pytest/capture.py
+@@ -410,7 +410,7 @@
+ 
+     @property
+     def mode(self):
+-        return self.buffer.mode
++        return self.buffer.mode.replace("b", "")
+ 
+     def __getattr__(self, name):
+         return getattr(self.buffer, name)
+```

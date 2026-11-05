@@ -1,0 +1,11 @@
+```diff
+--- pylint/config/argument.py
++++ pylint/config/argument.py
+@@ -101,5 +101,5 @@
+     patterns = []
+     for pattern in utils._splitstrip(value):
+-        patterns.append(re.compile(pattern))
++        patterns.append(re.compile(utils._unquote(pattern)))
+     return patterns
+ 
+```

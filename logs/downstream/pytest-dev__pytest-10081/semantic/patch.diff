@@ -1,0 +1,14 @@
+```patch
+diff --git a/src/_pytest/unittest.py b/src/_pytest/unittest.py
+--- a/src/_pytest/unittest.py
++++ b/src/_pytest/unittest.py
+@@ -319,7 +319,7 @@ class TestCaseFunction(Function):
+             # handle unittest.skip decorator on class or method
+             skip_str = _get_skip_reason(self.obj)
+             if skip_str is not None:
+-                raise skip.Exception(skip_str)
++                pytest.skip(skip_str)
+ 
+             # allow setUpModule/setUpClass to be-defined
+             if self._explicit_tearDown:
+```

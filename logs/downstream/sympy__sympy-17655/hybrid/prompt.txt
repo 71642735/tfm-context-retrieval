@@ -1,0 +1,717 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Unexpected exception when multiplying geometry.Point and number
+```python
+from sympy import geometry as ge
+import sympy
+
+point1 = ge.Point(0,0)
+point2 = ge.Point(1,1)
+```
+
+This line works fine
+```python
+point1 + point2 * sympy.sympify(2.0)
+```
+
+But when I write the same this way it raises an exception
+```python
+point1 + sympy.sympify(2.0) * point2
+```
+
+```
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)
+    219         try:
+--> 220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+    221         except TypeError:
+
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __new__(cls, *args, **kwargs)
+    128                 Expecting sequence of coordinates, not `{}`'''
+--> 129                                        .format(func_name(coords))))
+    130         # A point where only `dim` is specified is initialized
+
+TypeError: 
+Expecting sequence of coordinates, not `Mul`
+
+During handling of the above exception, another exception occurred:
+
+GeometryError                             Traceback (most recent call last)
+<ipython-input-20-6dcbddac1ee2> in <module>
+----> 1 point1 + sympy.sympify(2.0)* point2
+
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)
+    220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+    221         except TypeError:
+--> 222             raise GeometryError("Don't know how to add {} and a Point object".format(other))
+    223 
+    224         coords = [simplify(a + b) for a, b in zip(s, o)]
+
+GeometryError: Don't know how to add 2.0*Point2D(1, 1) and a Point object
+```
+
+The expected behaviour is, that both lines give the same result
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sympy/geometry/point.py
+Lines: 185-222
+Symbol: Point.__add__
+
+    def __add__(self, other):
+        """Add other to self by incrementing self's coordinates by
+        those of other.
+
+        Notes
+        =====
+
+        >>> from sympy.geometry.point import Point
+
+        When sequences of coordinates are passed to Point methods, they
+        are converted to a Point internally. This __add__ method does
+        not do that so if floating point values are used, a floating
+        point result (in terms of SymPy Floats) will be returned.
+
+        >>> Point(1, 2) + (.1, .2)
+        Point2D(1.1, 2.2)
+
+        If this is not desired, the `translate` method can be used or
+        another Point can be added:
+
+        >>> Point(1, 2).translate(.1, .2)
+        Point2D(11/10, 11/5)
+        >>> Point(1, 2) + Point(.1, .2)
+        Point2D(11/10, 11/5)
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.translate
+
+        """
+        try:
+            s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+        except TypeError:
+            raise GeometryError("Don't know how to add {} and a Point object".format(other))
+
+        coords = [simplify(a + b) for a, b in zip(s, o)]
+        return Point(coords, evaluate=False)
+
+--- Chunk 2 ---
+File: sympy/geometry/point.py
+Lines: 250-279
+Symbol: Point.__mul__
+
+    def __mul__(self, factor):
+        """Multiply point's coordinates by a factor.
+
+        Notes
+        =====
+
+        >>> from sympy.geometry.point import Point
+
+        When multiplying a Point by a floating point number,
+        the coordinates of the Point will be changed to Floats:
+
+        >>> Point(1, 2)*0.1
+        Point2D(0.1, 0.2)
+
+        If this is not desired, the `scale` method can be used or
+        else only multiply or divide by integers:
+
+        >>> Point(1, 2).scale(1.1, 1.1)
+        Point2D(11/10, 11/5)
+        >>> Point(1, 2)*11/10
+        Point2D(11/10, 11/5)
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.scale
+        """
+        factor = sympify(factor)
+        coords = [simplify(x*factor) for x in self.args]
+        return Point(coords, evaluate=False)
+
+--- Chunk 3 ---
+File: sympy/geometry/point.py
+Lines: 382-432
+Symbol: Point.distance
+
+    def distance(self, other):
+        """The Euclidean distance between self and another GeometricEntity.
+
+        Returns
+        =======
+
+        distance : number or symbolic expression.
+
+        Raises
+        ======
+
+        TypeError : if other is not recognized as a GeometricEntity or is a
+                    GeometricEntity for which distance is not defined.
+
+        See Also
+        ========
+
+        sympy.geometry.line.Segment.length
+        sympy.geometry.point.Point.taxicab_distance
+
+        Examples
+        ========
+
+        >>> from sympy.geometry import Point, Line
+        >>> p1, p2 = Point(1, 1), Point(4, 5)
+        >>> l = Line((3, 1), (2, 2))
+        >>> p1.distance(p2)
+        5
+        >>> p1.distance(l)
+        sqrt(2)
+
+        The computed distance may be symbolic, too:
+
+        >>> from sympy.abc import x, y
+        >>> p3 = Point(x, y)
+        >>> p3.distance((0, 0))
+        sqrt(x**2 + y**2)
+
+        """
+        if not isinstance(other, GeometryEntity):
+            try:
+                other = Point(other, dim=self.ambient_dimension)
+            except TypeError:
+                raise TypeError("not recognized as a GeometricEntity: %s" % type(other))
+        if isinstance(other, Point):
+            s, p = Point._normalize_dimension(self, Point(other))
+            return sqrt(Add(*((a - b)**2 for a, b in zip(s, p))))
+        distance = getattr(other, 'distance', None)
+        if distance is None:
+            raise TypeError("distance between Point and %s is not defined" % type(other))
+        return distance(self)
+
+--- Chunk 4 ---
+File: sympy/geometry/plane.py
+Lines: 826-883
+Symbol: Plane.parameter_value
+
+    def parameter_value(self, other, u, v=None):
+        """Return the parameter(s) corresponding to the given point.
+
+        Examples
+        ========
+
+        >>> from sympy import Plane, Point, pi
+        >>> from sympy.abc import t, u, v
+        >>> p = Plane((2, 0, 0), (0, 0, 1), (0, 1, 0))
+
+        By default, the parameter value returned defines a point
+        that is a distance of 1 from the Plane's p1 value and
+        in line with the given point:
+
+        >>> on_circle = p.arbitrary_point(t).subs(t, pi/4)
+        >>> on_circle.distance(p.p1)
+        1
+        >>> p.parameter_value(on_circle, t)
+        {t: pi/4}
+
+        Moving the point twice as far from p1 does not change
+        the parameter value:
+
+        >>> off_circle = p.p1 + (on_circle - p.p1)*2
+        >>> off_circle.distance(p.p1)
+        2
+        >>> p.parameter_value(off_circle, t)
+        {t: pi/4}
+
+        If the 2-value parameter is desired, supply the two
+        parameter symbols and a replacement dictionary will
+        be returned:
+
+        >>> p.parameter_value(on_circle, u, v)
+        {u: sqrt(10)/10, v: sqrt(10)/30}
+        >>> p.parameter_value(off_circle, u, v)
+        {u: sqrt(10)/5, v: sqrt(10)/15}
+        """
+        from sympy.geometry.point import Point
+        from sympy.solvers.solvers import solve
+        if not isinstance(other, GeometryEntity):
+            other = Point(other, dim=self.ambient_dimension)
+        if not isinstance(other, Point):
+            raise ValueError("other must be a point")
+        if other == self.p1:
+            return other
+        if isinstance(u, Symbol) and v is None:
+            delta = self.arbitrary_point(u) - self.p1
+            eq = delta - (other - self.p1).unit
+            sol = solve(eq, u, dict=True)
+        elif isinstance(u, Symbol) and isinstance(v, Symbol):
+            pt = self.arbitrary_point(u, v)
+            sol = solve(pt - other, (u, v), dict=True)
+        else:
+            raise ValueError('expecting 1 or 2 symbols')
+        if not sol:
+            raise ValueError("Given point is not on %s" % func_name(self))
+        return sol[0]  # {t: tval} or {u: uval, v: vval}
+
+--- Chunk 5 ---
+File: sympy/geometry/ellipse.py
+Lines: 1088-1143
+Symbol: Ellipse.random_point
+
+    def random_point(self, seed=None):
+        """A random point on the ellipse.
+
+        Returns
+        =======
+
+        point : Point
+
+        Examples
+        ========
+
+        >>> from sympy import Point, Ellipse, Segment
+        >>> e1 = Ellipse(Point(0, 0), 3, 2)
+        >>> e1.random_point() # gives some random point
+        Point2D(...)
+        >>> p1 = e1.random_point(seed=0); p1.n(2)
+        Point2D(2.1, 1.4)
+
+        Notes
+        =====
+
+        When creating a random point, one may simply replace the
+        parameter with a random number. When doing so, however, the
+        random number should be made a Rational or else the point
+        may not test as being in the ellipse:
+
+        >>> from sympy.abc import t
+        >>> from sympy import Rational
+        >>> arb = e1.arbitrary_point(t); arb
+        Point2D(3*cos(t), 2*sin(t))
+        >>> arb.subs(t, .1) in e1
+        False
+        >>> arb.subs(t, Rational(.1)) in e1
+        True
+        >>> arb.subs(t, Rational('.1')) in e1
+        True
+
+        See Also
+        ========
+        sympy.geometry.point.Point
+        arbitrary_point : Returns parameterized point on ellipse
+        """
+        from sympy import sin, cos, Rational
+        t = _symbol('t', real=True)
+        x, y = self.arbitrary_point(t).args
+        # get a random value in [-1, 1) corresponding to cos(t)
+        # and confirm that it will test as being in the ellipse
+        if seed is not None:
+            rng = random.Random(seed)
+        else:
+            rng = random
+        # simplify this now or else the Float will turn s into a Float
+        r = Rational(rng.random())
+        c = 2*r - 1
+        s = sqrt(1 - c**2)
+        return Point(x.subs(cos(t), c), y.subs(sin(t), s))
+
+--- Chunk 6 ---
+File: sympy/geometry/util.py
+Lines: 115-174
+Symbol: are_similar
+
+def are_similar(e1, e2):
+    """Are two geometrical entities similar.
+
+    Can one geometrical entity be uniformly scaled to the other?
+
+    Parameters
+    ==========
+
+    e1 : GeometryEntity
+    e2 : GeometryEntity
+
+    Returns
+    =======
+
+    are_similar : boolean
+
+    Raises
+    ======
+
+    GeometryError
+        When `e1` and `e2` cannot be compared.
+
+    Notes
+    =====
+
+    If the two objects are equal then they are similar.
+
+    See Also
+    ========
+
+    sympy.geometry.entity.GeometryEntity.is_similar
+
+    Examples
+    ========
+
+    >>> from sympy import Point, Circle, Triangle, are_similar
+    >>> c1, c2 = Circle(Point(0, 0), 4), Circle(Point(1, 4), 3)
+    >>> t1 = Triangle(Point(0, 0), Point(1, 0), Point(0, 1))
+    >>> t2 = Triangle(Point(0, 0), Point(2, 0), Point(0, 2))
+    >>> t3 = Triangle(Point(0, 0), Point(3, 0), Point(0, 1))
+    >>> are_similar(t1, t2)
+    True
+    >>> are_similar(t1, t3)
+    False
+
+    """
+    from .exceptions import GeometryError
+
+    if e1 == e2:
+        return True
+    is_similar1 = getattr(e1, 'is_similar', None)
+    if is_similar1:
+        return is_similar1(e2)
+    is_similar2 = getattr(e2, 'is_similar', None)
+    if is_similar2:
+        return is_similar2(e1)
+    n1 = e1.__class__.__name__
+    n2 = e2.__class__.__name__
+    raise GeometryError(
+        "Cannot test similarity between %s and %s" % (n1, n2))
+
+--- Chunk 7 ---
+File: sympy/geometry/line.py
+Lines: 896-982
+Symbol: LinearEntity.projection
+
+    def projection(self, other):
+        """Project a point, line, ray, or segment onto this linear entity.
+
+        Parameters
+        ==========
+
+        other : Point or LinearEntity (Line, Ray, Segment)
+
+        Returns
+        =======
+
+        projection : Point or LinearEntity (Line, Ray, Segment)
+            The return type matches the type of the parameter ``other``.
+
+        Raises
+        ======
+
+        GeometryError
+            When method is unable to perform projection.
+
+        Notes
+        =====
+
+        A projection involves taking the two points that define
+        the linear entity and projecting those points onto a
+        Line and then reforming the linear entity using these
+        projections.
+        A point P is projected onto a line L by finding the point
+        on L that is closest to P. This point is the intersection
+        of L and the line perpendicular to L that passes through P.
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point, perpendicular_line
+
+        Examples
+        ========
+
+        >>> from sympy import Point, Line, Segment, Rational
+        >>> p1, p2, p3 = Point(0, 0), Point(1, 1), Point(Rational(1, 2), 0)
+        >>> l1 = Line(p1, p2)
+        >>> l1.projection(p3)
+        Point2D(1/4, 1/4)
+        >>> p4, p5 = Point(10, 0), Point(12, 1)
+        >>> s1 = Segment(p4, p5)
+        >>> l1.projection(s1)
+        Segment2D(Point2D(5, 5), Point2D(13/2, 13/2))
+        >>> p1, p2, p3 = Point(0, 0, 1), Point(1, 1, 2), Point(2, 0, 1)
+        >>> l1 = Line(p1, p2)
+        >>> l1.projection(p3)
+        Point3D(2/3, 2/3, 5/3)
+        >>> p4, p5 = Point(10, 0, 1), Point(12, 1, 3)
+        >>> s1 = Segment(p4, p5)
+        >>> l1.projection(s1)
+        Segment3D(Point3D(10/3, 10/3, 13/3), Point3D(5, 5, 6))
+
+        """
+
+        if not isinstance(other, GeometryEntity):
+            other = Point(other, dim=self.ambient_dimension)
+
+        def proj_point(p):
+            return Point.project(p - self.p1, self.direction) + self.p1
+
+        if isinstance(other, Point):
+            return proj_point(other)
+        elif isinstance(other, LinearEntity):
+            p1, p2 = proj_point(other.p1), proj_point(other.p2)
+            # test to see if we're degenerate
+            if p1 == p2:
+                return p1
+            projected = other.__class__(p1, p2)
+            projected = Intersection(self, projected)
+            # if we happen to have intersected in only a point, return that
+            if projected.is_FiniteSet and len(projected) == 1:
+                # projected is a set of size 1, so unpack it in `a`
+                a, = projected
+                return a
+            # order args so projection is in the same direction as self
+            if self.direction.dot(projected.direction) < 0:
+                p1, p2 = projected.args
+                projected = projected.func(p2, p1)
+            return projected
+
+        raise GeometryError(
+            "Do not know how to project %s onto %s" % (other, self))
+
+--- Chunk 8 ---
+File: sympy/geometry/line.py
+Lines: 390-545
+Symbol: LinearEntity.intersection
+
+    def intersection(self, other):
+        """The intersection with another geometrical entity.
+
+        Parameters
+        ==========
+
+        o : Point or LinearEntity
+
+        Returns
+        =======
+
+        intersection : list of geometrical entities
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point
+
+        Examples
+        ========
+
+        >>> from sympy import Point, Line, Segment
+        >>> p1, p2, p3 = Point(0, 0), Point(1, 1), Point(7, 7)
+        >>> l1 = Line(p1, p2)
+        >>> l1.intersection(p3)
+        [Point2D(7, 7)]
+        >>> p4, p5 = Point(5, 0), Point(0, 3)
+        >>> l2 = Line(p4, p5)
+        >>> l1.intersection(l2)
+        [Point2D(15/8, 15/8)]
+        >>> p6, p7 = Point(0, 5), Point(2, 6)
+        >>> s1 = Segment(p6, p7)
+        >>> l1.intersection(s1)
+        []
+        >>> from sympy import Point3D, Line3D, Segment3D
+        >>> p1, p2, p3 = Point3D(0, 0, 0), Point3D(1, 1, 1), Point3D(7, 7, 7)
+        >>> l1 = Line3D(p1, p2)
+        >>> l1.intersection(p3)
+        [Point3D(7, 7, 7)]
+        >>> l1 = Line3D(Point3D(4,19,12), Point3D(5,25,17))
+        >>> l2 = Line3D(Point3D(-3, -15, -19), direction_ratio=[2,8,8])
+        >>> l1.intersection(l2)
+        [Point3D(1, 1, -3)]
+        >>> p6, p7 = Point3D(0, 5, 2), Point3D(2, 6, 3)
+        >>> s1 = Segment3D(p6, p7)
+        >>> l1.intersection(s1)
+        []
+
+        """
+        def intersect_parallel_rays(ray1, ray2):
+            if ray1.direction.dot(ray2.direction) > 0:
+                # rays point in the same direction
+                # so return the one that is "in front"
+                return [ray2] if ray1._span_test(ray2.p1) >= 0 else [ray1]
+            else:
+                # rays point in opposite directions
+                st = ray1._span_test(ray2.p1)
+                if st < 0:
+                    return []
+                elif st == 0:
+                    return [ray2.p1]
+                return [Segment(ray1.p1, ray2.p1)]
+
+        def intersect_parallel_ray_and_segment(ray, seg):
+            st1, st2 = ray._span_test(seg.p1), ray._span_test(seg.p2)
+            if st1 < 0 and st2 < 0:
+                return []
+            elif st1 >= 0 and st2 >= 0:
+                return [seg]
+            elif st1 >= 0: # st2 < 0:
+                return [Segment(ray.p1, seg.p1)]
+            elif st2 >= 0: # st1 < 0:
+                return [Segment(ray.p1, seg.p2)]
+
+        def intersect_parallel_segments(seg1, seg2):
+            if seg1.contains(seg2):
+                return [seg2]
+            if seg2.contains(seg1):
+                return [seg1]
+
+            # direct the segments so they're oriented the same way
+            if seg1.direction.dot(seg2.direction) < 0:
+                seg2 = Segment(seg2.p2, seg2.p1)
+            # order the segments so seg1 is "behind" seg2
+            if seg1._span_test(seg2.p1) < 0:
+                seg1, seg2 = seg2, seg1
+            if seg2._span_test(seg1.p2) < 0:
+                return []
+            return [Segment(seg2.p1, seg1.p2)]
+
+        if not isinstance(other, GeometryEntity):
+            other = Point(other, dim=self.ambient_dimension)
+        if other.is_Point:
+            if self.contains(other):
+                return [other]
+            else:
+                return []
+        elif isinstance(other, LinearEntity):
+            # break into cases based on whether
+            # the lines are parallel, non-parallel intersecting, or skew
+            pts = Point._normalize_dimension(self.p1, self.p2, other.p1, other.p2)
+            rank = Point.affine_rank(*pts)
+
+            if rank == 1:
+                # we're collinear
+                if isinstance(self, Line):
+                    return [other]
+                if isinstance(other, Line):
+                    return [self]
+
+                if isinstance(self, Ray) and isinstance(other, Ray):
+                    return intersect_parallel_rays(self, other)
+                if isinstance(self, Ray) and isinstance(other, Segment):
+                    return intersect_parallel_ray_and_segment(self, other)
+                if isinstance(self, Segment) and isinstance(other, Ray):
+                    return intersect_parallel_ray_and_segment(other, self)
+                if isinstance(self, Segment) and isinstance(other, Segment):
+                    return intersect_parallel_segments(self, other)
+            elif rank == 2:
+                # we're in the same plane
+                l1 = Line(*pts[:2])
+                l2 = Line(*pts[2:])
+
+                # check to see if we're parallel.  If we are, we can't
+                # be intersecting, since the collinear case was already
+                # handled
+                if l1.direction.is_scalar_multiple(l2.direction):
+                    return []
+
+                # find the intersection as if everything were lines
+                # by solving the equation t*d + p1 == s*d' + p1'
+                m = Matrix([l1.direction, -l2.direction]).transpose()
+                v = Matrix([l2.p1 - l1.p1]).transpose()
+
+                # we cannot use m.solve(v) because that only works for square matrices
+                m_rref, pivots = m.col_insert(2, v).rref(simplify=True)
+                # rank == 2 ensures we have 2 pivots, but let's check anyway
+                if len(pivots) != 2:
+                    raise GeometryError("Failed when solving Mx=b when M={} and b={}".format(m, v))
+                coeff = m_rref[0, 2]
+                line_intersection = l1.direction*coeff + self.p1
+
+                # if we're both lines, we can skip a containment check
+                if isinstance(self, Line) and isinstance(other, Line):
+                    return [line_intersection]
+
+                if ((isinstance(self, Line) or
+                        self.contains(line_intersection)) and
+                        other.contains(line_intersection)):
+                    return [line_intersection]
+                return []
+            else:
+                # we're skew
+                return []
+
+        return other.intersection(self)
+
+--- Chunk 9 ---
+File: sympy/geometry/line.py
+Lines: 1625-1666
+Symbol: Segment.distance
+
+    def distance(self, other):
+        """
+        Finds the shortest distance between a line segment and a point.
+
+        Raises
+        ======
+
+        NotImplementedError is raised if `other` is not a Point
+
+        Examples
+        ========
+
+        >>> from sympy import Point, Segment
+        >>> p1, p2 = Point(0, 1), Point(3, 4)
+        >>> s = Segment(p1, p2)
+        >>> s.distance(Point(10, 15))
+        sqrt(170)
+        >>> s.distance((0, 12))
+        sqrt(73)
+        >>> from sympy import Point3D, Segment3D
+        >>> p1, p2 = Point3D(0, 0, 3), Point3D(1, 1, 4)
+        >>> s = Segment3D(p1, p2)
+        >>> s.distance(Point3D(10, 15, 12))
+        sqrt(341)
+        >>> s.distance((10, 15, 12))
+        sqrt(341)
+        """
+        if not isinstance(other, GeometryEntity):
+            other = Point(other, dim=self.ambient_dimension)
+        if isinstance(other, Point):
+            vp1 = other - self.p1
+            vp2 = other - self.p2
+
+            dot_prod_sign_1 = self.direction.dot(vp1) >= 0
+            dot_prod_sign_2 = self.direction.dot(vp2) <= 0
+            if dot_prod_sign_1 and dot_prod_sign_2:
+                return Line(self.p1, self.p2).distance(other)
+            if dot_prod_sign_1 and not dot_prod_sign_2:
+                return abs(vp2)
+            if not dot_prod_sign_1 and dot_prod_sign_2:
+                return abs(vp1)
+        raise NotImplementedError()
+
+--- Chunk 10 ---
+File: sympy/geometry/tests/test_line.py
+Lines: 683-696
+Symbol: test_raises
+
+def test_raises():
+    d, e = symbols('a,b', real=True)
+    s = Segment((d, 0), (e, 0))
+
+    raises(TypeError, lambda: Line((1, 1), 1))
+    raises(ValueError, lambda: Line(Point(0, 0), Point(0, 0)))
+    raises(Undecidable, lambda: Point(2 * d, 0) in s)
+    raises(ValueError, lambda: Ray3D(Point(1.0, 1.0)))
+    raises(ValueError, lambda: Line3D(Point3D(0, 0, 0), Point3D(0, 0, 0)))
+    raises(TypeError, lambda: Line3D((1, 1), 1))
+    raises(ValueError, lambda: Line3D(Point3D(0, 0, 0)))
+    raises(TypeError, lambda: Ray((1, 1), 1))
+    raises(GeometryError, lambda: Line(Point(0, 0), Point(1, 0))
+           .projection(Circle(Point(0, 0), 1)))
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

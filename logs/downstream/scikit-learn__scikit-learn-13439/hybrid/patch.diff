@@ -1,0 +1,11 @@
+--- sklearn/pipeline.py
++++ sklearn/pipeline.py
+@@ -196,6 +196,9 @@
+         """
+         return len(self.steps)
+ 
++    def __len__(self):
++        return len(self.steps)
++
+     def __getitem__(self, ind):
+         """Index into the Pipeline.

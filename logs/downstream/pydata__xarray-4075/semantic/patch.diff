@@ -1,0 +1,14 @@
+```diff
+diff --git a/xarray/core/weighted.py b/xarray/core/weighted.py
+--- a/xarray/core/weighted.py
++++ b/xarray/core/weighted.py
+@@ -141,7 +141,7 @@
+         # we need to mask ``weights`` with ``notnull`` of ``obj``,
+         # otherwise sum of weights would consider NaN values
+         weights = self.weights.broadcast_like(self.obj)
+-        sum_of_weights = dot(self.obj.notnull(), weights, dims=dim)
++        sum_of_weights = dot(self.obj.notnull(), weights * 1, dims=dim)
+ 
+         return sum_of_weights
+ 
+```

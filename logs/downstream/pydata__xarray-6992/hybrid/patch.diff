@@ -1,0 +1,32 @@
+```diff
+diff --git a/xarray/core/dataset.py b/xarray/core/dataset.py
+--- a/xarray/core/dataset.py
++++ b/xarray/core/dataset.py
+@@ -365,7 +365,7 @@
+ 
+     @property
+     def data_vars(self):
+-        return DataVariables(self)
++        return DataVariables(self._dataset)
+ 
+     @property
+     def xindexes(self):
+@@ -512,7 +512,7 @@
+ class DataVariables(Mapping[Any, "DataArray"]):
+     def __iter__(self) -> Iterator[Hashable]:
+         return (
+-            k for k in self._dataset._variables if k not in self._dataset._coord_names
++            k for k in self._dataset._variables if k not in self._dataset.xindexes
+         )
+ 
+     def __len__(self) -> int:
+@@ -521,7 +521,7 @@
+     def __contains__(self, key: Hashable) -> bool:
+         return (
+             key in self._dataset._variables
+-            and key not in self._dataset._coord_names
++            and key not in self._dataset.xindexes
+         )
+ 
+     def __getitem__(self, key: Hashable) -> "DataArray":
+```

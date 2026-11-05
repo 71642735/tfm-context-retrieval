@@ -1,0 +1,39 @@
+diff --git a/seaborn/_core/plot.py b/seaborn/_core/plot.py
+--- a/seaborn/_core/plot.py
++++ b/seaborn/_core/plot.py
+@@ -1445,6 +1445,18 @@
+                 ax.set_xticks(major_locs)
+                 ax.set_xticklabels(major_labels)
+ 
++            for axis_name, axis_obj in [("x", ax.xaxis), ("y", ax.yaxis)]:
++                scale = scales.get(axis_name, None)
++                if isinstance(scale, Nominal):
++                    n = len(scale._spec) if hasattr(scale, "_spec") and scale._spec is not None else len(ax.get_xticks() if axis_name == "x" else ax.get_yticks())
++                    if axis_name == "x":
++                        ax.xaxis.grid(False)
++                        ax.set_xlim(-.5, n - .5, auto=None)
++                    else:
++                        ax.yaxis.grid(False)
++                        ax.set_ylim(n - .5, -.5, auto=None)
++
+             # TODO Add support for axis sharing/linking here
+ 
+         # -----------------------------------------------------------------
+diff --git a/seaborn/_core/scales.py b/seaborn/_core/scales.py
+--- a/seaborn/_core/scales.py
++++ b/seaborn/_core/scales.py
+@@ -149,6 +149,7 @@
+     def _setup(
+         self, data: Series, prop: Property, axis: Axis | None = None,
+     ) -> Scale:
++        self._spec = units_seed = categorical_order(data, self.order)
+ 
+         new = copy(self)
+         if new._tick_params is None:
+@@ -160,8 +161,6 @@
+         stringify = np.vectorize(format)
+ 
+-        units_seed = categorical_order(data, new.order)
+-
+         # TODO move to Nominal._get_scale?
+         # TODO this needs some more complicated rethinking about how to pass

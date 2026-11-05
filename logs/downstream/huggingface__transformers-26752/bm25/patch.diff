@@ -1,0 +1,50 @@
+```diff
+diff --git a/src/transformers/models/encoder_decoder/modeling_encoder_decoder.py b/src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
+--- a/src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
++++ b/src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
+@@ -623,6 +623,8 @@
+             decoder_input_ids = shift_tokens_right(
+                 labels, self.config.pad_token_id, self.config.decoder_start_token_id
+             )
++            if decoder_attention_mask is None:
++                decoder_attention_mask = decoder_input_ids.ne(self.config.pad_token_id).long()
+ 
+         decoder_inputs = {
+             "input_ids": decoder_input_ids,
+diff --git a/src/transformers/models/encoder_decoder/modeling_tf_encoder_decoder.py b/src/transformers/models/encoder_decoder/modeling_tf_encoder_decoder.py
+--- a/src/transformers/models/encoder_decoder/modeling_tf_encoder_decoder.py
++++ b/src/transformers/models/encoder_decoder/modeling_tf_encoder_decoder.py
+@@ -588,6 +588,8 @@
+             decoder_input_ids = shift_tokens_right(
+                 labels, self.config.pad_token_id, self.config.decoder_start_token_id
+             )
++            if decoder_attention_mask is None:
++                decoder_attention_mask = tf.cast(tf.not_equal(decoder_input_ids, self.config.pad_token_id), dtype=tf.int32)
+ 
+         decoder_inputs = {
+             "input_ids": decoder_input_ids,
+diff --git a/src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py b/src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py
+--- a/src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py
++++ b/src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py
+@@ -604,6 +604,8 @@
+             decoder_input_ids = shift_tokens_right(
+                 labels, self.config.pad_token_id, self.config.decoder_start_token_id
+             )
++            if decoder_attention_mask is None:
++                decoder_attention_mask = tf.cast(tf.not_equal(decoder_input_ids, self.config.pad_token_id), dtype=tf.int32)
+ 
+         batch_size, sequence_length = shape_list(encoder_hidden_states)[:2]
+         encoder_attention_mask = tf.ones(shape=(batch_size, sequence_length), dtype=tf.int32)
+diff --git a/src/transformers/models/vision_encoder_decoder/modeling_vision_encoder_decoder.py b/src/transformers/models/vision_encoder_decoder/modeling_vision_encoder_decoder.py
+--- a/src/transformers/models/vision_encoder_decoder/modeling_vision_encoder_decoder.py
++++ b/src/transformers/models/vision_encoder_decoder/modeling_vision_encoder_decoder.py
+@@ -620,6 +620,8 @@
+             decoder_input_ids = shift_tokens_right(
+                 labels, self.config.pad_token_id, self.config.decoder_start_token_id
+             )
++            if decoder_attention_mask is None:
++                decoder_attention_mask = decoder_input_ids.ne(self.config.pad_token_id).long()
+ 
+         decoder_inputs = {
+             "input_ids": decoder_input_ids,
+```

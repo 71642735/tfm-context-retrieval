@@ -1,0 +1,1004 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+index refactor: more `_coord_names` than `_variables` on Dataset
+### What happened?
+
+`xr.core.dataset.DataVariables` assumes that everything that is in `ds._dataset._variables` and not in `self._dataset._coord_names` is a "data variable". However, since the index refactor we can end up with more `_coord_names` than `_variables` which breaks a number of stuff (e.g. the repr).
+
+### What did you expect to happen?
+
+Well it seems this assumption is now wrong.
+
+### Minimal Complete Verifiable Example
+
+```Python
+ds = xr.Dataset(coords={"a": ("x", [1, 2, 3]), "b": ("x", ['a', 'b', 'c'])})
+ds.set_index(z=['a', 'b']).reset_index("z", drop=True)
+```
+
+
+### MVCE confirmation
+
+- [ ] Minimal example — the example is as focused as reasonably possible to demonstrate the underlying issue in xarray.
+- [ ] Complete example — the example is self-contained, including all data and the text of any traceback.
+- [ ] Verifiable example — the example copy & pastes into an IPython prompt or [Binder notebook](https://mybinder.org/v2/gh/pydata/xarray/main?urlpath=lab/tree/doc/examples/blank_template.ipynb), returning the result.
+- [ ] New issue — a search of GitHub Issues suggests this is not a duplicate.
+
+### Relevant log output
+
+```Python
+ValueError: __len__() should return >= 0
+```
+
+
+### Anything else we need to know?
+
+The error comes from here
+
+https://github.com/pydata/xarray/blob/63ba862d03c8d0cd8b44d2071bc360e9fed4519d/xarray/core/dataset.py#L368
+
+Bisected to #5692 - which probably does not help too much.
+
+
+### Environment
+
+<details>
+
+
+
+</details>
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: xarray/core/dataset.py
+Lines: 4966-5035
+Symbol: Dataset.drop_sel
+
+    def drop_sel(
+        self: T_Dataset, labels=None, *, errors: ErrorOptions = "raise", **labels_kwargs
+    ) -> T_Dataset:
+        """Drop index labels from this dataset.
+
+        Parameters
+        ----------
+        labels : mapping of hashable to Any
+            Index labels to drop
+        errors : {"raise", "ignore"}, default: "raise"
+            If 'raise', raises a ValueError error if
+            any of the index labels passed are not
+            in the dataset. If 'ignore', any given labels that are in the
+            dataset are dropped and no error is raised.
+        **labels_kwargs : {dim: label, ...}, optional
+            The keyword arguments form of ``dim`` and ``labels``
+
+        Returns
+        -------
+        dropped : Dataset
+
+        Examples
+        --------
+        >>> data = np.arange(6).reshape(2, 3)
+        >>> labels = ["a", "b", "c"]
+        >>> ds = xr.Dataset({"A": (["x", "y"], data), "y": labels})
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * y        (y) <U1 'a' 'b' 'c'
+        Dimensions without coordinates: x
+        Data variables:
+            A        (x, y) int64 0 1 2 3 4 5
+        >>> ds.drop_sel(y=["a", "c"])
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 1)
+        Coordinates:
+          * y        (y) <U1 'b'
+        Dimensions without coordinates: x
+        Data variables:
+            A        (x, y) int64 1 4
+        >>> ds.drop_sel(y="b")
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 2)
+        Coordinates:
+          * y        (y) <U1 'a' 'c'
+        Dimensions without coordinates: x
+        Data variables:
+            A        (x, y) int64 0 2 3 5
+        """
+        if errors not in ["raise", "ignore"]:
+            raise ValueError('errors must be either "raise" or "ignore"')
+
+        labels = either_dict_or_kwargs(labels, labels_kwargs, "drop_sel")
+
+        ds = self
+        for dim, labels_for_dim in labels.items():
+            # Don't cast to set, as it would harm performance when labels
+            # is a large numpy array
+            if utils.is_scalar(labels_for_dim):
+                labels_for_dim = [labels_for_dim]
+            labels_for_dim = np.asarray(labels_for_dim)
+            try:
+                index = self.get_index(dim)
+            except KeyError:
+                raise ValueError(f"dimension {dim!r} does not have coordinate labels")
+            new_index = index.drop(labels_for_dim, errors=errors)
+            ds = ds.loc[{dim: new_index}]
+        return ds
+
+--- Chunk 2 ---
+File: xarray/core/dataarray.py
+Lines: 2447-2510
+Symbol: DataArray.to_unstacked_dataset
+
+    def to_unstacked_dataset(self, dim: Hashable, level: int | Hashable = 0) -> Dataset:
+        """Unstack DataArray expanding to Dataset along a given level of a
+        stacked coordinate.
+
+        This is the inverse operation of Dataset.to_stacked_array.
+
+        Parameters
+        ----------
+        dim : Hashable
+            Name of existing dimension to unstack
+        level : int or Hashable, default: 0
+            The MultiIndex level to expand to a dataset along. Can either be
+            the integer index of the level or its name.
+
+        Returns
+        -------
+        unstacked: Dataset
+
+        Examples
+        --------
+        >>> arr = xr.DataArray(
+        ...     np.arange(6).reshape(2, 3),
+        ...     coords=[("x", ["a", "b"]), ("y", [0, 1, 2])],
+        ... )
+        >>> data = xr.Dataset({"a": arr, "b": arr.isel(y=0)})
+        >>> data
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * x        (x) <U1 'a' 'b'
+          * y        (y) int64 0 1 2
+        Data variables:
+            a        (x, y) int64 0 1 2 3 4 5
+            b        (x) int64 0 3
+        >>> stacked = data.to_stacked_array("z", ["x"])
+        >>> stacked.indexes["z"]
+        MultiIndex([('a', 0.0),
+                    ('a', 1.0),
+                    ('a', 2.0),
+                    ('b', nan)],
+                   name='z')
+        >>> roundtripped = stacked.to_unstacked_dataset(dim="z")
+        >>> data.identical(roundtripped)
+        True
+
+        See Also
+        --------
+        Dataset.to_stacked_array
+        """
+        idx = self._indexes[dim].to_pandas_index()
+        if not isinstance(idx, pd.MultiIndex):
+            raise ValueError(f"'{dim}' is not a stacked coordinate")
+
+        level_number = idx._get_level_number(level)
+        variables = idx.levels[level_number]
+        variable_dim = idx.names[level_number]
+
+        # pull variables out of datarray
+        data_dict = {}
+        for k in variables:
+            data_dict[k] = self.sel({variable_dim: k}, drop=True).squeeze(drop=True)
+
+        # unstacked dataset
+        return Dataset(data_dict)
+
+--- Chunk 3 ---
+File: xarray/core/dataset.py
+Lines: 5980-6015
+Symbol: Dataset._set_numpy_data_from_dataframe
+
+    def _set_numpy_data_from_dataframe(
+        self, idx: pd.Index, arrays: list[tuple[Hashable, np.ndarray]], dims: tuple
+    ) -> None:
+        if not isinstance(idx, pd.MultiIndex):
+            for name, values in arrays:
+                self[name] = (dims, values)
+            return
+
+        # NB: similar, more general logic, now exists in
+        # variable.unstack_once; we could consider combining them at some
+        # point.
+
+        shape = tuple(lev.size for lev in idx.levels)
+        indexer = tuple(idx.codes)
+
+        # We already verified that the MultiIndex has all unique values, so
+        # there are missing values if and only if the size of output arrays is
+        # larger that the index.
+        missing_values = math.prod(shape) > idx.shape[0]
+
+        for name, values in arrays:
+            # NumPy indexing is much faster than using DataFrame.reindex() to
+            # fill in missing values:
+            # https://stackoverflow.com/a/35049899/809705
+            if missing_values:
+                dtype, fill_value = xrdtypes.maybe_promote(values.dtype)
+                data = np.full(shape, fill_value, dtype)
+            else:
+                # If there are no missing values, keep the existing dtype
+                # instead of promoting to support NA, e.g., keep integer
+                # columns as integers.
+                # TODO: consider removing this special case, which doesn't
+                # exist for sparse=True.
+                data = np.zeros(shape, values.dtype)
+            data[indexer] = values
+            self[name] = (dims, data)
+
+--- Chunk 4 ---
+File: xarray/core/alignment.py
+Lines: 979-1050
+Symbol: broadcast
+
+def broadcast(*args, exclude=None):
+    """Explicitly broadcast any number of DataArray or Dataset objects against
+    one another.
+
+    xarray objects automatically broadcast against each other in arithmetic
+    operations, so this function should not be necessary for normal use.
+
+    If no change is needed, the input data is returned to the output without
+    being copied.
+
+    Parameters
+    ----------
+    *args : DataArray or Dataset
+        Arrays to broadcast against each other.
+    exclude : sequence of str, optional
+        Dimensions that must not be broadcasted
+
+    Returns
+    -------
+    broadcast : tuple of DataArray or tuple of Dataset
+        The same data as the input arrays, but with additional dimensions
+        inserted so that all data arrays have the same dimensions and shape.
+
+    Examples
+    --------
+    Broadcast two data arrays against one another to fill out their dimensions:
+
+    >>> a = xr.DataArray([1, 2, 3], dims="x")
+    >>> b = xr.DataArray([5, 6], dims="y")
+    >>> a
+    <xarray.DataArray (x: 3)>
+    array([1, 2, 3])
+    Dimensions without coordinates: x
+    >>> b
+    <xarray.DataArray (y: 2)>
+    array([5, 6])
+    Dimensions without coordinates: y
+    >>> a2, b2 = xr.broadcast(a, b)
+    >>> a2
+    <xarray.DataArray (x: 3, y: 2)>
+    array([[1, 1],
+           [2, 2],
+           [3, 3]])
+    Dimensions without coordinates: x, y
+    >>> b2
+    <xarray.DataArray (x: 3, y: 2)>
+    array([[5, 6],
+           [5, 6],
+           [5, 6]])
+    Dimensions without coordinates: x, y
+
+    Fill out the dimensions of all data variables in a dataset:
+
+    >>> ds = xr.Dataset({"a": a, "b": b})
+    >>> (ds2,) = xr.broadcast(ds)  # use tuple unpacking to extract one dataset
+    >>> ds2
+    <xarray.Dataset>
+    Dimensions:  (x: 3, y: 2)
+    Dimensions without coordinates: x, y
+    Data variables:
+        a        (x, y) int64 1 1 2 2 3 3
+        b        (x, y) int64 5 6 5 6 5 6
+    """
+
+    if exclude is None:
+        exclude = set()
+    args = align(*args, join="outer", copy=False, exclude=exclude)
+
+    dims_map, common_coords = _get_broadcast_dims_map_common_coords(args, exclude)
+    result = [_broadcast_helper(arg, exclude, dims_map, common_coords) for arg in args]
+
+    return tuple(result)
+
+--- Chunk 5 ---
+File: xarray/core/dataset.py
+Lines: 3968-4106
+Symbol: Dataset.set_index
+
+    def set_index(
+        self,
+        indexes: Mapping[Any, Hashable | Sequence[Hashable]] | None = None,
+        append: bool = False,
+        **indexes_kwargs: Hashable | Sequence[Hashable],
+    ) -> Dataset:
+        """Set Dataset (multi-)indexes using one or more existing coordinates
+        or variables.
+
+        Parameters
+        ----------
+        indexes : {dim: index, ...}
+            Mapping from names matching dimensions and values given
+            by (lists of) the names of existing coordinates or variables to set
+            as new (multi-)index.
+        append : bool, default: False
+            If True, append the supplied index(es) to the existing index(es).
+            Otherwise replace the existing index(es) (default).
+        **indexes_kwargs : optional
+            The keyword arguments form of ``indexes``.
+            One of indexes or indexes_kwargs must be provided.
+
+        Returns
+        -------
+        obj : Dataset
+            Another dataset, with this dataset's data but replaced coordinates.
+
+        Examples
+        --------
+        >>> arr = xr.DataArray(
+        ...     data=np.ones((2, 3)),
+        ...     dims=["x", "y"],
+        ...     coords={"x": range(2), "y": range(3), "a": ("x", [3, 4])},
+        ... )
+        >>> ds = xr.Dataset({"v": arr})
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * x        (x) int64 0 1
+          * y        (y) int64 0 1 2
+            a        (x) int64 3 4
+        Data variables:
+            v        (x, y) float64 1.0 1.0 1.0 1.0 1.0 1.0
+        >>> ds.set_index(x="a")
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * x        (x) int64 3 4
+          * y        (y) int64 0 1 2
+        Data variables:
+            v        (x, y) float64 1.0 1.0 1.0 1.0 1.0 1.0
+
+        See Also
+        --------
+        Dataset.reset_index
+        Dataset.swap_dims
+        """
+        dim_coords = either_dict_or_kwargs(indexes, indexes_kwargs, "set_index")
+
+        new_indexes: dict[Hashable, Index] = {}
+        new_variables: dict[Hashable, IndexVariable] = {}
+        maybe_drop_indexes: list[Hashable] = []
+        drop_variables: list[Hashable] = []
+        replace_dims: dict[Hashable, Hashable] = {}
+
+        for dim, _var_names in dim_coords.items():
+            if isinstance(_var_names, str) or not isinstance(_var_names, Sequence):
+                var_names = [_var_names]
+            else:
+                var_names = list(_var_names)
+
+            invalid_vars = set(var_names) - set(self._variables)
+            if invalid_vars:
+                raise ValueError(
+                    ", ".join([str(v) for v in invalid_vars])
+                    + " variable(s) do not exist"
+                )
+
+            current_coord_names = self.xindexes.get_all_coords(dim, errors="ignore")
+
+            # drop any pre-existing index involved
+            maybe_drop_indexes += list(current_coord_names) + var_names
+            for k in var_names:
+                maybe_drop_indexes += list(
+                    self.xindexes.get_all_coords(k, errors="ignore")
+                )
+
+            drop_variables += var_names
+
+            if len(var_names) == 1 and (not append or dim not in self._indexes):
+                var_name = var_names[0]
+                var = self._variables[var_name]
+                if var.dims != (dim,):
+                    raise ValueError(
+                        f"dimension mismatch: try setting an index for dimension {dim!r} with "
+                        f"variable {var_name!r} that has dimensions {var.dims}"
+                    )
+                idx = PandasIndex.from_variables({dim: var})
+                idx_vars = idx.create_variables({var_name: var})
+            else:
+                if append:
+                    current_variables = {
+                        k: self._variables[k] for k in current_coord_names
+                    }
+                else:
+                    current_variables = {}
+                idx, idx_vars = PandasMultiIndex.from_variables_maybe_expand(
+                    dim,
+                    current_variables,
+                    {k: self._variables[k] for k in var_names},
+                )
+                for n in idx.index.names:
+                    replace_dims[n] = dim
+
+            new_indexes.update({k: idx for k in idx_vars})
+            new_variables.update(idx_vars)
+
+        indexes_: dict[Any, Index] = {
+            k: v for k, v in self._indexes.items() if k not in maybe_drop_indexes
+        }
+        indexes_.update(new_indexes)
+
+        variables = {
+            k: v for k, v in self._variables.items() if k not in drop_variables
+        }
+        variables.update(new_variables)
+
+        # update dimensions if necessary, GH: 3512
+        for k, v in variables.items():
+            if any(d in replace_dims for d in v.dims):
+                new_dims = [replace_dims.get(d, d) for d in v.dims]
+                variables[k] = v._replace(dims=new_dims)
+
+        coord_names = self._coord_names - set(drop_variables) | set(new_variables)
+
+        return self._replace_with_new_dims(
+            variables, coord_names=coord_names, indexes=indexes_
+        )
+
+--- Chunk 6 ---
+File: xarray/core/dataset.py
+Lines: 5037-5100
+Symbol: Dataset.drop_isel
+
+    def drop_isel(self: T_Dataset, indexers=None, **indexers_kwargs) -> T_Dataset:
+        """Drop index positions from this Dataset.
+
+        Parameters
+        ----------
+        indexers : mapping of hashable to Any
+            Index locations to drop
+        **indexers_kwargs : {dim: position, ...}, optional
+            The keyword arguments form of ``dim`` and ``positions``
+
+        Returns
+        -------
+        dropped : Dataset
+
+        Raises
+        ------
+        IndexError
+
+        Examples
+        --------
+        >>> data = np.arange(6).reshape(2, 3)
+        >>> labels = ["a", "b", "c"]
+        >>> ds = xr.Dataset({"A": (["x", "y"], data), "y": labels})
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * y        (y) <U1 'a' 'b' 'c'
+        Dimensions without coordinates: x
+        Data variables:
+            A        (x, y) int64 0 1 2 3 4 5
+        >>> ds.drop_isel(y=[0, 2])
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 1)
+        Coordinates:
+          * y        (y) <U1 'b'
+        Dimensions without coordinates: x
+        Data variables:
+            A        (x, y) int64 1 4
+        >>> ds.drop_isel(y=1)
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 2)
+        Coordinates:
+          * y        (y) <U1 'a' 'c'
+        Dimensions without coordinates: x
+        Data variables:
+            A        (x, y) int64 0 2 3 5
+        """
+
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "drop_isel")
+
+        ds = self
+        dimension_index = {}
+        for dim, pos_for_dim in indexers.items():
+            # Don't cast to set, as it would harm performance when labels
+            # is a large numpy array
+            if utils.is_scalar(pos_for_dim):
+                pos_for_dim = [pos_for_dim]
+            pos_for_dim = np.asarray(pos_for_dim)
+            index = self.get_index(dim)
+            new_index = index.delete(pos_for_dim)
+            dimension_index[dim] = new_index
+        ds = ds.loc[dimension_index]
+        return ds
+
+--- Chunk 7 ---
+File: xarray/core/dataset.py
+Lines: 3720-3823
+Symbol: Dataset.swap_dims
+
+    def swap_dims(
+        self: T_Dataset, dims_dict: Mapping[Any, Hashable] = None, **dims_kwargs
+    ) -> T_Dataset:
+        """Returns a new object with swapped dimensions.
+
+        Parameters
+        ----------
+        dims_dict : dict-like
+            Dictionary whose keys are current dimension names and whose values
+            are new names.
+        **dims_kwargs : {existing_dim: new_dim, ...}, optional
+            The keyword arguments form of ``dims_dict``.
+            One of dims_dict or dims_kwargs must be provided.
+
+        Returns
+        -------
+        swapped : Dataset
+            Dataset with swapped dimensions.
+
+        Examples
+        --------
+        >>> ds = xr.Dataset(
+        ...     data_vars={"a": ("x", [5, 7]), "b": ("x", [0.1, 2.4])},
+        ...     coords={"x": ["a", "b"], "y": ("x", [0, 1])},
+        ... )
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (x: 2)
+        Coordinates:
+          * x        (x) <U1 'a' 'b'
+            y        (x) int64 0 1
+        Data variables:
+            a        (x) int64 5 7
+            b        (x) float64 0.1 2.4
+
+        >>> ds.swap_dims({"x": "y"})
+        <xarray.Dataset>
+        Dimensions:  (y: 2)
+        Coordinates:
+            x        (y) <U1 'a' 'b'
+          * y        (y) int64 0 1
+        Data variables:
+            a        (y) int64 5 7
+            b        (y) float64 0.1 2.4
+
+        >>> ds.swap_dims({"x": "z"})
+        <xarray.Dataset>
+        Dimensions:  (z: 2)
+        Coordinates:
+            x        (z) <U1 'a' 'b'
+            y        (z) int64 0 1
+        Dimensions without coordinates: z
+        Data variables:
+            a        (z) int64 5 7
+            b        (z) float64 0.1 2.4
+
+        See Also
+        --------
+        Dataset.rename
+        DataArray.swap_dims
+        """
+        # TODO: deprecate this method in favor of a (less confusing)
+        # rename_dims() method that only renames dimensions.
+
+        dims_dict = either_dict_or_kwargs(dims_dict, dims_kwargs, "swap_dims")
+        for k, v in dims_dict.items():
+            if k not in self.dims:
+                raise ValueError(
+                    f"cannot swap from dimension {k!r} because it is "
+                    "not an existing dimension"
+                )
+            if v in self.variables and self.variables[v].dims != (k,):
+                raise ValueError(
+                    f"replacement dimension {v!r} is not a 1D "
+                    f"variable along the old dimension {k!r}"
+                )
+
+        result_dims = {dims_dict.get(dim, dim) for dim in self.dims}
+
+        coord_names = self._coord_names.copy()
+        coord_names.update({dim for dim in dims_dict.values() if dim in self.variables})
+
+        variables: dict[Hashable, Variable] = {}
+        indexes: dict[Hashable, Index] = {}
+        for k, v in self.variables.items():
+            dims = tuple(dims_dict.get(dim, dim) for dim in v.dims)
+            var: Variable
+            if k in result_dims:
+                var = v.to_index_variable()
+                var.dims = dims
+                if k in self._indexes:
+                    indexes[k] = self._indexes[k]
+                    variables[k] = var
+                else:
+                    index, index_vars = create_default_index_implicit(var)
+                    indexes.update({name: index for name in index_vars})
+                    variables.update(index_vars)
+                    coord_names.update(index_vars)
+            else:
+                var = v.to_base_variable()
+                var.dims = dims
+                variables[k] = var
+
+        return self._replace_with_new_dims(variables, coord_names, indexes=indexes)
+
+--- Chunk 8 ---
+File: xarray/core/dataset.py
+Lines: 4397-4508
+Symbol: Dataset.to_stacked_array
+
+    def to_stacked_array(
+        self,
+        new_dim: Hashable,
+        sample_dims: Collection[Hashable],
+        variable_dim: Hashable = "variable",
+        name: Hashable | None = None,
+    ) -> DataArray:
+        """Combine variables of differing dimensionality into a DataArray
+        without broadcasting.
+
+        This method is similar to Dataset.to_array but does not broadcast the
+        variables.
+
+        Parameters
+        ----------
+        new_dim : hashable
+            Name of the new stacked coordinate
+        sample_dims : Collection of hashables
+            List of dimensions that **will not** be stacked. Each array in the
+            dataset must share these dimensions. For machine learning
+            applications, these define the dimensions over which samples are
+            drawn.
+        variable_dim : hashable, default: "variable"
+            Name of the level in the stacked coordinate which corresponds to
+            the variables.
+        name : hashable, optional
+            Name of the new data array.
+
+        Returns
+        -------
+        stacked : DataArray
+            DataArray with the specified dimensions and data variables
+            stacked together. The stacked coordinate is named ``new_dim``
+            and represented by a MultiIndex object with a level containing the
+            data variable names. The name of this level is controlled using
+            the ``variable_dim`` argument.
+
+        See Also
+        --------
+        Dataset.to_array
+        Dataset.stack
+        DataArray.to_unstacked_dataset
+
+        Examples
+        --------
+        >>> data = xr.Dataset(
+        ...     data_vars={
+        ...         "a": (("x", "y"), [[0, 1, 2], [3, 4, 5]]),
+        ...         "b": ("x", [6, 7]),
+        ...     },
+        ...     coords={"y": ["u", "v", "w"]},
+        ... )
+
+        >>> data
+        <xarray.Dataset>
+        Dimensions:  (x: 2, y: 3)
+        Coordinates:
+          * y        (y) <U1 'u' 'v' 'w'
+        Dimensions without coordinates: x
+        Data variables:
+            a        (x, y) int64 0 1 2 3 4 5
+            b        (x) int64 6 7
+
+        >>> data.to_stacked_array("z", sample_dims=["x"])
+        <xarray.DataArray 'a' (x: 2, z: 4)>
+        array([[0, 1, 2, 6],
+               [3, 4, 5, 7]])
+        Coordinates:
+          * z         (z) object MultiIndex
+          * variable  (z) object 'a' 'a' 'a' 'b'
+          * y         (z) object 'u' 'v' 'w' nan
+        Dimensions without coordinates: x
+
+        """
+        from .concat import concat
+
+        stacking_dims = tuple(dim for dim in self.dims if dim not in sample_dims)
+
+        for variable in self:
+            dims = self[variable].dims
+            dims_include_sample_dims = set(sample_dims) <= set(dims)
+            if not dims_include_sample_dims:
+                raise ValueError(
+                    "All variables in the dataset must contain the "
+                    "dimensions {}.".format(dims)
+                )
+
+        def ensure_stackable(val):
+            assign_coords = {variable_dim: val.name}
+            for dim in stacking_dims:
+                if dim not in val.dims:
+                    assign_coords[dim] = None
+
+            expand_dims = set(stacking_dims).difference(set(val.dims))
+            expand_dims.add(variable_dim)
+            # must be list for .expand_dims
+            expand_dims = list(expand_dims)
+
+            return (
+                val.assign_coords(**assign_coords)
+                .expand_dims(expand_dims)
+                .stack({new_dim: (variable_dim,) + stacking_dims})
+            )
+
+        # concatenate the arrays
+        stackable_vars = [ensure_stackable(self[key]) for key in self.data_vars]
+        data_array = concat(stackable_vars, dim=new_dim)
+
+        if name is not None:
+            data_array.name = name
+
+        return data_array
+
+--- Chunk 9 ---
+File: xarray/core/dataset.py
+Lines: 1125-1256
+Symbol: Dataset.copy
+
+    def copy(
+        self: T_Dataset, deep: bool = False, data: Mapping | None = None
+    ) -> T_Dataset:
+        """Returns a copy of this dataset.
+
+        If `deep=True`, a deep copy is made of each of the component variables.
+        Otherwise, a shallow copy of each of the component variable is made, so
+        that the underlying memory region of the new dataset is the same as in
+        the original dataset.
+
+        Use `data` to create a new object with the same structure as
+        original but entirely new data.
+
+        Parameters
+        ----------
+        deep : bool, default: False
+            Whether each component variable is loaded into memory and copied onto
+            the new object. Default is False.
+        data : dict-like or None, optional
+            Data to use in the new object. Each item in `data` must have same
+            shape as corresponding data variable in original. When `data` is
+            used, `deep` is ignored for the data variables and only used for
+            coords.
+
+        Returns
+        -------
+        object : Dataset
+            New object with dimensions, attributes, coordinates, name, encoding,
+            and optionally data copied from original.
+
+        Examples
+        --------
+        Shallow copy versus deep copy
+
+        >>> da = xr.DataArray(np.random.randn(2, 3))
+        >>> ds = xr.Dataset(
+        ...     {"foo": da, "bar": ("x", [-1, 2])},
+        ...     coords={"x": ["one", "two"]},
+        ... )
+        >>> ds.copy()
+        <xarray.Dataset>
+        Dimensions:  (dim_0: 2, dim_1: 3, x: 2)
+        Coordinates:
+          * x        (x) <U3 'one' 'two'
+        Dimensions without coordinates: dim_0, dim_1
+        Data variables:
+            foo      (dim_0, dim_1) float64 1.764 0.4002 0.9787 2.241 1.868 -0.9773
+            bar      (x) int64 -1 2
+
+        >>> ds_0 = ds.copy(deep=False)
+        >>> ds_0["foo"][0, 0] = 7
+        >>> ds_0
+        <xarray.Dataset>
+        Dimensions:  (dim_0: 2, dim_1: 3, x: 2)
+        Coordinates:
+          * x        (x) <U3 'one' 'two'
+        Dimensions without coordinates: dim_0, dim_1
+        Data variables:
+            foo      (dim_0, dim_1) float64 7.0 0.4002 0.9787 2.241 1.868 -0.9773
+            bar      (x) int64 -1 2
+
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (dim_0: 2, dim_1: 3, x: 2)
+        Coordinates:
+          * x        (x) <U3 'one' 'two'
+        Dimensions without coordinates: dim_0, dim_1
+        Data variables:
+            foo      (dim_0, dim_1) float64 7.0 0.4002 0.9787 2.241 1.868 -0.9773
+            bar      (x) int64 -1 2
+
+        Changing the data using the ``data`` argument maintains the
+        structure of the original object, but with the new data. Original
+        object is unaffected.
+
+        >>> ds.copy(data={"foo": np.arange(6).reshape(2, 3), "bar": ["a", "b"]})
+        <xarray.Dataset>
+        Dimensions:  (dim_0: 2, dim_1: 3, x: 2)
+        Coordinates:
+          * x        (x) <U3 'one' 'two'
+        Dimensions without coordinates: dim_0, dim_1
+        Data variables:
+            foo      (dim_0, dim_1) int64 0 1 2 3 4 5
+            bar      (x) <U1 'a' 'b'
+
+        >>> ds
+        <xarray.Dataset>
+        Dimensions:  (dim_0: 2, dim_1: 3, x: 2)
+        Coordinates:
+          * x        (x) <U3 'one' 'two'
+        Dimensions without coordinates: dim_0, dim_1
+        Data variables:
+            foo      (dim_0, dim_1) float64 7.0 0.4002 0.9787 2.241 1.868 -0.9773
+            bar      (x) int64 -1 2
+
+        See Also
+        --------
+        pandas.DataFrame.copy
+        """
+        if data is None:
+            data = {}
+        elif not utils.is_dict_like(data):
+            raise ValueError("Data must be dict-like")
+
+        if data:
+            var_keys = set(self.data_vars.keys())
+            data_keys = set(data.keys())
+            keys_not_in_vars = data_keys - var_keys
+            if keys_not_in_vars:
+                raise ValueError(
+                    "Data must only contain variables in original "
+                    "dataset. Extra variables: {}".format(keys_not_in_vars)
+                )
+            keys_missing_from_data = var_keys - data_keys
+            if keys_missing_from_data:
+                raise ValueError(
+                    "Data must contain all variables in original "
+                    "dataset. Data is missing {}".format(keys_missing_from_data)
+                )
+
+        indexes, index_vars = self.xindexes.copy_indexes(deep=deep)
+
+        variables = {}
+        for k, v in self._variables.items():
+            if k in index_vars:
+                variables[k] = index_vars[k]
+            else:
+                variables[k] = v.copy(deep=deep, data=data.get(k))
+
+        attrs = copy.deepcopy(self._attrs) if deep else copy.copy(self._attrs)
+
+        return self._replace(variables, indexes=indexes, attrs=attrs)
+
+--- Chunk 10 ---
+File: xarray/core/dataset.py
+Lines: 2339-2428
+Symbol: Dataset.isel
+
+    def isel(
+        self: T_Dataset,
+        indexers: Mapping[Any, Any] | None = None,
+        drop: bool = False,
+        missing_dims: ErrorOptionsWithWarn = "raise",
+        **indexers_kwargs: Any,
+    ) -> T_Dataset:
+        """Returns a new dataset with each array indexed along the specified
+        dimension(s).
+
+        This method selects values from each array using its `__getitem__`
+        method, except this method does not require knowing the order of
+        each array's dimensions.
+
+        Parameters
+        ----------
+        indexers : dict, optional
+            A dict with keys matching dimensions and values given
+            by integers, slice objects or arrays.
+            indexer can be a integer, slice, array-like or DataArray.
+            If DataArrays are passed as indexers, xarray-style indexing will be
+            carried out. See :ref:`indexing` for the details.
+            One of indexers or indexers_kwargs must be provided.
+        drop : bool, default: False
+            If ``drop=True``, drop coordinates variables indexed by integers
+            instead of making them scalar.
+        missing_dims : {"raise", "warn", "ignore"}, default: "raise"
+            What to do if dimensions that should be selected from are not present in the
+            Dataset:
+            - "raise": raise an exception
+            - "warn": raise a warning, and ignore the missing dimensions
+            - "ignore": ignore the missing dimensions
+
+        **indexers_kwargs : {dim: indexer, ...}, optional
+            The keyword arguments form of ``indexers``.
+            One of indexers or indexers_kwargs must be provided.
+
+        Returns
+        -------
+        obj : Dataset
+            A new Dataset with the same contents as this dataset, except each
+            array and dimension is indexed by the appropriate indexers.
+            If indexer DataArrays have coordinates that do not conflict with
+            this object, then these coordinates will be attached.
+            In general, each array's data will be a view of the array's data
+            in this dataset, unless vectorized indexing was triggered by using
+            an array indexer, in which case the data will be a copy.
+
+        See Also
+        --------
+        Dataset.sel
+        DataArray.isel
+        """
+        indexers = either_dict_or_kwargs(indexers, indexers_kwargs, "isel")
+        if any(is_fancy_indexer(idx) for idx in indexers.values()):
+            return self._isel_fancy(indexers, drop=drop, missing_dims=missing_dims)
+
+        # Much faster algorithm for when all indexers are ints, slices, one-dimensional
+        # lists, or zero or one-dimensional np.ndarray's
+        indexers = drop_dims_from_indexers(indexers, self.dims, missing_dims)
+
+        variables = {}
+        dims: dict[Hashable, int] = {}
+        coord_names = self._coord_names.copy()
+
+        indexes, index_variables = isel_indexes(self.xindexes, indexers)
+
+        for name, var in self._variables.items():
+            # preserve variable order
+            if name in index_variables:
+                var = index_variables[name]
+            else:
+                var_indexers = {k: v for k, v in indexers.items() if k in var.dims}
+                if var_indexers:
+                    var = var.isel(var_indexers)
+                    if drop and var.ndim == 0 and name in coord_names:
+                        coord_names.remove(name)
+                        continue
+            variables[name] = var
+            dims.update(zip(var.dims, var.shape))
+
+        return self._construct_direct(
+            variables=variables,
+            coord_names=coord_names,
+            dims=dims,
+            attrs=self._attrs,
+            indexes=indexes,
+            encoding=self._encoding,
+            close=self._close,
+        )
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

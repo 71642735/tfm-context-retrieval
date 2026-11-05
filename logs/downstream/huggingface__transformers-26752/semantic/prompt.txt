@@ -1,0 +1,825 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+EncoderDecoder does not automatically create decoder_attention_mask to match decoder_input_ids
+### System Info
+
+```
+- `transformers` version: 4.31.0
+- Platform: Linux-4.15.0-192-generic-x86_64-with-glibc2.27
+- Python version: 3.11.4
+- Huggingface_hub version: 0.16.4
+- Safetensors version: 0.3.1
+- Accelerate version: 0.21.0
+- Accelerate config:    not found
+- PyTorch version (GPU?): 2.0.1+cu117 (True)
+- Tensorflow version (GPU?): not installed (NA)
+- Flax version (CPU?/GPU?/TPU?): not installed (NA)
+- Jax version: not installed
+- JaxLib version: not installed
+- Using GPU in script?: yes
+- Using distributed or parallel set-up in script?: no
+```
+
+### Who can help?
+
+@ArthurZucker @NielsRogge 
+
+### Information
+
+- [ ] The official example scripts
+- [X] My own modified scripts
+
+### Tasks
+
+- [ ] An officially supported task in the `examples` folder (such as GLUE/SQuAD, ...)
+- [X] My own task or dataset (give details below)
+
+### Reproduction
+
+I'm using a pretrained BERT model to make a bert2bert model using an EncoderDecoderModel. According to the [documentation](https://huggingface.co/docs/transformers/model_doc/encoder-decoder#transformers.EncoderDecoderModel.forward.decoder_input_ids) and a deprecation warning in the [source code](https://github.com/huggingface/transformers/blob/bef02fd6b9cde975c51607fb936050ef706ff6d8/src/transformers/models/encoder_decoder/modeling_encoder_decoder.py#L42-L47), it says that you no longer need to pass in `decoder_input_ids` as they'll be automatically generated using `labels`. In the docs specifically, [it also goes on to say](https://huggingface.co/docs/transformers/model_doc/encoder-decoder#transformers.EncoderDecoderModel.forward.decoder_attention_mask) that the default behavior of `decoder_attention_mask` is to automatically generate it based on padded tokens in `decoder_input_ids`, so you don't need to pass the decoder attention mask either, as expected.
+
+However, when trying to just pass `input_ids + attention_mask` for the encoder and `labels`, I get a warning that says something to the effect of "we strongly recommend passing an attention mask". If I explicitly pass `input_ids, attention_mask, decoder_input_ids, decoder_attention_mask, and labels`, the warning goes away. Looking at the implementation of creating the `decoder_input_ids` from `labels`, it does indeed seem to skip the generation of `decoder_attention_mask` and simply passes through the value from the arguments, in this case `None`:
+https://github.com/huggingface/transformers/blob/e42587f596181396e1c4b63660abf0c736b10dae/src/transformers/models/encoder_decoder/modeling_encoder_decoder.py#L619-L637
+
+You can recreate the warning in the notebook that Patrick made for the blog (https://colab.research.google.com/github/patrickvonplaten/notebooks/blob/master/Leveraging_Pre_trained_Checkpoints_for_Encoder_Decoder_Models.ipynb#scrollTo=yoN2q0hZUbXN&line=11&uniqifier=1). Specifically, in the `process_data_to_model_inputs` function, you can just comment out the lines which explicitly set `decoder_input_ids` and `decoder_attention_mask`.
+
+### Expected behavior
+
+I'd expect that if you can just pass `labels` to the forward call of EncoderDecoder and it will create `decoder_input_ids`, it would also create `decoder_attention_mask`. The fix is probably a few lines:
+
+```python
+        if (labels is not None) and (decoder_input_ids is None and decoder_inputs_embeds is None):
+            decoder_input_ids = shift_tokens_right(
+                labels, self.config.pad_token_id, self.config.decoder_start_token_id
+            )
+            if decoder_attention_mask is not None:
+                raise Exception # some error for passing 1/2 of decoder input_id/attn_mask?
+            decoder_attention_mask = torch.where(decoder_input_ids == self.config.pad_token_id, 0, 1)
+```
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py
+Lines: 293-336
+Symbol: TFVisionEncoderDecoderModel.from_pretrained
+
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+        r"""
+        Example:
+
+        ```python
+        >>> from transformers import TFVisionEncoderDecoderModel, AutoImageProcessor, AutoTokenizer
+        >>> from PIL import Image
+        >>> import requests
+
+        >>> image_processor = AutoImageProcessor.from_pretrained("ydshieh/vit-gpt2-coco-en")
+        >>> decoder_tokenizer = AutoTokenizer.from_pretrained("ydshieh/vit-gpt2-coco-en")
+        >>> model = TFVisionEncoderDecoderModel.from_pretrained("ydshieh/vit-gpt2-coco-en")
+
+        >>> url = "http://images.cocodataset.org/val2017/000000039769.jpg"
+        >>> img = Image.open(requests.get(url, stream=True).raw)
+        >>> pixel_values = image_processor(images=img, return_tensors="tf").pixel_values  # Batch size 1
+
+        >>> output_ids = model.generate(
+        ...     pixel_values, max_length=16, num_beams=4, return_dict_in_generate=True
+        ... ).sequences
+
+        >>> preds = decoder_tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+        >>> preds = [pred.strip() for pred in preds]
+
+        >>> assert preds == ["a cat laying on top of a couch next to another cat"]
+        ```"""
+        # Matt: The TF and PT weights don't align because our TF base classes have an extra layer compared to PT models
+        # (the main model stem is in the MainLayer class). If we remove that layer, then weight names sync up as normal.
+        # However, the name of that extra layer is the name of the MainLayer in the base model. We make the assumption
+        # here that the config model_type is the same as the name of the MainLayer. I don't know of anywhere that's
+        # not the case, and I wasn't sure how else to go from the config to the correct MainLayer name!
+
+        if kwargs.get("from_pt", False):
+            config = AutoConfig.from_pretrained(pretrained_model_name_or_path)
+            encoder_model_type = config.encoder.model_type
+
+            def tf_to_pt_weight_rename(tf_weight):
+                if "encoder" in tf_weight and "decoder" not in tf_weight:
+                    return re.sub(rf"encoder\.{encoder_model_type}\.", "encoder.", tf_weight)
+                else:
+                    return tf_weight
+
+            kwargs["tf_to_pt_weight_rename"] = tf_to_pt_weight_rename
+        return super().from_pretrained(pretrained_model_name_or_path, *model_args, **kwargs)
+
+--- Chunk 2 ---
+File: src/transformers/utils/import_utils.py
+Lines: 297-322
+Symbol: is_torch_bf16_gpu_available
+
+def is_torch_bf16_gpu_available():
+    if not is_torch_available():
+        return False
+
+    import torch
+
+    # since currently no utility function is available we build our own.
+    # some bits come from https://github.com/pytorch/pytorch/blob/2289a12f21c54da93bf5d696e3f9aea83dd9c10d/torch/testing/_internal/common_cuda.py#L51
+    # with additional check for torch version
+    # to succeed: (torch is required to be >= 1.10 anyway)
+    # 1. the hardware needs to support bf16 (GPU arch >= Ampere, or CPU)
+    # 2. if using gpu, CUDA >= 11
+    # 3. torch.autocast exists
+    # XXX: one problem here is that it may give invalid results on mixed gpus setup, so it's
+    # really only correct for the 0th gpu (or currently set default device if different from 0)
+    if torch.cuda.is_available() and torch.version.cuda is not None:
+        if torch.cuda.get_device_properties(torch.cuda.current_device()).major < 8:
+            return False
+        if int(torch.version.cuda.split(".")[0]) < 11:
+            return False
+        if not hasattr(torch.cuda.amp, "autocast"):
+            return False
+    else:
+        return False
+
+    return True
+
+--- Chunk 3 ---
+File: src/transformers/models/encoder_decoder/modeling_flax_encoder_decoder.py
+Lines: 629-719
+Symbol: FlaxEncoderDecoderModel.__call__
+
+    def __call__(
+        self,
+        input_ids: jnp.ndarray,
+        attention_mask: Optional[jnp.ndarray] = None,
+        decoder_input_ids: Optional[jnp.ndarray] = None,
+        decoder_attention_mask: Optional[jnp.ndarray] = None,
+        position_ids: Optional[jnp.ndarray] = None,
+        decoder_position_ids: Optional[jnp.ndarray] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+        train: bool = False,
+        params: dict = None,
+        dropout_rng: PRNGKey = None,
+    ):
+        r"""
+        Returns:
+
+        Examples:
+
+        ```python
+        >>> from transformers import FlaxEncoderDecoderModel, BertTokenizer, GPT2Tokenizer
+
+        >>> # load a fine-tuned bert2gpt2 model
+        >>> model = FlaxEncoderDecoderModel.from_pretrained("patrickvonplaten/bert2gpt2-cnn_dailymail-fp16")
+        >>> # load input & output tokenizer
+        >>> tokenizer_input = BertTokenizer.from_pretrained("bert-base-cased")
+        >>> tokenizer_output = GPT2Tokenizer.from_pretrained("gpt2")
+
+        >>> article = '''Sigma Alpha Epsilon is under fire for a video showing party-bound fraternity members
+        >>> singing a racist chant. SAE's national chapter suspended the students,
+        >>> but University of Oklahoma President David Boren took it a step further,
+        >>> saying the university's affiliation with the fraternity is permanently done.'''
+
+        >>> input_ids = tokenizer_input(article, add_special_tokens=True, return_tensors="np").input_ids
+
+        >>> # use GPT2's eos_token as the pad as well as eos token
+        >>> model.config.eos_token_id = model.config.decoder.eos_token_id
+        >>> model.config.pad_token_id = model.config.eos_token_id
+
+        >>> sequences = model.generate(input_ids, num_beams=4, max_length=12).sequences
+
+        >>> summary = tokenizer_output.batch_decode(sequences, skip_special_tokens=True)[0]
+        >>> assert summary == "SAS Alpha Epsilon suspended Sigma Alpha Epsilon members"
+        ```
+        """
+
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        output_hidden_states = (
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        )
+        return_dict = return_dict if return_dict is not None else self.config.return_dict
+
+        # prepare encoder inputs
+        if attention_mask is None:
+            attention_mask = jnp.ones_like(input_ids)
+        if position_ids is None:
+            batch_size, sequence_length = input_ids.shape
+            position_ids = jnp.broadcast_to(jnp.arange(sequence_length)[None, :], (batch_size, sequence_length))
+
+        # prepare decoder inputs
+        if decoder_input_ids is None:
+            raise ValueError(
+                "`decoder_input_ids` cannot be `None`. For sequence to sequence training, `decoder_position_ids` must"
+                " be specified as an input argument."
+            )
+        if decoder_attention_mask is None:
+            decoder_attention_mask = jnp.ones_like(decoder_input_ids)
+        if decoder_position_ids is None:
+            batch_size, sequence_length = decoder_input_ids.shape
+            decoder_position_ids = jnp.broadcast_to(
+                jnp.arange(sequence_length)[None, :], (batch_size, sequence_length)
+            )
+
+        # Handle any PRNG if needed
+        rngs = {"dropout": dropout_rng} if dropout_rng is not None else {}
+
+        return self.module.apply(
+            {"params": params or self.params},
+            input_ids=jnp.array(input_ids, dtype="i4"),
+            attention_mask=jnp.array(attention_mask, dtype="i4"),
+            decoder_input_ids=jnp.array(decoder_input_ids, dtype="i4"),
+            decoder_attention_mask=jnp.array(decoder_attention_mask, dtype="i4"),
+            position_ids=jnp.array(position_ids, dtype="i4"),
+            decoder_position_ids=jnp.array(decoder_position_ids, dtype="i4"),
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+            deterministic=not train,
+            rngs=rngs,
+        )
+
+--- Chunk 4 ---
+File: scripts/fsmt/gen-card-allenai-wmt19.py
+Lines: 22-144
+Symbol: write_model_card
+
+def write_model_card(model_card_dir, src_lang, tgt_lang, model_name):
+
+    texts = {
+        "en": "Machine learning is great, isn't it?",
+        "ru": "Машинное обучение - это здорово, не так ли?",
+        "de": "Maschinelles Lernen ist großartig, nicht wahr?",
+    }
+
+    # BLUE scores as follows:
+    # "pair": [fairseq, transformers]
+    scores = {
+        "wmt19-de-en-6-6-base": [0, 38.37],
+        "wmt19-de-en-6-6-big": [0, 39.90],
+    }
+    pair = f"{src_lang}-{tgt_lang}"
+
+    readme = f"""
+---
+
+language:
+- {src_lang}
+- {tgt_lang}
+thumbnail:
+tags:
+- translation
+- wmt19
+- allenai
+license: apache-2.0
+datasets:
+- wmt19
+metrics:
+- bleu
+---
+
+# FSMT
+
+## Model description
+
+This is a ported version of fairseq-based [wmt19 transformer](https://github.com/jungokasai/deep-shallow/) for {src_lang}-{tgt_lang}.
+
+For more details, please, see [Deep Encoder, Shallow Decoder: Reevaluating the Speed-Quality Tradeoff in Machine Translation](https://arxiv.org/abs/2006.10369).
+
+2 models are available:
+
+* [wmt19-de-en-6-6-big](https://huggingface.co/allenai/wmt19-de-en-6-6-big)
+* [wmt19-de-en-6-6-base](https://huggingface.co/allenai/wmt19-de-en-6-6-base)
+
+
+## Intended uses & limitations
+
+#### How to use
+
+```python
+from transformers import FSMTForConditionalGeneration, FSMTTokenizer
+mname = "allenai/{model_name}"
+tokenizer = FSMTTokenizer.from_pretrained(mname)
+model = FSMTForConditionalGeneration.from_pretrained(mname)
+
+input = "{texts[src_lang]}"
+input_ids = tokenizer.encode(input, return_tensors="pt")
+outputs = model.generate(input_ids)
+decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print(decoded) # {texts[tgt_lang]}
+
+```
+
+#### Limitations and bias
+
+
+## Training data
+
+Pretrained weights were left identical to the original model released by allenai. For more details, please, see the [paper](https://arxiv.org/abs/2006.10369).
+
+## Eval results
+
+Here are the BLEU scores:
+
+model   |  transformers
+-------|---------
+{model_name}  |  {scores[model_name][1]}
+
+The score was calculated using this code:
+
+```bash
+git clone https://github.com/huggingface/transformers
+cd transformers
+export PAIR={pair}
+export DATA_DIR=data/$PAIR
+export SAVE_DIR=data/$PAIR
+export BS=8
+export NUM_BEAMS=5
+mkdir -p $DATA_DIR
+sacrebleu -t wmt19 -l $PAIR --echo src > $DATA_DIR/val.source
+sacrebleu -t wmt19 -l $PAIR --echo ref > $DATA_DIR/val.target
+echo $PAIR
+PYTHONPATH="src:examples/seq2seq" python examples/seq2seq/run_eval.py allenai/{model_name} $DATA_DIR/val.source $SAVE_DIR/test_translations.txt --reference_path $DATA_DIR/val.target --score_path $SAVE_DIR/test_bleu.json --bs $BS --task translation --num_beams $NUM_BEAMS
+```
+
+## Data Sources
+
+- [training, etc.](http://www.statmt.org/wmt19/)
+- [test set](http://matrix.statmt.org/test_sets/newstest2019.tgz?1556572561)
+
+
+### BibTeX entry and citation info
+
+```
+@misc{{kasai2020deep,
+    title={{Deep Encoder, Shallow Decoder: Reevaluating the Speed-Quality Tradeoff in Machine Translation}},
+    author={{Jungo Kasai and Nikolaos Pappas and Hao Peng and James Cross and Noah A. Smith}},
+    year={{2020}},
+    eprint={{2006.10369}},
+    archivePrefix={{arXiv}},
+    primaryClass={{cs.CL}}
+}}
+```
+
+"""
+    model_card_dir.mkdir(parents=True, exist_ok=True)
+    path = os.path.join(model_card_dir, "README.md")
+    print(f"Generating {path}")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(readme)
+
+--- Chunk 5 ---
+File: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
+Lines: 289-387
+Symbol: EncoderDecoderModel.from_pretrained
+
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+        r"""
+        Example:
+
+        ```python
+        >>> from transformers import EncoderDecoderModel
+
+        >>> model = EncoderDecoderModel.from_pretrained("patrickvonplaten/bert2bert-cnn_dailymail-fp16")
+        ```"""
+
+        from_tf = kwargs.pop("from_tf", False)
+        if from_tf:
+            from transformers import TFEncoderDecoderModel
+
+            # a workaround to load from tensorflow checkpoint
+            # Using `_tf_model` won't work, because the weight names in the encoder/decoder of `_tf_model` get
+            # extended before saving those components. For example, The name of `_tf_model.encoder.vit` is
+            # `[top model name]/encoder/vit`, but the name of `tf_model.encoder.vit` is `[top model name]/vit`. The
+            # [top model name] is handled (stripped) by the conversion method, and the former case gets extra `encoder`,
+            # which should not occur when we want to save the components alone.
+            # There was a (very) ugly potential fix, which wasn't integrated to `transformers`: see
+            #   https://github.com/huggingface/transformers/pull/13222/commits/dbb3c9de76eee235791d2064094654637c99f36d#r697304245
+            #   (the change in `src/transformers/modeling_tf_utils.py`)
+            _tf_model = TFEncoderDecoderModel.from_pretrained(pretrained_model_name_or_path, *model_args, **kwargs)
+            config = _tf_model.config
+
+            # Using `tf_model` instead
+            encoder = _tf_model.encoder.__class__(_tf_model.config.encoder)
+            decoder = _tf_model.decoder.__class__(_tf_model.config.decoder)
+            # Make sure models are built
+            encoder(encoder.dummy_inputs)
+            decoder(decoder.dummy_inputs)
+
+            # Get the variable correspondence between `_tf_model` and `encoder` and `decoder`
+            encoder_variables = {}
+            for v in encoder.trainable_variables + encoder.non_trainable_variables:
+                encoder_variables["/".join(v.name.split("/")[1:])] = v
+            decoder_variables = {}
+            for v in decoder.trainable_variables + decoder.non_trainable_variables:
+                decoder_variables["/".join(v.name.split("/")[1:])] = v
+
+            _encoder_variables = {}
+            for v in _tf_model.encoder.trainable_variables + _tf_model.encoder.non_trainable_variables:
+                _encoder_variables["/".join(v.name.split("/")[2:])] = v
+            _decoder_variables = {}
+            for v in _tf_model.decoder.trainable_variables + _tf_model.decoder.non_trainable_variables:
+                _decoder_variables["/".join(v.name.split("/")[2:])] = v
+
+            # assign weight values to `encoder` and `decoder` from `_tf_model`
+            for name, v in encoder_variables.items():
+                v.assign(_encoder_variables[name])
+            for name, v in decoder_variables.items():
+                v.assign(_decoder_variables[name])
+
+            tf_model = TFEncoderDecoderModel(encoder=encoder, decoder=decoder)
+
+            # Deal with `enc_to_dec_proj`
+            if hasattr(_tf_model, "enc_to_dec_proj"):
+                tf_model(tf_model.dummy_inputs)
+                tf_model.enc_to_dec_proj.kernel.assign(_tf_model.enc_to_dec_proj.kernel)
+                tf_model.enc_to_dec_proj.bias.assign(_tf_model.enc_to_dec_proj.bias)
+
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                encoder_dir = os.path.join(tmpdirname, "encoder")
+                decoder_dir = os.path.join(tmpdirname, "decoder")
+                tf_model.encoder.save_pretrained(encoder_dir)
+                tf_model.decoder.save_pretrained(decoder_dir)
+
+                if hasattr(tf_model, "enc_to_dec_proj"):
+                    enc_to_dec_proj_weight = torch.transpose(
+                        torch.from_numpy(tf_model.enc_to_dec_proj.kernel.numpy()), 1, 0
+                    )
+                    enc_to_dec_proj_bias = torch.from_numpy(tf_model.enc_to_dec_proj.bias.numpy())
+
+                del _tf_model
+                del tf_model
+                gc.collect()
+
+                model = EncoderDecoderModel.from_encoder_decoder_pretrained(
+                    encoder_dir, decoder_dir, encoder_from_tf=True, decoder_from_tf=True
+                )
+                # This is only for copying some specific attributes of this particular model.
+                model.config = config
+
+                if hasattr(model, "enc_to_dec_proj"):
+                    model.enc_to_dec_proj.weight.data = enc_to_dec_proj_weight
+                    model.enc_to_dec_proj.bias.data = enc_to_dec_proj_bias
+
+                return model
+
+        # At the moment fast initialization is not supported for composite models
+        if kwargs.get("_fast_init", False):
+            logger.warning(
+                "Fast initialization is currently not supported for EncoderDecoderModel. "
+                "Falling back to slow initialization..."
+            )
+        kwargs["_fast_init"] = False
+
+        return super().from_pretrained(pretrained_model_name_or_path, *model_args, **kwargs)
+
+--- Chunk 6 ---
+File: src/transformers/models/mobilenet_v2/convert_original_tf_checkpoint_to_pytorch.py
+Lines: 86-153
+Symbol: convert_movilevit_checkpoint
+
+def convert_movilevit_checkpoint(model_name, checkpoint_path, pytorch_dump_folder_path, push_to_hub=False):
+    """
+    Copy/paste/tweak model's weights to our MobileNetV2 structure.
+    """
+    config = get_mobilenet_v2_config(model_name)
+
+    # Load 🤗 model
+    if model_name.startswith("deeplabv3_"):
+        model = MobileNetV2ForSemanticSegmentation(config).eval()
+    else:
+        model = MobileNetV2ForImageClassification(config).eval()
+
+    # Load weights from TensorFlow checkpoint
+    load_tf_weights_in_mobilenet_v2(model, config, checkpoint_path)
+
+    # Check outputs on an image, prepared by MobileNetV2ImageProcessor
+    image_processor = MobileNetV2ImageProcessor(
+        crop_size={"width": config.image_size, "height": config.image_size},
+        size={"shortest_edge": config.image_size + 32},
+    )
+    encoding = image_processor(images=prepare_img(), return_tensors="pt")
+    outputs = model(**encoding)
+    logits = outputs.logits
+
+    if model_name.startswith("deeplabv3_"):
+        assert logits.shape == (1, 21, 65, 65)
+
+        if model_name == "deeplabv3_mobilenet_v2_1.0_513":
+            expected_logits = torch.tensor(
+                [
+                    [[17.5790, 17.7581, 18.3355], [18.3257, 18.4230, 18.8973], [18.6169, 18.8650, 19.2187]],
+                    [[-2.1595, -2.0977, -2.3741], [-2.4226, -2.3028, -2.6835], [-2.7819, -2.5991, -2.7706]],
+                    [[4.2058, 4.8317, 4.7638], [4.4136, 5.0361, 4.9383], [4.5028, 4.9644, 4.8734]],
+                ]
+            )
+
+        else:
+            raise ValueError(f"Unknown model name: {model_name}")
+
+        assert torch.allclose(logits[0, :3, :3, :3], expected_logits, atol=1e-4)
+    else:
+        assert logits.shape == (1, 1001)
+
+        if model_name == "mobilenet_v2_1.4_224":
+            expected_logits = torch.tensor([0.0181, -1.0015, 0.4688])
+        elif model_name == "mobilenet_v2_1.0_224":
+            expected_logits = torch.tensor([0.2445, -1.1993, 0.1905])
+        elif model_name == "mobilenet_v2_0.75_160":
+            expected_logits = torch.tensor([0.2482, 0.4136, 0.6669])
+        elif model_name == "mobilenet_v2_0.35_96":
+            expected_logits = torch.tensor([0.1451, -0.4624, 0.7192])
+        else:
+            expected_logits = None
+
+        if expected_logits is not None:
+            assert torch.allclose(logits[0, :3], expected_logits, atol=1e-4)
+
+    Path(pytorch_dump_folder_path).mkdir(exist_ok=True)
+    print(f"Saving model {model_name} to {pytorch_dump_folder_path}")
+    model.save_pretrained(pytorch_dump_folder_path)
+    print(f"Saving image processor to {pytorch_dump_folder_path}")
+    image_processor.save_pretrained(pytorch_dump_folder_path)
+
+    if push_to_hub:
+        print("Pushing to the hub...")
+        repo_id = "google/" + model_name
+        image_processor.push_to_hub(repo_id)
+        model.push_to_hub(repo_id)
+
+--- Chunk 7 ---
+File: tests/models/encoder_decoder/test_modeling_tf_encoder_decoder.py
+Lines: 863-890
+Symbol: TFGPT2EncoderDecoderModelTest.test_bert2gpt2_summarization
+
+    def test_bert2gpt2_summarization(self):
+        from transformers import EncoderDecoderModel
+
+        tokenizer_in = AutoTokenizer.from_pretrained("bert-base-cased")
+        tokenizer_out = AutoTokenizer.from_pretrained("gpt2")
+
+        """Not working, because pt checkpoint has `encoder.encoder.layer...` while tf model has `encoder.bert.encoder.layer...`.
+        (For GPT2 decoder, there is no issue)
+        model = TFEncoderDecoderModel.from_pretrained("patrickvonplaten/bert2gpt2-cnn_dailymail-fp16", from_pt=True)
+        """
+
+        # workaround to load from pt
+        _model = EncoderDecoderModel.from_pretrained("patrickvonplaten/bert2gpt2-cnn_dailymail-fp16")
+        _model.encoder.save_pretrained("./encoder")
+        _model.decoder.save_pretrained("./decoder")
+        model = TFEncoderDecoderModel.from_encoder_decoder_pretrained(
+            "./encoder", "./decoder", encoder_from_pt=True, decoder_from_pt=True
+        )
+        model.config = _model.config
+
+        ARTICLE_STUDENTS = """(CNN)Sigma Alpha Epsilon is under fire for a video showing party-bound fraternity members singing a racist chant. SAE's national chapter suspended the students, but University of Oklahoma President David Boren took it a step further, saying the university's affiliation with the fraternity is permanently done. The news is shocking, but it's not the first time SAE has faced controversy. SAE was founded March 9, 1856, at the University of Alabama, five years before the American Civil War, according to the fraternity website. When the war began, the group had fewer than 400 members, of which "369 went to war for the Confederate States and seven for the Union Army," the website says. The fraternity now boasts more than 200,000 living alumni, along with about 15,000 undergraduates populating 219 chapters and 20 "colonies" seeking full membership at universities. SAE has had to work hard to change recently after a string of member deaths, many blamed on the hazing of new recruits, SAE national President Bradley Cohen wrote in a message on the fraternity's website. The fraternity's website lists more than 130 chapters cited or suspended for "health and safety incidents" since 2010. At least 30 of the incidents involved hazing, and dozens more involved alcohol. However, the list is missing numerous incidents from recent months. Among them, according to various media outlets: Yale University banned the SAEs from campus activities last month after members allegedly tried to interfere with a sexual misconduct investigation connected to an initiation rite. Stanford University in December suspended SAE housing privileges after finding sorority members attending a fraternity function were subjected to graphic sexual content. And Johns Hopkins University in November suspended the fraternity for underage drinking. "The media has labeled us as the 'nation's deadliest fraternity,' " Cohen said. In 2011, for example, a student died while being coerced into excessive alcohol consumption, according to a lawsuit. SAE's previous insurer dumped the fraternity. "As a result, we are paying Lloyd's of London the highest insurance rates in the Greek-letter world," Cohen said. Universities have turned down SAE's attempts to open new chapters, and the fraternity had to close 12 in 18 months over hazing incidents."""
+        EXPECTED_SUMMARY_STUDENTS = """SAS Alpha Epsilon suspended the students, but university president says it's permanent.\nThe fraternity has had to deal with a string of student deaths since 2010.\nSAS has more than 200,000 members, many of whom are students.\nA student died while being forced into excessive alcohol consumption."""
+
+        input_dict = tokenizer_in(ARTICLE_STUDENTS, return_tensors="tf")
+        output_ids = model.generate(input_ids=input_dict["input_ids"]).numpy().tolist()
+        summary = tokenizer_out.batch_decode(output_ids, skip_special_tokens=True)
+
+        self.assertEqual(summary, [EXPECTED_SUMMARY_STUDENTS])
+
+--- Chunk 8 ---
+File: src/transformers/models/xlm/tokenization_xlm.py
+Lines: 761-855
+Symbol: XLMTokenizer._tokenize
+
+    def _tokenize(self, text, lang="en", bypass_tokenizer=False):
+        """
+        Tokenize a string given language code. For Chinese, Japanese and Thai, we use a language specific tokenizer.
+        Otherwise, we use Moses.
+
+        Details of tokenization:
+
+            - [sacremoses](https://github.com/alvations/sacremoses): port of Moses
+            - Install with `pip install sacremoses`
+            - [pythainlp](https://github.com/PyThaiNLP/pythainlp): Thai tokenizer
+            - Install with `pip install pythainlp`
+            - [kytea](https://github.com/chezou/Mykytea-python): Japanese tokenizer, wrapper of
+              [KyTea](https://github.com/neubig/kytea)
+            - Install with the following steps:
+
+            ::
+
+                git clone git@github.com:neubig/kytea.git && cd kytea autoreconf -i ./configure --prefix=$HOME/local
+                make && make install pip install kytea
+
+            - [jieba](https://github.com/fxsjy/jieba): Chinese tokenizer (*)
+            - Install with `pip install jieba`
+
+        (*) The original XLM used [Stanford
+        Segmenter](https://nlp.stanford.edu/software/stanford-segmenter-2018-10-16.zip). However, the wrapper
+        (`nltk.tokenize.stanford_segmenter`) is slow due to JVM overhead, and it will be deprecated. Jieba is a lot
+        faster and pip-installable. Note there is some mismatch with the Stanford Segmenter. It should be fine if you
+        fine-tune the model with Chinese supervisionself. If you want the same exact behaviour, use the original XLM
+        [preprocessing script](https://github.com/facebookresearch/XLM/tree/master/tools) to tokenize the sentence
+        externally, and set `bypass_tokenizer=True` to bypass the tokenizer.
+
+        Args:
+            - lang: ISO language code (default = 'en') (string). Languages should belong of the model supported
+              languages. However, we don't enforce it.
+            - bypass_tokenizer: Allow users to preprocess and tokenize the sentences externally (default = False)
+              (bool). If True, we only apply BPE.
+
+        Returns:
+            List of tokens.
+        """
+        if lang and self.lang2id and lang not in self.lang2id:
+            logger.error(
+                "Supplied language code not found in lang2id mapping. Please check that your language is supported by"
+                " the loaded pretrained model."
+            )
+        if bypass_tokenizer:
+            text = text.split()
+        elif lang not in self.lang_with_custom_tokenizer:
+            text = self.moses_pipeline(text, lang=lang)
+            # TODO: make sure we are using `xlm-mlm-enro-1024`, since XLM-100 doesn't have this step
+            if lang == "ro":
+                text = romanian_preprocessing(text)
+            text = self.moses_tokenize(text, lang=lang)
+        elif lang == "th":
+            text = self.moses_pipeline(text, lang=lang)
+            try:
+                if "pythainlp" not in sys.modules:
+                    from pythainlp.tokenize import word_tokenize as th_word_tokenize
+                else:
+                    th_word_tokenize = sys.modules["pythainlp"].word_tokenize
+            except (AttributeError, ImportError):
+                logger.error(
+                    "Make sure you install PyThaiNLP (https://github.com/PyThaiNLP/pythainlp) with the following steps"
+                )
+                logger.error("1. pip install pythainlp")
+                raise
+            text = th_word_tokenize(text)
+        elif lang == "zh":
+            try:
+                if "jieba" not in sys.modules:
+                    import jieba
+                else:
+                    jieba = sys.modules["jieba"]
+            except (AttributeError, ImportError):
+                logger.error("Make sure you install Jieba (https://github.com/fxsjy/jieba) with the following steps")
+                logger.error("1. pip install jieba")
+                raise
+            text = " ".join(jieba.cut(text))
+            text = self.moses_pipeline(text, lang=lang)
+            text = text.split()
+        elif lang == "ja":
+            text = self.moses_pipeline(text, lang=lang)
+            text = self.ja_tokenize(text)
+        else:
+            raise ValueError("It should not reach here")
+
+        if self.do_lowercase_and_remove_accent and not bypass_tokenizer:
+            text = lowercase_and_remove_accent(text)
+
+        split_tokens = []
+        for token in text:
+            if token:
+                split_tokens.extend(list(self.bpe(token).split(" ")))
+
+        return split_tokens
+
+--- Chunk 9 ---
+File: src/transformers/modeling_utils.py
+Lines: 1249-1324
+Symbol: PreTrainedModel._check_and_enable_flash_attn_2
+
+    def _check_and_enable_flash_attn_2(
+        cls, config, torch_dtype: Optional[torch.dtype] = None, device_map: Optional[Union[str, Dict[str, int]]] = None
+    ) -> PretrainedConfig:
+        """
+        If you don't know about Flash Attention, check out the official repository of flash attention:
+        https://github.com/Dao-AILab/flash-attention
+
+        For using Flash Attention 1.0 you can do it directly via the `BetterTransformer` API, have a look at this
+        specific section of the documentation to learn more about it:
+        https://huggingface.co/docs/transformers/main/en/perf_infer_gpu_one#decoder-models
+
+        The method checks if the current setup is compatible with Flash Attention as it requires the model to be in
+        half precision and not ran on CPU.
+
+        If all checks pass, the method will create an attribute in the config `_flash_attn_2_enabled` so that the model
+        can initialize the correct attention module
+        """
+        if not cls._supports_flash_attn_2:
+            raise ValueError(
+                "The current architecture does not support Flash Attention 2.0. Please open an issue on GitHub to "
+                "request support for this architecture: https://github.com/huggingface/transformers/issues/new"
+            )
+
+        if not is_flash_attn_available():
+            raise ImportError(
+                "Flash Attention 2.0 is not available. Please refer to the documentation of https://github.com/Dao-AILab/flash-attention for"
+                " installing it."
+            )
+        else:
+            flash_attention_version = version.parse(importlib.metadata.version("flash_attn"))
+            is_flash_greater_than_2 = flash_attention_version > version.parse("2.0.0")
+            if not is_flash_greater_than_2:
+                raise ValueError(
+                    f"You need flash_attn package version to be greater than 2.0. Make sure to have that version installed - detected version {flash_attention_version}"
+                )
+
+        _is_bettertransformer = getattr(cls, "use_bettertransformer", False)
+
+        if _is_bettertransformer:
+            raise ValueError(
+                "Flash Attention 2 and BetterTransformer API are not compatible. Please make sure to disable BetterTransformers by doing model.reverse_bettertransformer()"
+            )
+
+        if torch_dtype is None:
+            logger.warning(
+                "You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour"
+            )
+        elif torch_dtype is not None and torch_dtype not in [torch.float16, torch.bfloat16]:
+            raise ValueError(
+                f"Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes. You passed {torch_dtype}, this might lead to"
+                " unexpected behaviour."
+            )
+
+        if device_map is None:
+            if torch.cuda.is_available():
+                logger.warning(
+                    "You are attempting to use Flash Attention 2.0 with a model initialized on CPU. Make sure to move the model to GPU"
+                    " after initializing it on CPU with `model.to('cuda')`."
+                )
+            else:
+                raise ValueError(
+                    "You are attempting to use Flash Attention 2.0 with a model initialized on CPU and with no GPU available. "
+                    "This is not supported yet. Please make sure to have access to a GPU and either initialise the model on a GPU by passing a device_map "
+                    "or initialising the model on CPU and then moving it to GPU."
+                )
+        elif (
+            device_map is not None
+            and isinstance(device_map, dict)
+            and ("cpu" in device_map.values() or "disk" in device_map.values())
+        ):
+            raise ValueError(
+                "You are attempting to use Flash Attention 2.0 with a model dispatched on CPU or disk. This is not supported. Please make sure to "
+                "initialise the model on a GPU by passing a device_map that contains only GPU devices as keys."
+            )
+        config._flash_attn_2_enabled = True
+        return config
+
+--- Chunk 10 ---
+File: tests/pipelines/test_pipelines_question_answering.py
+Lines: 310-355
+Symbol: QAPipelineTests.test_large_model_course
+
+    def test_large_model_course(self):
+        question_answerer = pipeline("question-answering")
+        long_context = """
+🤗 Transformers: State of the Art NLP
+
+🤗 Transformers provides thousands of pretrained models to perform tasks on texts such as classification, information extraction,
+question answering, summarization, translation, text generation and more in over 100 languages.
+Its aim is to make cutting-edge NLP easier to use for everyone.
+
+🤗 Transformers provides APIs to quickly download and use those pretrained models on a given text, fine-tune them on your own datasets and
+then share them with the community on our model hub. At the same time, each python module defining an architecture is fully standalone and
+can be modified to enable quick research experiments.
+
+Why should I use transformers?
+
+1. Easy-to-use state-of-the-art models:
+  - High performance on NLU and NLG tasks.
+  - Low barrier to entry for educators and practitioners.
+  - Few user-facing abstractions with just three classes to learn.
+  - A unified API for using all our pretrained models.
+  - Lower compute costs, smaller carbon footprint:
+
+2. Researchers can share trained models instead of always retraining.
+  - Practitioners can reduce compute time and production costs.
+  - Dozens of architectures with over 10,000 pretrained models, some in more than 100 languages.
+
+3. Choose the right framework for every part of a model's lifetime:
+  - Train state-of-the-art models in 3 lines of code.
+  - Move a single model between TF2.0/PyTorch frameworks at will.
+  - Seamlessly pick the right framework for training, evaluation and production.
+
+4. Easily customize a model or an example to your needs:
+  - We provide examples for each architecture to reproduce the results published by its original authors.
+  - Model internals are exposed as consistently as possible.
+  - Model files can be used independently of the library for quick experiments.
+
+🤗 Transformers is backed by the three most popular deep learning libraries — Jax, PyTorch and TensorFlow — with a seamless integration
+between them. It's straightforward to train your models with one before loading them for inference with the other.
+"""
+        question = "Which deep learning libraries back 🤗 Transformers?"
+        outputs = question_answerer(question=question, context=long_context)
+
+        self.assertEqual(
+            nested_simplify(outputs),
+            {"answer": "Jax, PyTorch and TensorFlow", "end": 1919, "score": 0.971, "start": 1892},
+        )
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

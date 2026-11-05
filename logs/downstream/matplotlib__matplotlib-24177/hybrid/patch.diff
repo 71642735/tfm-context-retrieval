@@ -1,0 +1,14 @@
+diff --git a/lib/matplotlib/axes/_axes.py b/lib/matplotlib/axes/_axes.py
+--- a/lib/matplotlib/axes/_axes.py
++++ b/lib/matplotlib/axes/_axes.py
+@@ -6900,8 +6900,8 @@
+             for patch_list in patches:
+                 for patch in patch_list:
+                     if orientation == 'vertical':
+-                        patch.sticky_edges.y.append(0)
++                        patch.sticky_edges.y[:] = [0]
+                     elif orientation == 'horizontal':
+-                        patch.sticky_edges.x.append(0)
++                        patch.sticky_edges.x[:] = [0]
+ 
+             # we return patches, so put it back in the expected order

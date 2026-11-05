@@ -1,0 +1,702 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Unexpected exception when multiplying geometry.Point and number
+```python
+from sympy import geometry as ge
+import sympy
+
+point1 = ge.Point(0,0)
+point2 = ge.Point(1,1)
+```
+
+This line works fine
+```python
+point1 + point2 * sympy.sympify(2.0)
+```
+
+But when I write the same this way it raises an exception
+```python
+point1 + sympy.sympify(2.0) * point2
+```
+
+```
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)
+    219         try:
+--> 220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+    221         except TypeError:
+
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __new__(cls, *args, **kwargs)
+    128                 Expecting sequence of coordinates, not `{}`'''
+--> 129                                        .format(func_name(coords))))
+    130         # A point where only `dim` is specified is initialized
+
+TypeError: 
+Expecting sequence of coordinates, not `Mul`
+
+During handling of the above exception, another exception occurred:
+
+GeometryError                             Traceback (most recent call last)
+<ipython-input-20-6dcbddac1ee2> in <module>
+----> 1 point1 + sympy.sympify(2.0)* point2
+
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)
+    220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+    221         except TypeError:
+--> 222             raise GeometryError("Don't know how to add {} and a Point object".format(other))
+    223 
+    224         coords = [simplify(a + b) for a, b in zip(s, o)]
+
+GeometryError: Don't know how to add 2.0*Point2D(1, 1) and a Point object
+```
+
+The expected behaviour is, that both lines give the same result
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sympy/geometry/point.py
+Lines: 185-222
+Symbol: Point.__add__
+
+    def __add__(self, other):
+        """Add other to self by incrementing self's coordinates by
+        those of other.
+
+        Notes
+        =====
+
+        >>> from sympy.geometry.point import Point
+
+        When sequences of coordinates are passed to Point methods, they
+        are converted to a Point internally. This __add__ method does
+        not do that so if floating point values are used, a floating
+        point result (in terms of SymPy Floats) will be returned.
+
+        >>> Point(1, 2) + (.1, .2)
+        Point2D(1.1, 2.2)
+
+        If this is not desired, the `translate` method can be used or
+        another Point can be added:
+
+        >>> Point(1, 2).translate(.1, .2)
+        Point2D(11/10, 11/5)
+        >>> Point(1, 2) + Point(.1, .2)
+        Point2D(11/10, 11/5)
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.translate
+
+        """
+        try:
+            s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+        except TypeError:
+            raise GeometryError("Don't know how to add {} and a Point object".format(other))
+
+        coords = [simplify(a + b) for a, b in zip(s, o)]
+        return Point(coords, evaluate=False)
+
+--- Chunk 2 ---
+File: sympy/geometry/point.py
+Lines: 250-279
+Symbol: Point.__mul__
+
+    def __mul__(self, factor):
+        """Multiply point's coordinates by a factor.
+
+        Notes
+        =====
+
+        >>> from sympy.geometry.point import Point
+
+        When multiplying a Point by a floating point number,
+        the coordinates of the Point will be changed to Floats:
+
+        >>> Point(1, 2)*0.1
+        Point2D(0.1, 0.2)
+
+        If this is not desired, the `scale` method can be used or
+        else only multiply or divide by integers:
+
+        >>> Point(1, 2).scale(1.1, 1.1)
+        Point2D(11/10, 11/5)
+        >>> Point(1, 2)*11/10
+        Point2D(11/10, 11/5)
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.scale
+        """
+        factor = sympify(factor)
+        coords = [simplify(x*factor) for x in self.args]
+        return Point(coords, evaluate=False)
+
+--- Chunk 3 ---
+File: sympy/geometry/point.py
+Lines: 382-432
+Symbol: Point.distance
+
+    def distance(self, other):
+        """The Euclidean distance between self and another GeometricEntity.
+
+        Returns
+        =======
+
+        distance : number or symbolic expression.
+
+        Raises
+        ======
+
+        TypeError : if other is not recognized as a GeometricEntity or is a
+                    GeometricEntity for which distance is not defined.
+
+        See Also
+        ========
+
+        sympy.geometry.line.Segment.length
+        sympy.geometry.point.Point.taxicab_distance
+
+        Examples
+        ========
+
+        >>> from sympy.geometry import Point, Line
+        >>> p1, p2 = Point(1, 1), Point(4, 5)
+        >>> l = Line((3, 1), (2, 2))
+        >>> p1.distance(p2)
+        5
+        >>> p1.distance(l)
+        sqrt(2)
+
+        The computed distance may be symbolic, too:
+
+        >>> from sympy.abc import x, y
+        >>> p3 = Point(x, y)
+        >>> p3.distance((0, 0))
+        sqrt(x**2 + y**2)
+
+        """
+        if not isinstance(other, GeometryEntity):
+            try:
+                other = Point(other, dim=self.ambient_dimension)
+            except TypeError:
+                raise TypeError("not recognized as a GeometricEntity: %s" % type(other))
+        if isinstance(other, Point):
+            s, p = Point._normalize_dimension(self, Point(other))
+            return sqrt(Add(*((a - b)**2 for a, b in zip(s, p))))
+        distance = getattr(other, 'distance', None)
+        if distance is None:
+            raise TypeError("distance between Point and %s is not defined" % type(other))
+        return distance(self)
+
+--- Chunk 4 ---
+File: sympy/core/expr.py
+Lines: 3655-3824
+Symbol: Expr.round
+
+    def round(self, n=None):
+        """Return x rounded to the given decimal place.
+
+        If a complex number would results, apply round to the real
+        and imaginary components of the number.
+
+        Examples
+        ========
+
+        >>> from sympy import pi, E, I, S, Add, Mul, Number
+        >>> pi.round()
+        3
+        >>> pi.round(2)
+        3.14
+        >>> (2*pi + E*I).round()
+        6 + 3*I
+
+        The round method has a chopping effect:
+
+        >>> (2*pi + I/10).round()
+        6
+        >>> (pi/10 + 2*I).round()
+        2*I
+        >>> (pi/10 + E*I).round(2)
+        0.31 + 2.72*I
+
+        Notes
+        =====
+
+        The Python builtin function, round, always returns a
+        float in Python 2 while the SymPy round method (and
+        round with a Number argument in Python 3) returns a
+        Number.
+
+        >>> from sympy.core.compatibility import PY3
+        >>> isinstance(round(S(123), -2), Number if PY3 else float)
+        True
+
+        For a consistent behavior, and Python 3 rounding
+        rules, import `round` from sympy.core.compatibility.
+
+        >>> from sympy.core.compatibility import round
+        >>> isinstance(round(S(123), -2), Number)
+        True
+        """
+        from sympy.core.power import integer_log
+        from sympy.core.numbers import Float
+
+        x = self
+
+        if not x.is_number:
+            raise TypeError("can't round symbolic expression")
+        if not x.is_Atom:
+            if not pure_complex(x.n(2), or_real=True):
+                raise TypeError(
+                    'Expected a number but got %s:' % func_name(x))
+        elif x in (S.NaN, S.Infinity, S.NegativeInfinity, S.ComplexInfinity):
+            return x
+        if not x.is_extended_real:
+            i, r = x.as_real_imag()
+            return i.round(n) + S.ImaginaryUnit*r.round(n)
+        if not x:
+            return S.Zero if n is None else x
+
+
+        p = as_int(n or 0)
+
+        if x.is_Integer:
+            # XXX return Integer(round(int(x), p)) when Py2 is dropped
+            if p >= 0:
+                return x
+            m = 10**-p
+            i, r = divmod(abs(x), m)
+            if i%2 and 2*r == m:
+              i += 1
+            elif 2*r > m:
+                i += 1
+            if x < 0:
+                i *= -1
+            return i*m
+
+        digits_to_decimal = _mag(x)  # _mag(12) = 2, _mag(.012) = -1
+        allow = digits_to_decimal + p
+        precs = [f._prec for f in x.atoms(Float)]
+        dps = prec_to_dps(max(precs)) if precs else None
+        if dps is None:
+            # assume everything is exact so use the Python
+            # float default or whatever was requested
+            dps = max(15, allow)
+        else:
+            allow = min(allow, dps)
+        # this will shift all digits to right of decimal
+        # and give us dps to work with as an int
+        shift = -digits_to_decimal + dps
+        extra = 1  # how far we look past known digits
+        # NOTE
+        # mpmath will calculate the binary representation to
+        # an arbitrary number of digits but we must base our
+        # answer on a finite number of those digits, e.g.
+        # .575 2589569785738035/2**52 in binary.
+        # mpmath shows us that the first 18 digits are
+        #     >>> Float(.575).n(18)
+        #     0.574999999999999956
+        # The default precision is 15 digits and if we ask
+        # for 15 we get
+        #     >>> Float(.575).n(15)
+        #     0.575000000000000
+        # mpmath handles rounding at the 15th digit. But we
+        # need to be careful since the user might be asking
+        # for rounding at the last digit and our semantics
+        # are to round toward the even final digit when there
+        # is a tie. So the extra digit will be used to make
+        # that decision. In this case, the value is the same
+        # to 15 digits:
+        #     >>> Float(.575).n(16)
+        #     0.5750000000000000
+        # Now converting this to the 15 known digits gives
+        #     575000000000000.0
+        # which rounds to integer
+        #    5750000000000000
+        # And now we can round to the desired digt, e.g. at
+        # the second from the left and we get
+        #    5800000000000000
+        # and rescaling that gives
+        #    0.58
+        # as the final result.
+        # If the value is made slightly less than 0.575 we might
+        # still obtain the same value:
+        #    >>> Float(.575-1e-16).n(16)*10**15
+        #    574999999999999.8
+        # What 15 digits best represents the known digits (which are
+        # to the left of the decimal? 5750000000000000, the same as
+        # before. The only way we will round down (in this case) is
+        # if we declared that we had more than 15 digits of precision.
+        # For example, if we use 16 digits of precision, the integer
+        # we deal with is
+        #    >>> Float(.575-1e-16).n(17)*10**16
+        #    5749999999999998.4
+        # and this now rounds to 5749999999999998 and (if we round to
+        # the 2nd digit from the left) we get 5700000000000000.
+        #
+        xf = x.n(dps + extra)*Pow(10, shift)
+        xi = Integer(xf)
+        # use the last digit to select the value of xi
+        # nearest to x before rounding at the desired digit
+        sign = 1 if x > 0 else -1
+        dif2 = sign*(xf - xi).n(extra)
+        if dif2 < 0:
+            raise NotImplementedError(
+                'not expecting int(x) to round away from 0')
+        if dif2 > .5:
+            xi += sign  # round away from 0
+        elif dif2 == .5:
+            xi += sign if xi%2 else -sign  # round toward even
+        # shift p to the new position
+        ip = p - shift
+        # let Python handle the int rounding then rescale
+        xr = xi.round(ip) # when Py2 is drop make this round(xi.p, ip)
+        # restore scale
+        rv = Rational(xr, Pow(10, shift))
+        # return Float or Integer
+        if rv.is_Integer:
+            if n is None:  # the single-arg case
+                return rv
+            # use str or else it won't be a float
+            return Float(str(rv), dps)  # keep same precision
+        else:
+            if not allow and rv > self:
+                allow += 1
+            return Float(rv, allow)
+
+--- Chunk 5 ---
+File: sympy/core/power.py
+Lines: 1630-1709
+Symbol: Pow.as_content_primitive
+
+    def as_content_primitive(self, radical=False, clear=True):
+        """Return the tuple (R, self/R) where R is the positive Rational
+        extracted from self.
+
+        Examples
+        ========
+
+        >>> from sympy import sqrt
+        >>> sqrt(4 + 4*sqrt(2)).as_content_primitive()
+        (2, sqrt(1 + sqrt(2)))
+        >>> sqrt(3 + 3*sqrt(2)).as_content_primitive()
+        (1, sqrt(3)*sqrt(1 + sqrt(2)))
+
+        >>> from sympy import expand_power_base, powsimp, Mul
+        >>> from sympy.abc import x, y
+
+        >>> ((2*x + 2)**2).as_content_primitive()
+        (4, (x + 1)**2)
+        >>> (4**((1 + y)/2)).as_content_primitive()
+        (2, 4**(y/2))
+        >>> (3**((1 + y)/2)).as_content_primitive()
+        (1, 3**((y + 1)/2))
+        >>> (3**((5 + y)/2)).as_content_primitive()
+        (9, 3**((y + 1)/2))
+        >>> eq = 3**(2 + 2*x)
+        >>> powsimp(eq) == eq
+        True
+        >>> eq.as_content_primitive()
+        (9, 3**(2*x))
+        >>> powsimp(Mul(*_))
+        3**(2*x + 2)
+
+        >>> eq = (2 + 2*x)**y
+        >>> s = expand_power_base(eq); s.is_Mul, s
+        (False, (2*x + 2)**y)
+        >>> eq.as_content_primitive()
+        (1, (2*(x + 1))**y)
+        >>> s = expand_power_base(_[1]); s.is_Mul, s
+        (True, 2**y*(x + 1)**y)
+
+        See docstring of Expr.as_content_primitive for more examples.
+        """
+
+        b, e = self.as_base_exp()
+        b = _keep_coeff(*b.as_content_primitive(radical=radical, clear=clear))
+        ce, pe = e.as_content_primitive(radical=radical, clear=clear)
+        if b.is_Rational:
+            #e
+            #= ce*pe
+            #= ce*(h + t)
+            #= ce*h + ce*t
+            #=> self
+            #= b**(ce*h)*b**(ce*t)
+            #= b**(cehp/cehq)*b**(ce*t)
+            #= b**(iceh + r/cehq)*b**(ce*t)
+            #= b**(iceh)*b**(r/cehq)*b**(ce*t)
+            #= b**(iceh)*b**(ce*t + r/cehq)
+            h, t = pe.as_coeff_Add()
+            if h.is_Rational:
+                ceh = ce*h
+                c = self.func(b, ceh)
+                r = S.Zero
+                if not c.is_Rational:
+                    iceh, r = divmod(ceh.p, ceh.q)
+                    c = self.func(b, iceh)
+                return c, self.func(b, _keep_coeff(ce, t + r/ce/ceh.q))
+        e = _keep_coeff(ce, pe)
+        # b**e = (h*t)**e = h**e*t**e = c*m*t**e
+        if e.is_Rational and b.is_Mul:
+            h, t = b.as_content_primitive(radical=radical, clear=clear)  # h is positive
+            c, m = self.func(h, e).as_coeff_Mul()  # so c is positive
+            m, me = m.as_base_exp()
+            if m is S.One or me == e:  # probably always true
+                # return the following, not return c, m*Pow(t, e)
+                # which would change Pow into Mul; we let sympy
+                # decide what to do by using the unevaluated Mul, e.g
+                # should it stay as sqrt(2 + 2*sqrt(5)) or become
+                # sqrt(2)*sqrt(1 + sqrt(5))
+                return c, self.func(_keep_coeff(m, t), e)
+        return S.One, self.func(b, e)
+
+--- Chunk 6 ---
+File: sympy/geometry/tests/test_line.py
+Lines: 25-38
+Symbol: test_object_from_equation
+
+def test_object_from_equation():
+    from sympy.abc import x, y, a, b
+    assert Line(3*x + y + 18) == Line2D(Point2D(0, -18), Point2D(1, -21))
+    assert Line(3*x + 5 * y + 1) == Line2D(Point2D(0, Rational(-1, 5)), Point2D(1, Rational(-4, 5)))
+    assert Line(3*a + b + 18, x='a', y='b') == Line2D(Point2D(0, -18), Point2D(1, -21))
+    assert Line(3*x + y) == Line2D(Point2D(0, 0), Point2D(1, -3))
+    assert Line(x + y) == Line2D(Point2D(0, 0), Point2D(1, -1))
+    raises(ValueError, lambda: Line(x))
+    raises(ValueError, lambda: Line(y))
+    raises(ValueError, lambda: Line(x/y))
+    raises(ValueError, lambda: Line(a/b, x='a', y='b'))
+    raises(ValueError, lambda: Line(y/x))
+    raises(ValueError, lambda: Line(b/a, x='a', y='b'))
+    raises(ValueError, lambda: Line((x + 1)**2 + y))
+
+--- Chunk 7 ---
+File: sympy/core/basic.py
+Lines: 769-795
+Symbol: Basic.as_poly
+
+    def as_poly(self, *gens, **args):
+        """Converts ``self`` to a polynomial or returns ``None``.
+
+        >>> from sympy import sin
+        >>> from sympy.abc import x, y
+
+        >>> print((x**2 + x*y).as_poly())
+        Poly(x**2 + x*y, x, y, domain='ZZ')
+
+        >>> print((x**2 + x*y).as_poly(x, y))
+        Poly(x**2 + x*y, x, y, domain='ZZ')
+
+        >>> print((x**2 + sin(y)).as_poly(x, y))
+        None
+
+        """
+        from sympy.polys import Poly, PolynomialError
+
+        try:
+            poly = Poly(self, *gens, **args)
+
+            if not poly.is_Poly:
+                return None
+            else:
+                return poly
+        except PolynomialError:
+            return None
+
+--- Chunk 8 ---
+File: sympy/geometry/tests/test_point.py
+Lines: 9-119
+Symbol: test_point
+
+def test_point():
+    x = Symbol('x', real=True)
+    y = Symbol('y', real=True)
+    x1 = Symbol('x1', real=True)
+    x2 = Symbol('x2', real=True)
+    y1 = Symbol('y1', real=True)
+    y2 = Symbol('y2', real=True)
+    half = S.Half
+    p1 = Point(x1, x2)
+    p2 = Point(y1, y2)
+    p3 = Point(0, 0)
+    p4 = Point(1, 1)
+    p5 = Point(0, 1)
+    line = Line(Point(1, 0), slope=1)
+
+    assert p1 in p1
+    assert p1 not in p2
+    assert p2.y == y2
+    assert (p3 + p4) == p4
+    assert (p2 - p1) == Point(y1 - x1, y2 - x2)
+    assert p4*5 == Point(5, 5)
+    assert -p2 == Point(-y1, -y2)
+    raises(ValueError, lambda: Point(3, I))
+    raises(ValueError, lambda: Point(2*I, I))
+    raises(ValueError, lambda: Point(3 + I, I))
+
+    assert Point(34.05, sqrt(3)) == Point(Rational(681, 20), sqrt(3))
+    assert Point.midpoint(p3, p4) == Point(half, half)
+    assert Point.midpoint(p1, p4) == Point(half + half*x1, half + half*x2)
+    assert Point.midpoint(p2, p2) == p2
+    assert p2.midpoint(p2) == p2
+
+    assert Point.distance(p3, p4) == sqrt(2)
+    assert Point.distance(p1, p1) == 0
+    assert Point.distance(p3, p2) == sqrt(p2.x**2 + p2.y**2)
+
+    # distance should be symmetric
+    assert p1.distance(line) == line.distance(p1)
+    assert p4.distance(line) == line.distance(p4)
+
+    assert Point.taxicab_distance(p4, p3) == 2
+
+    assert Point.canberra_distance(p4, p5) == 1
+
+    p1_1 = Point(x1, x1)
+    p1_2 = Point(y2, y2)
+    p1_3 = Point(x1 + 1, x1)
+    assert Point.is_collinear(p3)
+
+    with warns(UserWarning):
+        assert Point.is_collinear(p3, Point(p3, dim=4))
+    assert p3.is_collinear()
+    assert Point.is_collinear(p3, p4)
+    assert Point.is_collinear(p3, p4, p1_1, p1_2)
+    assert Point.is_collinear(p3, p4, p1_1, p1_3) is False
+    assert Point.is_collinear(p3, p3, p4, p5) is False
+
+    raises(TypeError, lambda: Point.is_collinear(line))
+    raises(TypeError, lambda: p1_1.is_collinear(line))
+
+    assert p3.intersection(Point(0, 0)) == [p3]
+    assert p3.intersection(p4) == []
+
+    x_pos = Symbol('x', real=True, positive=True)
+    p2_1 = Point(x_pos, 0)
+    p2_2 = Point(0, x_pos)
+    p2_3 = Point(-x_pos, 0)
+    p2_4 = Point(0, -x_pos)
+    p2_5 = Point(x_pos, 5)
+    assert Point.is_concyclic(p2_1)
+    assert Point.is_concyclic(p2_1, p2_2)
+    assert Point.is_concyclic(p2_1, p2_2, p2_3, p2_4)
+    for pts in permutations((p2_1, p2_2, p2_3, p2_5)):
+        assert Point.is_concyclic(*pts) is False
+    assert Point.is_concyclic(p4, p4 * 2, p4 * 3) is False
+    assert Point(0, 0).is_concyclic((1, 1), (2, 2), (2, 1)) is False
+
+    assert p4.scale(2, 3) == Point(2, 3)
+    assert p3.scale(2, 3) == p3
+
+    assert p4.rotate(pi, Point(0.5, 0.5)) == p3
+    assert p1.__radd__(p2) == p1.midpoint(p2).scale(2, 2)
+    assert (-p3).__rsub__(p4) == p3.midpoint(p4).scale(2, 2)
+
+    assert p4 * 5 == Point(5, 5)
+    assert p4 / 5 == Point(0.2, 0.2)
+
+    raises(ValueError, lambda: Point(0, 0) + 10)
+
+    # Point differences should be simplified
+    assert Point(x*(x - 1), y) - Point(x**2 - x, y + 1) == Point(0, -1)
+
+    a, b = S.Half, Rational(1, 3)
+    assert Point(a, b).evalf(2) == \
+        Point(a.n(2), b.n(2), evaluate=False)
+    raises(ValueError, lambda: Point(1, 2) + 1)
+
+    # test transformations
+    p = Point(1, 0)
+    assert p.rotate(pi/2) == Point(0, 1)
+    assert p.rotate(pi/2, p) == p
+    p = Point(1, 1)
+    assert p.scale(2, 3) == Point(2, 3)
+    assert p.translate(1, 2) == Point(2, 3)
+    assert p.translate(1) == Point(2, 1)
+    assert p.translate(y=1) == Point(1, 2)
+    assert p.translate(*p.args) == Point(2, 2)
+
+    # Check invalid input for transform
+    raises(ValueError, lambda: p3.transform(p3))
+    raises(ValueError, lambda: p.transform(Matrix([[1, 0], [0, 1]])))
+
+--- Chunk 9 ---
+File: sympy/geometry/line.py
+Lines: 1625-1666
+Symbol: Segment.distance
+
+    def distance(self, other):
+        """
+        Finds the shortest distance between a line segment and a point.
+
+        Raises
+        ======
+
+        NotImplementedError is raised if `other` is not a Point
+
+        Examples
+        ========
+
+        >>> from sympy import Point, Segment
+        >>> p1, p2 = Point(0, 1), Point(3, 4)
+        >>> s = Segment(p1, p2)
+        >>> s.distance(Point(10, 15))
+        sqrt(170)
+        >>> s.distance((0, 12))
+        sqrt(73)
+        >>> from sympy import Point3D, Segment3D
+        >>> p1, p2 = Point3D(0, 0, 3), Point3D(1, 1, 4)
+        >>> s = Segment3D(p1, p2)
+        >>> s.distance(Point3D(10, 15, 12))
+        sqrt(341)
+        >>> s.distance((10, 15, 12))
+        sqrt(341)
+        """
+        if not isinstance(other, GeometryEntity):
+            other = Point(other, dim=self.ambient_dimension)
+        if isinstance(other, Point):
+            vp1 = other - self.p1
+            vp2 = other - self.p2
+
+            dot_prod_sign_1 = self.direction.dot(vp1) >= 0
+            dot_prod_sign_2 = self.direction.dot(vp2) <= 0
+            if dot_prod_sign_1 and dot_prod_sign_2:
+                return Line(self.p1, self.p2).distance(other)
+            if dot_prod_sign_1 and not dot_prod_sign_2:
+                return abs(vp2)
+            if not dot_prod_sign_1 and dot_prod_sign_2:
+                return abs(vp1)
+        raise NotImplementedError()
+
+--- Chunk 10 ---
+File: sympy/geometry/tests/test_line.py
+Lines: 683-696
+Symbol: test_raises
+
+def test_raises():
+    d, e = symbols('a,b', real=True)
+    s = Segment((d, 0), (e, 0))
+
+    raises(TypeError, lambda: Line((1, 1), 1))
+    raises(ValueError, lambda: Line(Point(0, 0), Point(0, 0)))
+    raises(Undecidable, lambda: Point(2 * d, 0) in s)
+    raises(ValueError, lambda: Ray3D(Point(1.0, 1.0)))
+    raises(ValueError, lambda: Line3D(Point3D(0, 0, 0), Point3D(0, 0, 0)))
+    raises(TypeError, lambda: Line3D((1, 1), 1))
+    raises(ValueError, lambda: Line3D(Point3D(0, 0, 0)))
+    raises(TypeError, lambda: Ray((1, 1), 1))
+    raises(GeometryError, lambda: Line(Point(0, 0), Point(1, 0))
+           .projection(Circle(Point(0, 0), 1)))
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

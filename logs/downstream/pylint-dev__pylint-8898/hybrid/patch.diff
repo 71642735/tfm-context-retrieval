@@ -1,0 +1,4 @@
+$$\begin{tabular}{l}
+\textbf{The requested changes cannot be performed because the necessary context files are missing from the retrieved context.}\\\\
+Specifically, the file defining `_regexp_csv_transfomer` (referenced in the stack trace as `pylint/config/argument.py`) was not provided in the retrieved chunks. Therefore, no patch can be produced.
+\end{tabular}$$

@@ -1,0 +1,14 @@
+{
+  "task_id": "huggingface__transformers-26752",
+  "repository": "huggingface/transformers",
+  "base_commit": "3bc65505fc0801e3d9ff741ec725fb0cb4d863d6",
+  "retrieval_method": "bm25",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 10518,
+  "output_tokens": 928,
+  "thinking_tokens": 0,
+  "total_tokens": 11446
+}

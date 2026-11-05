@@ -1,0 +1,23 @@
+```patch
+diff --git a/astropy/io/fits/card.py b/astropy/io/fits/card.py
+--- a/astropy/io/fits/card.py
++++ b/astropy/io/fits/card.py
+@@ -1078,7 +1078,7 @@
+         # Split the string into chunks of 68, 70, 70... characters
+         # depending on whether an ampersand is needed at the end of the line.
+         while idx < len(value):
+-            if len(value[idx:]) > 67:
++            if len(value[idx:]) > 68:
+                 # Check if the next chunk breaks up a doubled single quote.
+                 # If so, include the second quote in the current chunk.
+                 if value[idx + 67] == "'" and value[idx + 68] == "'":
+@@ -1089,7 +1089,7 @@
+                     else:
+                         chunk = value[idx : idx + 67] + "&"
+                         idx += 67
+-            else:
++            elif len(value[idx:]) > 67:
+                 chunk = value[idx : idx + 68]
+                 idx += 68
+             else:
+```

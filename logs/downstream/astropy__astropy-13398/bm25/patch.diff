@@ -1,0 +1,147 @@
+--- astropy/coordinates/builtin_frames/altaz.py
++++ astropy/coordinates/builtin_frames/altaz.py
+@@ -1,13 +1,18 @@
+ # Licensed under a 3-clause BSD style license - see LICENSE.rst
++import numpy as np
+ 
+ from astropy import units as u
+ from astropy.coordinates.representation import (SphericalRepresentation,
+                                                 UnitSphericalRepresentation,
+                                                 RadialVelocityRepresentation)
+ from astropy.coordinates.baseframe import base_frame_registry, frame_transform_graph
++from astropy.coordinates.transformations import FunctionTransformWithFiniteDifference
++from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_transpose
+ from .utils import DIMENSIONLESS_ABSOLUTE_TOLERANCE
+ from .hadec import HADec
++from .itrs import ITRS
+ from .baserawframe import BaseCoordinateFrame, RepresentationMapping
++from .utils import PIOVER2
+ 
+ 
+ class AltAz(BaseCoordinateFrame):
+@@ -176,3 +181,51 @@
+     rep = hadec_coo.cartesian.transform(mat)
+     return altaz_frame.realize_frame(rep)
+ 
++
++def itrs_to_observed_mat(observed_frame):
++    lon, lat, height = observed_frame.location.to_geodetic('WGS84')
++    elong = lon.to_value(u.radian)
++
++    if isinstance(observed_frame, AltAz):
++        elat = lat.to_value(u.radian)
++        # AltAz frame is left handed
++        minus_x = np.eye(3)
++        minus_x[0][0] = -1.0
++        mat = (minus_x
++               @ rotation_matrix(PIOVER2 - elat, 'y', unit=u.radian)
++               @ rotation_matrix(elong, 'z', unit=u.radian))
++    else:
++        # HADec frame is left handed
++        minus_y = np.eye(3)
++        minus_y[1][1] = -1.0
++        mat = (minus_y
++               @ rotation_matrix(elong, 'z', unit=u.radian))
++    return mat
++
++
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, AltAz)
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, HADec)
++def itrs_to_observed(itrs_coo, observed_frame):
++    # Trying to synchronize the obstimes here makes no sense. In fact,
++    # it's a real gotcha as doing an ITRS->ITRS transform references
++    # ITRS coordinates, which should be tied to the Earth, to the SSB.
++    # Instead, we treat ITRS coordinates as time invariant here.
++
++    # form the Topocentric ITRS position
++    topocentric_itrs_repr = (itrs_coo.cartesian
++                             - observed_frame.location.get_itrs().cartesian)
++    rep = topocentric_itrs_repr.transform(itrs_to_observed_mat(observed_frame))
++    return observed_frame.realize_frame(rep)
++
++
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, AltAz, ITRS)
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, HADec, ITRS)
++def observed_to_itrs(observed_coo, itrs_frame):
++    # form the Topocentric ITRS position
++    topocentric_itrs_repr = observed_coo.cartesian.transform(matrix_transpose(
++                            itrs_to_observed_mat(observed_coo)))
++    # form the Geocentric ITRS position
++    rep = topocentric_itrs_repr + observed_coo.location.get_itrs().cartesian
++    return itrs_frame.realize_frame(rep)
++
++--- astropy/coordinates/builtin_frames/hadec.py
++++ astropy/coordinates/builtin_frames/hadec.py
+@@ -1,10 +1,14 @@
+ # Licensed under a 3-clause BSD style license - see LICENSE.rst
++import numpy as np
+ 
+ from astropy import units as u
+ from astropy.coordinates.representation import (SphericalRepresentation,
+                                                 UnitSphericalRepresentation,
+                                                 RadialVelocityRepresentation)
+ from astropy.coordinates.baseframe import base_frame_registry, frame_transform_graph
++from astropy.coordinates.transformations import FunctionTransformWithFiniteDifference
++from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_transpose
++from .itrs import ITRS
+ from .baserawframe import BaseCoordinateFrame, RepresentationMapping
+ 
+ 
+@@ -139,3 +143,33 @@
+     # HADec and AltAz are both left-handed, so the transformation matrix is just an identity
+     rep = altaz_coo.cartesian
+     return hadec_frame.realize_frame(rep)
++
++
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, HADec)
++def itrs_to_hadec(itrs_coo, hadec_frame):
++    from .altaz import itrs_to_observed_mat
++    topocentric_itrs_repr = (itrs_coo.cartesian
++                             - hadec_frame.location.get_itrs().cartesian)
++    rep = topocentric_itrs_repr.transform(itrs_to_observed_mat(hadec_frame))
++    return hadec_frame.realize_frame(rep)
++
++
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, HADec, ITRS)
++def hadec_to_itrs(hadec_coo, itrs_frame):
++    from .altaz import itrs_to_observed_mat
++    topocentric_itrs_repr = hadec_coo.cartesian.transform(matrix_transpose(
++                            itrs_to_observed_mat(hadec_coo)))
++    rep = topocentric_itrs_repr + hadec_coo.location.get_itrs().cartesian
++    return itrs_frame.realize_frame(rep)
++
++--- astropy/coordinates/builtin_frames/itrs.py
++++ astropy/coordinates/builtin_frames/itrs.py
+@@ -5,8 +5,10 @@
+ from astropy.coordinates.representation import (SphericalRepresentation,
+                                                 UnitSphericalRepresentation,
+                                                 RadialVelocityRepresentation)
+-from astropy.coordinates.baseframe import base_frame_registry
++from astropy.coordinates.baseframe import base_frame_registry, frame_transform_graph
++from astropy.coordinates.transformations import FunctionTransformWithFiniteDifference
+ from .baserawframe import BaseCoordinateFrame, RepresentationMapping
++from .altaz import AltAz, HADec, itrs_to_observed_mat
+ 
+ 
+ class ITRS(BaseCoordinateFrame):
+@@ -57,3 +59,20 @@
+ 
+     frame_specific_representation_info = {
+         **BaseCoordinateFrame.frame_specific_representation_info}
++
++
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, AltAz)
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, ITRS, HADec)
++def _itrs_to_observed(itrs_coo, observed_frame):
++    topocentric_itrs_repr = (itrs_coo.cartesian
++                             - observed_frame.location.get_itrs().cartesian)
++    rep = topocentric_itrs_repr.transform(itrs_to_observed_mat(observed_frame))
++    return observed_frame.realize_frame(rep)
++
++
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, AltAz, ITRS)
++@frame_transform_graph.transform(FunctionTransformWithFiniteDifference, HADec, ITRS)
++def _observed_to_itrs(observed_coo, itrs_frame):
++    topocentric_itrs_repr = observed_coo.cartesian.transform(matrix_transpose(itrs_to_observed_mat(observed_coo)))
++    rep = topocentric_itrs_repr + observed_coo.location.get_itrs().cartesian
++    return itrs_frame.realize_frame(rep)

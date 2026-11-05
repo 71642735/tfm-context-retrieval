@@ -1,0 +1,7 @@
+--- requests/utils.py
++++ requests/utils.py
+@@ -647,3 +647,3 @@
+     """
+-    if isinstance(string, bytes):
++    if isinstance(string, (bytes, bytearray)):
+         out = string.decode('utf-8')

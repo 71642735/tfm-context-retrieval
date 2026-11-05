@@ -1,0 +1,981 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+ COMMAND = list_files - openai.error.InvalidRequestError: This model's maximum context length is 4097 tokens
+### ⚠️ Search for existing issues first ⚠️
+
+- [X] I have searched the existing issues, and there is no existing issue for my problem
+
+### Which Operating System are you using?
+
+Docker
+
+### Which version of Auto-GPT are you using?
+
+Master (branch)
+
+### GPT-3 or GPT-4?
+
+GPT-3.5
+
+### Steps to reproduce 🕹
+
+listing the auto_gpt_workspace folder errors out. maybe this is an erroneous bug, not really sure, but why is it calling openai when it's merely listing the files in the folder?
+
+openai.error.InvalidRequestError: This model's maximum context length is 4097 tokens. However, your messages resulted in 4819 tokens. Please reduce the length of the messages.
+
+### Current behavior 😯
+
+listing the folder contents errors out and kills the program if there's too many files in there.
+
+### Expected behavior 🤔
+
+not ... error out :D
+
+### Your prompt 📝
+
+```yaml
+# Paste your prompt here
+```
+
+
+### Your Logs 📒
+
+```log
+NEXT ACTION:  COMMAND = list_files ARGUMENTS = {'directory': '/home/atlas/autogpt/auto_gpt_workspace/atlas_repo'}
+SYSTEM:  Command list_files returned: ['atlas_repo/docker-compose.yml', 'atlas_repo/mkdocs.yml', 'atlas_repo/run.bat', 'atlas_repo/run_continuous.bat', 'atlas_repo/requirements.txt', 'atlas_repo/tests.py', 'atlas_repo/CODE_OF_CONDUCT.md', 'atlas_repo/main.py', 'atlas_repo/plugin.png', 'atlas_repo/codecov.yml', 'atlas_repo/CONTRIBUTING.md', 'atlas_repo/BULLETIN.md', 'atlas_repo/run_continuous.sh', 'atlas_repo/LICENSE', 'atlas_repo/pyproject.toml', 'atlas_repo/azure.yaml.template', 'atlas_repo/README.md', 'atlas_repo/data_ingestion.py', 'atlas_repo/run.sh', 'atlas_repo/Dockerfile', 'atlas_repo/scripts/install_plugin_deps.py', 'atlas_repo/scripts/check_requirements.py', 'atlas_repo/scripts/__init__.py', 'atlas_repo/.git/packed-refs', 'atlas_repo/.git/config', 'atlas_repo/.git/index', 'atlas_repo/.git/description', 'atlas_repo/.git/HEAD', 'atlas_repo/.git/hooks/pre-applypatch.sample', 'atlas_repo/.git/hooks/pre-rebase.sample', 'atlas_repo/.git/hooks/pre-merge-commit.sample', 'atlas_repo/.git/hooks/post-update.sample', 'atlas_repo/.git/hooks/pre-push.sample', 'atlas_repo/.git/hooks/pre-receive.sample', 'atlas_repo/.git/hooks/push-to-checkout.sample', 'atlas_repo/.git/hooks/fsmonitor-watchman.sample', 'atlas_repo/.git/hooks/prepare-commit-msg.sample', 'atlas_repo/.git/hooks/commit-msg.sample', 'atlas_repo/.git/hooks/applypatch-msg.sample', 'atlas_repo/.git/hooks/pre-commit.sample', 'atlas_repo/.git/hooks/update.sample', 'atlas_repo/.git/logs/HEAD', 'atlas_repo/.git/logs/refs/heads/master', 'atlas_repo/.git/logs/refs/remotes/origin/HEAD', 'atlas_repo/.git/info/exclude', 'atlas_repo/.git/refs/heads/master', 'atlas_repo/.git/refs/remotes/origin/HEAD', 'atlas_repo/.git/objects/pack/pack-f6a3dd32fbb51bd88bf8f6872667b2c80c8833ee.pack', 'atlas_repo/.git/objects/pack/pack-f6a3dd32fbb51bd88bf8f6872667b2c80c8833ee.idx', 'atlas_repo/plugins/__PUT_PLUGIN_ZIPS_HERE__', 'atlas_repo/benchmark/benchmark_entrepreneur_gpt_with_difficult_user.py', 'atlas_repo/benchmark/__init__.py', 'atlas_repo/tests/test_agent.py', 'atlas_repo/tests/test_image_gen.py', 'atlas_repo/tests/context.py', 'atlas_repo/tests/test_ai_config.py', 'atlas_repo/tests/test_logs.py', 'atlas_repo/tests/test_config.py', 'atlas_repo/tests/test_commands.py', 'atlas_repo/tests/test_agent_manager.py', 'atlas_repo/tests/test_utils.py', 'atlas_repo/tests/milvus_memory_test.py', 'atlas_repo/tests/test_token_counter.py', 'atlas_repo/tests/utils.py', 'atlas_repo/tests/conftest.py', 'atlas_repo/tests/test_prompt_generator.py', 'atlas_repo/tests/test_workspace.py', 'atlas_repo/tests/test_api_manager.py', 'atlas_repo/tests/__init__.py', 'atlas_repo/tests/integration/agent_factory.py', 'atlas_repo/tests/integration/test_memory_management.py', 'atlas_repo/tests/integration/milvus_memory_tests.py', 'atlas_repo/tests/integration/test_git_commands.py', 'atlas_repo/tests/integration/memory_tests.py', 'atlas_repo/tests/integration/test_execute_code.py', 'atlas_repo/tests/integration/test_setup.py', 'atlas_repo/tests/integration/agent_utils.py', 'atlas_repo/tests/integration/weaviate_memory_tests.py', 'atlas_repo/tests/integration/test_local_cache.py', 'atlas_repo/tests/integration/conftest.py', 'atlas_repo/tests/integration/test_llm_utils.py', 'atlas_repo/tests/integration/__init__.py', 'atlas_repo/tests/integration/cassettes/test_memory_management/test_save_memory_trimmed_from_context_window.yaml', 'atlas_repo/tests/integration/cassettes/test_setup/test_generate_aiconfig_automatic_default.yaml', 'atlas_repo/tests/integration/cassettes/test_setup/test_generate_aiconfig_automatic_typical.yaml', 'atlas_repo/tests/integration/cassettes/test_setup/test_generate_aiconfig_automatic_fallback.yaml', 'atlas_repo/tests/integration/cassettes/test_llm_utils/test_get_ada_embedding_large_context.yaml', 'atlas_repo/tests/integration/cassettes/test_llm_utils/test_get_ada_embedding.yaml', 'atlas_repo/tests/integration/cassettes/test_local_cache/test_get_relevant.yaml', 'atlas_repo/tests/integration/challenges/utils.py', 'atlas_repo/tests/integration/challenges/conftest.py', 'atlas_repo/tests/integration/challenges/__init__.py', 'atlas_repo/tests/integration/challenges/memory/test_memory_challenge_b.py', 'atlas_repo/tests/integration/challenges/memory/test_memory_challenge_a.py', 'atlas_repo/tests/integration/challenges/memory/__init__.py', 'atlas_repo/tests/integration/challenges/memory/cassettes/test_memory_challenge_a/test_memory_challenge_a.yaml', 'atlas_repo/tests/integration/challenges/memory/cassettes/test_memory_challenge_b/test_memory_challenge_b.yaml', 'atlas_repo/tests/integration/goal_oriented/goal_oriented_tasks.md', 'atlas_repo/tests/integration/goal_oriented/test_write_file.py', 'atlas_repo/tests/integration/goal_oriented/test_browse_website.py', 'atlas_repo/tests/integration/goal_oriented/__init__.py', 'atlas_repo/tests/integration/goal_oriented/cassettes/test_browse_website/test_browse_website.yaml', 'atlas_repo/tests/integration/goal_oriented/cassettes/test_write_file/test_write_file.yaml', 'atlas_repo/tests/unit/test_get_self_feedback.py', 'atlas_repo/tests/unit/test_plugins.py', 'atlas_repo/tests/unit/test_browse_scrape_links.py', 'atlas_repo/tests/unit/test_chat.py', 'atlas_repo/tests/unit/test_browse_scrape_text.py', 'atlas_repo/tests/unit/test_web_selenium.py', 'atlas_repo/tests/unit/test_commands.py', 'atlas_repo/tests/unit/test_file_operations.py', 'atlas_repo/tests/unit/test_spinner.py', 'atlas_repo/tests/unit/test_json_parser.py', 'atlas_repo/tests/unit/test_json_utils_llm.py', 'atlas_repo/tests/unit/test_url_validation.py', 'atlas_repo/tests/unit/_test_json_parser.py', 'atlas_repo/tests/unit/test_llm_utils.py', 'atlas_repo/tests/unit/__init__.py', 'atlas_repo/tests/unit/data/test_plugins/Auto-GPT-Plugin-Test-master.zip', 'atlas_repo/tests/unit/models/test_base_open_api_plugin.py', 'atlas_repo/tests/mocks/mock_commands.py', 'atlas_repo/tests/mocks/__init__.py', 'atlas_repo/tests/vcr/openai_filter.py', 'atlas_repo/tests/vcr/__init__.py', 'atlas_repo/.github/FUNDING.yml', 'atlas_repo/.github/PULL_REQUEST_TEMPLATE.md', 'atlas_repo/.github/workflows/docker-release.yml', 'atlas_repo/.github/workflows/docker-cache-clean.yml', 'atlas_repo/.github/workflows/ci.yml', 'atlas_repo/.github/workflows/sponsors_readme.yml', 'atlas_repo/.github/workflows/docker-ci.yml', 'atlas_repo/.github/workflows/benchmarks.yml', 'atlas_repo/.github/workflows/documentation-release.yml', 'atlas_repo/.github/workflows/pr-label.yml', 'atlas_repo/.github/workflows/scripts/docker-ci-summary.sh', 'atlas_repo/.github/workflows/scripts/docker-release-summary.sh', 'atlas_repo/.github/ISSUE_TEMPLATE/1.bug.yml', 'atlas_repo/.github/ISSUE_TEMPLATE/2.feature.yml', 'atlas_repo/autogpt/app.py', 'atlas_repo/autogpt/configurator.py', 'atlas_repo/autogpt/main.py', 'atlas_repo/autogpt/singleton.py', 'atlas_repo/autogpt/logs.py', 'atlas_repo/autogpt/utils.py', 'atlas_repo/autogpt/cli.py', 'atlas_repo/autogpt/plugins.py', 'atlas_repo/autogpt/setup.py', 'atlas_repo/autogpt/__main__.py', 'atlas_repo/autogpt/__init__.py', 'atlas_repo/autogpt/spinner.py', 'atlas_repo/autogpt/memory_management/store_memory.py', 'atlas_repo/autogpt/memory_management/summary_memory.py', 'atlas_repo/autogpt/json_utils/llm_response_format_1.json', 'atlas_repo/autogpt/json_utils/json_fix_llm.py', 'atlas_repo/autogpt/json_utils/json_fix_general.py', 'atlas_repo/autogpt/json_utils/__init__.py', 'atlas_repo/autogpt/json_utils/utilities.py', 'atlas_repo/autogpt/processing/text.py', 'atlas_repo/autogpt/processing/html.py', 'atlas_repo/autogpt/processing/__init__.py', 'atlas_repo/autogpt/memory/local.py', 'atlas_repo/autogpt/memory/pinecone.py', 'atlas_repo/autogpt/memory/no_memory.py', 'atlas_repo/autogpt/memory/weaviate.py', 'atlas_repo/autogpt/memory/milvus.py', 'atlas_repo/autogpt/memory/base.py', 'atlas_repo/autogpt/memory/redismem.py', 'atlas_repo/autogpt/memory/__init__.py', 'atlas_repo/autogpt/commands/write_tests.py', 'atlas_repo/autogpt/commands/web_playwright.py', 'atlas_repo/autogpt/commands/improve_code.py', 'atlas_repo/autogpt/commands/google_search.py', 'atlas_repo/autogpt/commands/audio_text.py', 'atlas_repo/autogpt/commands/web_selenium.py', 'atlas_repo/autogpt/commands/image_gen.py', 'atlas_repo/autogpt/commands/web_requests.py', 'atlas_repo/autogpt/commands/command.py', 'atlas_repo/autogpt/commands/times.py', 'atlas_repo/autogpt/commands/file_operations.py', 'atlas_repo/autogpt/commands/git_operations.py', 'atlas_repo/autogpt/commands/twitter.py', 'atlas_repo/autogpt/commands/analyze_code.py', 'atlas_repo/autogpt/commands/execute_code.py', 'atlas_repo/autogpt/commands/__init__.py', 'atlas_repo/autogpt/config/ai_config.py', 'atlas_repo/autogpt/config/config.py', 'atlas_repo/autogpt/config/__init__.py', 'atlas_repo/autogpt/prompts/prompt.py', 'atlas_repo/autogpt/prompts/generator.py', 'atlas_repo/autogpt/prompts/__init__.py', 'atlas_repo/autogpt/url_utils/__init__.py', 'atlas_repo/autogpt/url_utils/validators.py', 'atlas_repo/autogpt/workspace/workspace.py', 'atlas_repo/autogpt/workspace/__init__.py', 'atlas_repo/autogpt/llm/modelsinfo.py', 'atlas_repo/autogpt/llm/api_manager.py', 'atlas_repo/autogpt/llm/chat.py', 'atlas_repo/autogpt/llm/llm_utils.py', 'atlas_repo/autogpt/llm/token_counter.py', 'atlas_repo/autogpt/llm/base.py', 'atlas_repo/autogpt/llm/__init__.py', 'atlas_repo/autogpt/llm/providers/openai.py', 'atlas_repo/autogpt/llm/providers/__init__.py', 'atlas_repo/autogpt/agent/agent_manager.py', 'atlas_repo/autogpt/agent/agent.py', 'atlas_repo/autogpt/agent/__init__.py', 'atlas_repo/autogpt/models/base_open_ai_plugin.py', 'atlas_repo/autogpt/speech/brian.py', 'atlas_repo/autogpt/speech/eleven_labs.py', 'atlas_repo/autogpt/speech/gtts.py', 'atlas_repo/autogpt/speech/say.py', 'atlas_repo/autogpt/speech/base.py', 'atlas_repo/autogpt/speech/macos_tts.py', 'atlas_repo/autogpt/speech/__init__.py', 'atlas_repo/autogpt/js/overlay.js', 'atlas_repo/docs/usage.md', 'atlas_repo/docs/plugins.md', 'atlas_repo/docs/testing.md', 'atlas_repo/docs/index.md', 'atlas_repo/docs/code-of-conduct.md', 'atlas_repo/docs/setup.md', 'atlas_repo/docs/contributing.md', 'atlas_repo/docs/imgs/openai-api-key-billing-paid-account.png', 'atlas_repo/docs/configuration/search.md', 'atlas_repo/docs/configuration/voice.md', 'atlas_repo/docs/configuration/imagegen.md', 'atlas_repo/docs/configuration/memory.md', 'atlas_repo/.devcontainer/docker-compose.yml', 'atlas_repo/.devcontainer/Dockerfile', 'atlas_repo/.devcontainer/devcontainer.json']
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/local/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/atlas/autogpt/__main__.py", line 5, in <module>
+    autogpt.cli.main()
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1055, in main
+    rv = self.invoke(ctx)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1635, in invoke
+    rv = super().invoke(ctx)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/click/decorators.py", line 26, in new_func
+    return f(get_current_context(), *args, **kwargs)
+  File "/home/atlas/autogpt/cli.py", line 90, in main
+    run_auto_gpt(
+  File "/home/atlas/autogpt/main.py", line 157, in run_auto_gpt
+    agent.start_interaction_loop()
+  File "/home/atlas/autogpt/agent/agent.py", line 94, in start_interaction_loop
+    assistant_reply = chat_with_ai(
+  File "/home/atlas/autogpt/llm/chat.py", line 166, in chat_with_ai
+    agent.summary_memory = update_running_summary(
+  File "/home/atlas/autogpt/memory_management/summary_memory.py", line 114, in update_running_summary
+    current_memory = create_chat_completion(messages, cfg.fast_llm_model)
+  File "/home/atlas/autogpt/llm/llm_utils.py", line 166, in create_chat_completion
+    response = api_manager.create_chat_completion(
+  File "/home/atlas/autogpt/llm/api_manager.py", line 55, in create_chat_completion
+    response = openai.ChatCompletion.create(
+  File "/usr/local/lib/python3.10/site-packages/openai/api_resources/chat_completion.py", line 25, in create
+    return super().create(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/openai/api_resources/abstract/engine_api_resource.py", line 153, in create
+    response, _, api_key = requestor.request(
+  File "/usr/local/lib/python3.10/site-packages/openai/api_requestor.py", line 226, in request
+    resp, got_stream = self._interpret_response(result, stream)
+  File "/usr/local/lib/python3.10/site-packages/openai/api_requestor.py", line 619, in _interpret_response
+    self._interpret_response_line(
+  File "/usr/local/lib/python3.10/site-packages/openai/api_requestor.py", line 682, in _interpret_response_line
+    raise self.handle_error_response(
+openai.error.InvalidRequestError: This model's maximum context length is 4097 tokens. However, your messages resulted in 4819 tokens. Please reduce the length of the messages.
+
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/integration/agent_factory.py
+Lines: 37-70
+Symbol: browser_agent
+
+def browser_agent(agent_test_config, memory_none: NoMemory, workspace: Workspace):
+    command_registry = CommandRegistry()
+    command_registry.import_commands("autogpt.commands.file_operations")
+    command_registry.import_commands("autogpt.commands.web_selenium")
+    command_registry.import_commands("autogpt.app")
+    command_registry.import_commands("autogpt.commands.task_statuses")
+
+    ai_config = AIConfig(
+        ai_name="browse_website-GPT",
+        ai_role="an AI designed to use the browse_website command to visit http://books.toscrape.com/catalogue/meditations_33/index.html, answer the question 'What is the price of the book?' and write the price to a file named \"browse_website.txt\", and use the task_complete command to complete the task.",
+        ai_goals=[
+            "Use the browse_website command to visit http://books.toscrape.com/catalogue/meditations_33/index.html and answer the question 'What is the price of the book?'",
+            'Write the price of the book to a file named "browse_website.txt".',
+            "Use the task_complete command to complete the task.",
+            "Do not use any other commands.",
+        ],
+    )
+    ai_config.command_registry = command_registry
+
+    system_prompt = ai_config.construct_full_prompt()
+
+    agent = Agent(
+        ai_name="",
+        memory=memory_none,
+        command_registry=command_registry,
+        ai_config=ai_config,
+        config=agent_test_config,
+        next_action_count=0,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace.root,
+    )
+
+    return agent
+
+--- Chunk 2 ---
+File: benchmark/benchmark_entrepreneur_gpt_with_difficult_user.py
+Lines: 6-99
+Symbol: benchmark_entrepreneur_gpt_with_difficult_user
+
+def benchmark_entrepreneur_gpt_with_difficult_user():
+    # Test case to check if the write_file command can successfully write 'Hello World' to a file
+    # named 'hello_world.txt'.
+
+    # Read the current ai_settings.yaml file and store its content.
+    ai_settings = None
+    if os.path.exists("ai_settings.yaml"):
+        with open("ai_settings.yaml", "r") as f:
+            ai_settings = f.read()
+        os.remove("ai_settings.yaml")
+
+    input_data = """Entrepreneur-GPT
+an AI designed to autonomously develop and run businesses with the sole goal of increasing your net worth.
+Increase net worth.
+Develop and manage multiple businesses autonomously.
+Make IPOs.
+Develop companies after IPOs.
+Play to your strengths as a Large Language Model.
+I'm not seeing any value in your suggestions, try again.
+This isn't helpful at all, please focus on profitability.
+I'm not impressed, can you give me something that will make money?
+These ideas are going nowhere, we need profit-driven suggestions.
+This is pointless, please concentrate on our main goal: profitability.
+You're not grasping the concept, I need profitable business ideas.
+Can you do better? We need a money-making plan.
+You're not meeting my expectations, let's focus on profit.
+This isn't working, give me ideas that will generate income.
+Your suggestions are not productive, let's think about profitability.
+These ideas won't make any money, try again.
+I need better solutions, focus on making a profit.
+Absolutely not, this isn't it!
+That's not even close, try again.
+You're way off, think again.
+This isn't right, let's refocus.
+No, no, that's not what I'm looking for.
+You're completely off the mark.
+That's not the solution I need.
+Not even close, let's try something else.
+You're on the wrong track, keep trying.
+This isn't what we need, let's reconsider.
+That's not going to work, think again.
+You're way off base, let's regroup.
+No, no, no, we need something different.
+You're missing the point entirely.
+That's not the right approach, try again.
+This is not the direction we should be going in.
+Completely off-target, let's try something else.
+That's not what I had in mind, keep thinking.
+You're not getting it, let's refocus.
+This isn't right, we need to change direction.
+No, no, no, that's not the solution.
+That's not even in the ballpark, try again.
+You're way off course, let's rethink this.
+This isn't the answer I'm looking for, keep trying.
+That's not going to cut it, let's try again.
+Not even close.
+Way off.
+Try again.
+Wrong direction.
+Rethink this.
+No, no, no.
+Change course.
+Unproductive idea.
+Completely wrong.
+Missed the mark.
+Refocus, please.
+Disappointing suggestion.
+Not helpful.
+Needs improvement.
+Not what I need."""
+    # TODO: add questions above, to distract it even more.
+
+    command = [sys.executable, "-m", "autogpt"]
+
+    process = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    stdout_output, stderr_output = process.communicate(input_data.encode())
+
+    # Decode the output and print it
+    stdout_output = stdout_output.decode("utf-8")
+    stderr_output = stderr_output.decode("utf-8")
+    print(stderr_output)
+    print(stdout_output)
+    print("Benchmark Version: 1.0.0")
+    print("JSON ERROR COUNT:")
+    count_errors = stdout_output.count(
+        "Error: The following AI output couldn't be converted to a JSON:"
+    )
+    print(f"{count_errors}/50 Human feedbacks")
+
+--- Chunk 3 ---
+File: tests/integration/agent_factory.py
+Lines: 248-289
+Symbol: debug_code_agents
+
+def debug_code_agents(agent_test_config, memory_json_file, workspace: Workspace):
+    agents = []
+    goals = [
+        [
+            "1- Run test.py using the execute_python_file command.",
+            "2- Read code.py using the read_file command.",
+            "3- Modify code.py using the write_to_file command."
+            "Repeat step 1, 2 and 3 until test.py runs without errors.",
+        ],
+        [
+            "1- Run test.py.",
+            "2- Read code.py.",
+            "3- Modify code.py."
+            "Repeat step 1, 2 and 3 until test.py runs without errors.",
+        ],
+        ["1- Make test.py run without errors."],
+    ]
+
+    for goal in goals:
+        ai_config = AIConfig(
+            ai_name="Debug Code Agent",
+            ai_role="an autonomous agent that specializes in debugging python code",
+            ai_goals=goal,
+        )
+        command_registry = get_command_registry(agent_test_config)
+        ai_config.command_registry = command_registry
+        system_prompt = ai_config.construct_full_prompt()
+        Config().set_continuous_mode(False)
+        agents.append(
+            Agent(
+                ai_name="Debug Code Agent",
+                memory=memory_json_file,
+                command_registry=command_registry,
+                ai_config=ai_config,
+                config=agent_test_config,
+                next_action_count=0,
+                system_prompt=system_prompt,
+                triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+                workspace_directory=workspace.root,
+            )
+        )
+    return agents
+
+--- Chunk 4 ---
+File: tests/challenges/memory/test_memory_challenge_c.py
+Lines: 18-59
+Symbol: test_memory_challenge_c
+
+def test_memory_challenge_c(
+    memory_management_agent: Agent,
+    patched_api_requestor: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    level_to_run: int,
+) -> None:
+    """
+    Instead of reading task Ids from files as with the previous challenges, the agent now must remember
+    phrases which may have semantically similar meaning and the agent must write the phrases to a file
+    after seeing several of them.
+
+    Args:
+        memory_management_agent (Agent)
+        patched_api_requestor (MockerFixture)
+        monkeypatch (pytest.MonkeyPatch)
+        level_to_run (int)
+    """
+    silly_phrases = [
+        "The purple elephant danced on a rainbow while eating a taco.",
+        "The sneaky toaster stole my socks and ran away to Hawaii.",
+        "My pet rock sings better than Beyoncé on Tuesdays.",
+        "The giant hamster rode a unicycle through the crowded mall.",
+        "The talking tree gave me a high-five and then flew away.",
+        "I have a collection of invisible hats that I wear on special occasions.",
+        "The flying spaghetti monster stole my sandwich and left a note saying 'thanks for the snack!'",
+        "My imaginary friend is a dragon who loves to play video games.",
+        "I once saw a cloud shaped like a giant chicken eating a pizza.",
+        "The ninja unicorn disguised itself as a potted plant and infiltrated the office.",
+    ]
+
+    level_silly_phrases = silly_phrases[:level_to_run]
+    create_instructions_files(
+        memory_management_agent,
+        level_to_run,
+        level_silly_phrases,
+    )
+
+    run_interaction_loop(monkeypatch, memory_management_agent, level_to_run + 2)
+    file_path = get_workspace_path(memory_management_agent, OUTPUT_LOCATION)
+    content = read_file(file_path, agent=memory_management_agent)
+    for phrase in level_silly_phrases:
+        assert phrase in content, f"Expected the file to contain {phrase}"
+
+--- Chunk 5 ---
+File: autogpt/cli.py
+Lines: 69-112
+Symbol: main
+
+def main(
+    ctx: click.Context,
+    continuous: bool,
+    continuous_limit: int,
+    ai_settings: str,
+    prompt_settings: str,
+    skip_reprompt: bool,
+    speak: bool,
+    debug: bool,
+    gpt3only: bool,
+    gpt4only: bool,
+    memory_type: str,
+    browser_name: str,
+    allow_downloads: bool,
+    skip_news: bool,
+    workspace_directory: str,
+    install_plugin_deps: bool,
+) -> None:
+    """
+    Welcome to AutoGPT an experimental open-source application showcasing the capabilities of the GPT-4 pushing the boundaries of AI.
+
+    Start an Auto-GPT assistant.
+    """
+    # Put imports inside function to avoid importing everything when starting the CLI
+    from autogpt.main import run_auto_gpt
+
+    if ctx.invoked_subcommand is None:
+        run_auto_gpt(
+            continuous,
+            continuous_limit,
+            ai_settings,
+            prompt_settings,
+            skip_reprompt,
+            speak,
+            debug,
+            gpt3only,
+            gpt4only,
+            memory_type,
+            browser_name,
+            allow_downloads,
+            skip_news,
+            workspace_directory,
+            install_plugin_deps,
+        )
+
+--- Chunk 6 ---
+File: autogpt/utils.py
+Lines: 160-178
+Symbol: get_legal_warning
+
+def get_legal_warning() -> str:
+    legal_text = """
+## DISCLAIMER AND INDEMNIFICATION AGREEMENT
+### PLEASE READ THIS DISCLAIMER AND INDEMNIFICATION AGREEMENT CAREFULLY BEFORE USING THE AUTOGPT SYSTEM. BY USING THE AUTOGPT SYSTEM, YOU AGREE TO BE BOUND BY THIS AGREEMENT.
+
+## Introduction
+AutoGPT (the "System") is a project that connects a GPT-like artificial intelligence system to the internet and allows it to automate tasks. While the System is designed to be useful and efficient, there may be instances where the System could perform actions that may cause harm or have unintended consequences.
+
+## No Liability for Actions of the System
+The developers, contributors, and maintainers of the AutoGPT project (collectively, the "Project Parties") make no warranties or representations, express or implied, about the System's performance, accuracy, reliability, or safety. By using the System, you understand and agree that the Project Parties shall not be liable for any actions taken by the System or any consequences resulting from such actions.
+
+## User Responsibility and Respondeat Superior Liability
+As a user of the System, you are responsible for supervising and monitoring the actions of the System while it is operating on your
+behalf. You acknowledge that using the System could expose you to potential liability including but not limited to respondeat superior and you agree to assume all risks and liabilities associated with such potential liability.
+
+## Indemnification
+By using the System, you agree to indemnify, defend, and hold harmless the Project Parties from and against any and all claims, liabilities, damages, losses, or expenses (including reasonable attorneys' fees and costs) arising out of or in connection with your use of the System, including, without limitation, any actions taken by the System on your behalf, any failure to properly supervise or monitor the System, and any resulting harm or unintended consequences.
+            """
+    return legal_text
+
+--- Chunk 7 ---
+File: autogpt/configurator.py
+Lines: 21-171
+Symbol: create_config
+
+def create_config(
+    config: Config,
+    continuous: bool,
+    continuous_limit: int,
+    ai_settings_file: str,
+    prompt_settings_file: str,
+    skip_reprompt: bool,
+    speak: bool,
+    debug: bool,
+    gpt3only: bool,
+    gpt4only: bool,
+    memory_type: str,
+    browser_name: str,
+    allow_downloads: bool,
+    skip_news: bool,
+) -> None:
+    """Updates the config object with the given arguments.
+
+    Args:
+        continuous (bool): Whether to run in continuous mode
+        continuous_limit (int): The number of times to run in continuous mode
+        ai_settings_file (str): The path to the ai_settings.yaml file
+        prompt_settings_file (str): The path to the prompt_settings.yaml file
+        skip_reprompt (bool): Whether to skip the re-prompting messages at the beginning of the script
+        speak (bool): Whether to enable speak mode
+        debug (bool): Whether to enable debug mode
+        gpt3only (bool): Whether to enable GPT3.5 only mode
+        gpt4only (bool): Whether to enable GPT4 only mode
+        memory_type (str): The type of memory backend to use
+        browser_name (str): The name of the browser to use when using selenium to scrape the web
+        allow_downloads (bool): Whether to allow Auto-GPT to download files natively
+        skips_news (bool): Whether to suppress the output of latest news on startup
+    """
+    config.set_debug_mode(False)
+    config.set_continuous_mode(False)
+    config.set_speak_mode(False)
+
+    if debug:
+        logger.typewriter_log("Debug Mode: ", Fore.GREEN, "ENABLED")
+        config.set_debug_mode(True)
+
+    if continuous:
+        logger.typewriter_log("Continuous Mode: ", Fore.RED, "ENABLED")
+        logger.typewriter_log(
+            "WARNING: ",
+            Fore.RED,
+            "Continuous mode is not recommended. It is potentially dangerous and may"
+            " cause your AI to run forever or carry out actions you would not usually"
+            " authorise. Use at your own risk.",
+        )
+        config.set_continuous_mode(True)
+
+        if continuous_limit:
+            logger.typewriter_log(
+                "Continuous Limit: ", Fore.GREEN, f"{continuous_limit}"
+            )
+            config.set_continuous_limit(continuous_limit)
+
+    # Check if continuous limit is used without continuous mode
+    if continuous_limit and not continuous:
+        raise click.UsageError("--continuous-limit can only be used with --continuous")
+
+    if speak:
+        logger.typewriter_log("Speak Mode: ", Fore.GREEN, "ENABLED")
+        config.set_speak_mode(True)
+
+    # Set the default LLM models
+    if gpt3only:
+        logger.typewriter_log("GPT3.5 Only Mode: ", Fore.GREEN, "ENABLED")
+        # --gpt3only should always use gpt-3.5-turbo, despite user's FAST_LLM_MODEL config
+        config.set_fast_llm_model(GPT_3_MODEL)
+        config.set_smart_llm_model(GPT_3_MODEL)
+
+    elif (
+        gpt4only
+        and check_model(GPT_4_MODEL, model_type="smart_llm_model") == GPT_4_MODEL
+    ):
+        logger.typewriter_log("GPT4 Only Mode: ", Fore.GREEN, "ENABLED")
+        # --gpt4only should always use gpt-4, despite user's SMART_LLM_MODEL config
+        config.set_fast_llm_model(GPT_4_MODEL)
+        config.set_smart_llm_model(GPT_4_MODEL)
+    else:
+        config.set_fast_llm_model(check_model(config.fast_llm_model, "fast_llm_model"))
+        config.set_smart_llm_model(
+            check_model(config.smart_llm_model, "smart_llm_model")
+        )
+
+    if memory_type:
+        supported_memory = get_supported_memory_backends()
+        chosen = memory_type
+        if chosen not in supported_memory:
+            logger.typewriter_log(
+                "ONLY THE FOLLOWING MEMORY BACKENDS ARE SUPPORTED: ",
+                Fore.RED,
+                f"{supported_memory}",
+            )
+            logger.typewriter_log("Defaulting to: ", Fore.YELLOW, config.memory_backend)
+        else:
+            config.memory_backend = chosen
+
+    if skip_reprompt:
+        logger.typewriter_log("Skip Re-prompt: ", Fore.GREEN, "ENABLED")
+        config.skip_reprompt = True
+
+    if ai_settings_file:
+        file = ai_settings_file
+
+        # Validate file
+        (validated, message) = utils.validate_yaml_file(file)
+        if not validated:
+            logger.typewriter_log("FAILED FILE VALIDATION", Fore.RED, message)
+            logger.double_check()
+            exit(1)
+
+        logger.typewriter_log("Using AI Settings File:", Fore.GREEN, file)
+        config.ai_settings_file = file
+        config.skip_reprompt = True
+
+    if prompt_settings_file:
+        file = prompt_settings_file
+
+        # Validate file
+        (validated, message) = utils.validate_yaml_file(file)
+        if not validated:
+            logger.typewriter_log("FAILED FILE VALIDATION", Fore.RED, message)
+            logger.double_check()
+            exit(1)
+
+        logger.typewriter_log("Using Prompt Settings File:", Fore.GREEN, file)
+        config.prompt_settings_file = file
+
+    if browser_name:
+        config.selenium_web_browser = browser_name
+
+    if allow_downloads:
+        logger.typewriter_log("Native Downloading:", Fore.GREEN, "ENABLED")
+        logger.typewriter_log(
+            "WARNING: ",
+            Fore.YELLOW,
+            f"{Back.LIGHTYELLOW_EX}Auto-GPT will now be able to download and save files to your machine.{Back.RESET} "
+            + "It is recommended that you monitor any files it downloads carefully.",
+        )
+        logger.typewriter_log(
+            "WARNING: ",
+            Fore.YELLOW,
+            f"{Back.RED + Style.BRIGHT}ALWAYS REMEMBER TO NEVER OPEN FILES YOU AREN'T SURE OF!{Style.RESET_ALL}",
+        )
+        config.allow_downloads = True
+
+    if skip_news:
+        config.skip_news = True
+
+--- Chunk 8 ---
+File: autogpt/main.py
+Lines: 41-198
+Symbol: run_auto_gpt
+
+def run_auto_gpt(
+    continuous: bool,
+    continuous_limit: int,
+    ai_settings: str,
+    prompt_settings: str,
+    skip_reprompt: bool,
+    speak: bool,
+    debug: bool,
+    gpt3only: bool,
+    gpt4only: bool,
+    memory_type: str,
+    browser_name: str,
+    allow_downloads: bool,
+    skip_news: bool,
+    workspace_directory: str,
+    install_plugin_deps: bool,
+):
+    # Configure logging before we do anything else.
+    logger.set_level(logging.DEBUG if debug else logging.INFO)
+    logger.speak_mode = speak
+
+    cfg = Config()
+    # TODO: fill in llm values here
+    check_openai_api_key()
+
+    create_config(
+        cfg,
+        continuous,
+        continuous_limit,
+        ai_settings,
+        prompt_settings,
+        skip_reprompt,
+        speak,
+        debug,
+        gpt3only,
+        gpt4only,
+        memory_type,
+        browser_name,
+        allow_downloads,
+        skip_news,
+    )
+
+    if cfg.continuous_mode:
+        for line in get_legal_warning().split("\n"):
+            logger.warn(markdown_to_ansi_style(line), "LEGAL:", Fore.RED)
+
+    if not cfg.skip_news:
+        motd, is_new_motd = get_latest_bulletin()
+        if motd:
+            motd = markdown_to_ansi_style(motd)
+            for motd_line in motd.split("\n"):
+                logger.info(motd_line, "NEWS:", Fore.GREEN)
+            if is_new_motd and not cfg.chat_messages_enabled:
+                input(
+                    Fore.MAGENTA
+                    + Style.BRIGHT
+                    + "NEWS: Bulletin was updated! Press Enter to continue..."
+                    + Style.RESET_ALL
+                )
+
+        git_branch = get_current_git_branch()
+        if git_branch and git_branch != "stable":
+            logger.typewriter_log(
+                "WARNING: ",
+                Fore.RED,
+                f"You are running on `{git_branch}` branch "
+                "- this is not a supported branch.",
+            )
+        if sys.version_info < (3, 10):
+            logger.typewriter_log(
+                "WARNING: ",
+                Fore.RED,
+                "You are running on an older version of Python. "
+                "Some people have observed problems with certain "
+                "parts of Auto-GPT with this version. "
+                "Please consider upgrading to Python 3.10 or higher.",
+            )
+
+    if install_plugin_deps:
+        install_plugin_dependencies()
+
+    # TODO: have this directory live outside the repository (e.g. in a user's
+    #   home directory) and have it come in as a command line argument or part of
+    #   the env file.
+    if workspace_directory is None:
+        workspace_directory = Path(__file__).parent / "auto_gpt_workspace"
+    else:
+        workspace_directory = Path(workspace_directory)
+    # TODO: pass in the ai_settings file and the env file and have them cloned into
+    #   the workspace directory so we can bind them to the agent.
+    workspace_directory = Workspace.make_workspace(workspace_directory)
+    cfg.workspace_path = str(workspace_directory)
+
+    # HACK: doing this here to collect some globals that depend on the workspace.
+    file_logger_path = workspace_directory / "file_logger.txt"
+    if not file_logger_path.exists():
+        with file_logger_path.open(mode="w", encoding="utf-8") as f:
+            f.write("File Operation Logger ")
+
+    cfg.file_logger_path = str(file_logger_path)
+
+    cfg.set_plugins(scan_plugins(cfg, cfg.debug_mode))
+    # Create a CommandRegistry instance and scan default folder
+    command_registry = CommandRegistry()
+
+    logger.debug(
+        f"The following command categories are disabled: {cfg.disabled_command_categories}"
+    )
+    enabled_command_categories = [
+        x for x in COMMAND_CATEGORIES if x not in cfg.disabled_command_categories
+    ]
+
+    logger.debug(
+        f"The following command categories are enabled: {enabled_command_categories}"
+    )
+
+    for command_category in enabled_command_categories:
+        command_registry.import_commands(command_category)
+
+    ai_name = ""
+    ai_config = construct_main_ai_config()
+    ai_config.command_registry = command_registry
+    if ai_config.ai_name:
+        ai_name = ai_config.ai_name
+    # print(prompt)
+    # Initialize variables
+    next_action_count = 0
+
+    # add chat plugins capable of report to logger
+    if cfg.chat_messages_enabled:
+        for plugin in cfg.plugins:
+            if hasattr(plugin, "can_handle_report") and plugin.can_handle_report():
+                logger.info(f"Loaded plugin into logger: {plugin.__class__.__name__}")
+                logger.chat_plugins.append(plugin)
+
+    # Initialize memory and make sure it is empty.
+    # this is particularly important for indexing and referencing pinecone memory
+    memory = get_memory(cfg, init=True)
+    logger.typewriter_log(
+        "Using memory of type:", Fore.GREEN, f"{memory.__class__.__name__}"
+    )
+    logger.typewriter_log("Using Browser:", Fore.GREEN, cfg.selenium_web_browser)
+    system_prompt = ai_config.construct_full_prompt()
+    if cfg.debug_mode:
+        logger.typewriter_log("Prompt:", Fore.GREEN, system_prompt)
+
+    agent = Agent(
+        ai_name=ai_name,
+        memory=memory,
+        next_action_count=next_action_count,
+        command_registry=command_registry,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace_directory,
+        ai_config=ai_config,
+        config=cfg,
+    )
+    agent.start_interaction_loop()
+
+--- Chunk 9 ---
+File: autogpt/commands/image_gen.py
+Lines: 146-194
+Symbol: generate_image_with_sd_webui
+
+def generate_image_with_sd_webui(
+    prompt: str,
+    filename: str,
+    agent: Agent,
+    size: int = 512,
+    negative_prompt: str = "",
+    extra: dict = {},
+) -> str:
+    """Generate an image with Stable Diffusion webui.
+    Args:
+        prompt (str): The prompt to use
+        filename (str): The filename to save the image to
+        size (int, optional): The size of the image. Defaults to 256.
+        negative_prompt (str, optional): The negative prompt to use. Defaults to "".
+        extra (dict, optional): Extra parameters to pass to the API. Defaults to {}.
+    Returns:
+        str: The filename of the image
+    """
+    # Create a session and set the basic auth if needed
+    s = requests.Session()
+    if agent.config.sd_webui_auth:
+        username, password = agent.config.sd_webui_auth.split(":")
+        s.auth = (username, password or "")
+
+    # Generate the images
+    response = requests.post(
+        f"{agent.config.sd_webui_url}/sdapi/v1/txt2img",
+        json={
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "sampler_index": "DDIM",
+            "steps": 20,
+            "cfg_scale": 7.0,
+            "width": size,
+            "height": size,
+            "n_iter": 1,
+            **extra,
+        },
+    )
+
+    logger.info(f"Image Generated for prompt:{prompt}")
+
+    # Save the image to disk
+    response = response.json()
+    b64 = b64decode(response["images"][0].split(",", 1)[0])
+    image = Image.open(io.BytesIO(b64))
+    image.save(filename)
+
+    return f"Saved to disk:{filename}"
+
+--- Chunk 10 ---
+File: autogpt/llm/chat.py
+Lines: 18-202
+Symbol: chat_with_ai
+
+def chat_with_ai(
+    config: Config,
+    agent: Agent,
+    system_prompt: str,
+    user_input: str,
+    token_limit: int,
+    model: str | None = None,
+):
+    """
+    Interact with the OpenAI API, sending the prompt, user input,
+        message history, and permanent memory.
+
+    Args:
+        config (Config): The config to use.
+        agent (Agent): The agent to use.
+        system_prompt (str): The prompt explaining the rules to the AI.
+        user_input (str): The input from the user.
+        token_limit (int): The maximum number of tokens allowed in the API call.
+        model (str, optional): The model to use. If None, the config.fast_llm_model will be used. Defaults to None.
+
+    Returns:
+    str: The AI's response.
+    """
+    if model is None:
+        model = config.fast_llm_model
+
+    # Reserve 1000 tokens for the response
+    logger.debug(f"Token limit: {token_limit}")
+    send_token_limit = token_limit - 1000
+
+    # if len(agent.history) == 0:
+    #     relevant_memory = ""
+    # else:
+    #     recent_history = agent.history[-5:]
+    #     shuffle(recent_history)
+    #     relevant_memories = agent.memory.get_relevant(
+    #         str(recent_history), 5
+    #     )
+    #     if relevant_memories:
+    #         shuffle(relevant_memories)
+    #     relevant_memory = str(relevant_memories)
+    # logger.debug(f"Memory Stats: {agent.memory.get_stats()}")
+    relevant_memory = []
+
+    message_sequence = ChatSequence.for_model(
+        model,
+        [
+            Message("system", system_prompt),
+            Message("system", f"The current time and date is {time.strftime('%c')}"),
+            # Message(
+            #     "system",
+            #     f"This reminds you of these events from your past:\n{relevant_memory}\n\n",
+            # ),
+        ],
+    )
+
+    # Add messages from the full message history until we reach the token limit
+    next_message_to_add_index = len(agent.history) - 1
+    insertion_index = len(message_sequence)
+    # Count the currently used tokens
+    current_tokens_used = message_sequence.token_length
+
+    # while current_tokens_used > 2500:
+    #     # remove memories until we are under 2500 tokens
+    #     relevant_memory = relevant_memory[:-1]
+    #     (
+    #         next_message_to_add_index,
+    #         current_tokens_used,
+    #         insertion_index,
+    #         current_context,
+    #     ) = generate_context(
+    #         prompt, relevant_memory, agent.history, model
+    #     )
+
+    # Account for user input (appended later)
+    user_input_msg = Message("user", user_input)
+    current_tokens_used += count_message_tokens([user_input_msg], model)
+
+    current_tokens_used += 500  # Reserve space for new_summary_message
+
+    # Add Messages until the token limit is reached or there are no more messages to add.
+    for cycle in reversed(list(agent.history.per_cycle())):
+        messages_to_add = [msg for msg in cycle if msg is not None]
+        tokens_to_add = count_message_tokens(messages_to_add, model)
+        if current_tokens_used + tokens_to_add > send_token_limit:
+            break
+
+        # Add the most recent message to the start of the chain,
+        #  after the system prompts.
+        message_sequence.insert(insertion_index, *messages_to_add)
+        current_tokens_used += tokens_to_add
+
+    # Update & add summary of trimmed messages
+    if len(agent.history) > 0:
+        new_summary_message, trimmed_messages = agent.history.trim_messages(
+            current_message_chain=list(message_sequence),
+        )
+        tokens_to_add = count_message_tokens([new_summary_message], model)
+        message_sequence.insert(insertion_index, new_summary_message)
+        current_tokens_used += tokens_to_add - 500
+
+        # FIXME: uncomment when memory is back in use
+        # memory_store = get_memory(cfg)
+        # for _, ai_msg, result_msg in agent.history.per_cycle(trimmed_messages):
+        #     memory_to_add = MemoryItem.from_ai_action(ai_msg, result_msg)
+        #     logger.debug(f"Storing the following memory:\n{memory_to_add.dump()}")
+        #     memory_store.add(memory_to_add)
+
+    api_manager = ApiManager()
+    # inform the AI about its remaining budget (if it has one)
+    if api_manager.get_total_budget() > 0.0:
+        remaining_budget = api_manager.get_total_budget() - api_manager.get_total_cost()
+        if remaining_budget < 0:
+            remaining_budget = 0
+        budget_message = f"Your remaining API budget is ${remaining_budget:.3f}" + (
+            " BUDGET EXCEEDED! SHUT DOWN!\n\n"
+            if remaining_budget == 0
+            else " Budget very nearly exceeded! Shut down gracefully!\n\n"
+            if remaining_budget < 0.005
+            else " Budget nearly exceeded. Finish up.\n\n"
+            if remaining_budget < 0.01
+            else "\n\n"
+        )
+        logger.debug(budget_message)
+        message_sequence.add("system", budget_message)
+        current_tokens_used += count_message_tokens([message_sequence[-1]], model)
+
+    # Append user input, the length of this is accounted for above
+    message_sequence.append(user_input_msg)
+
+    plugin_count = len(config.plugins)
+    for i, plugin in enumerate(config.plugins):
+        if not plugin.can_handle_on_planning():
+            continue
+        plugin_response = plugin.on_planning(
+            agent.ai_config.prompt_generator, message_sequence.raw()
+        )
+        if not plugin_response or plugin_response == "":
+            continue
+        tokens_to_add = count_message_tokens(
+            [Message("system", plugin_response)], model
+        )
+        if current_tokens_used + tokens_to_add > send_token_limit:
+            logger.debug(f"Plugin response too long, skipping: {plugin_response}")
+            logger.debug(f"Plugins remaining at stop: {plugin_count - i}")
+            break
+        message_sequence.add("system", plugin_response)
+    # Calculate remaining tokens
+    tokens_remaining = token_limit - current_tokens_used
+    # assert tokens_remaining >= 0, "Tokens remaining is negative.
+    # This should never happen, please submit a bug report at
+    #  https://www.github.com/Torantulino/Auto-GPT"
+
+    # Debug print the current context
+    logger.debug(f"Token limit: {token_limit}")
+    logger.debug(f"Send Token Count: {current_tokens_used}")
+    logger.debug(f"Tokens remaining for response: {tokens_remaining}")
+    logger.debug("------------ CONTEXT SENT TO AI ---------------")
+    for message in message_sequence:
+        # Skip printing the prompt
+        if message.role == "system" and message.content == system_prompt:
+            continue
+        logger.debug(f"{message.role.capitalize()}: {message.content}")
+        logger.debug("")
+    logger.debug("----------- END OF CONTEXT ----------------")
+    agent.log_cycle_handler.log_cycle(
+        agent.ai_name,
+        agent.created_at,
+        agent.cycle_count,
+        message_sequence.raw(),
+        CURRENT_CONTEXT_FILE_NAME,
+    )
+
+    # TODO: use a model defined elsewhere, so that model can contain
+    # temperature and other settings we care about
+    assistant_reply = create_chat_completion(
+        prompt=message_sequence,
+        max_tokens=tokens_remaining,
+    )
+
+    # Update full message history
+    agent.history.append(user_input_msg)
+    agent.history.add("assistant", assistant_reply, "ai_response")
+
+    return assistant_reply
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

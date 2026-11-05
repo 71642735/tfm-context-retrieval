@@ -1,0 +1,11 @@
+--- pylint/checkers/similar.py
++++ pylint/checkers/similar.py
+@@ -800,6 +800,8 @@
+         BaseChecker.set_option(self, optname, value, action, optdict)
+         if optname == "min-similarity-lines":
+             self.min_lines = self.config.min_similarity_lines
++            if self.min_lines == 0:
++                self.linter.disable("duplicate-code")
+         elif optname == "ignore-comments":
+             self.ignore_comments = self.config.ignore_comments
+         elif optname == "ignore-docstrings":

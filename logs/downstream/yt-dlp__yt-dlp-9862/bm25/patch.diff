@@ -1,0 +1,18 @@
+--- yt_dlp/YoutubeDL.py
++++ yt_dlp/YoutubeDL.py
+@@ -2194,8 +2194,7 @@
+     def _default_format_spec(self, info_dict, download=True):
+-        download = download and not self.params.get('simulate')
+-        prefer_best = download and (
++        prefer_best = (
+             self.params['outtmpl']['default'] == '-'
+             or info_dict.get('is_live') and not self.params.get('live_from_start'))
+ 
+         def can_merge():
+             merger = FFmpegMergerPP(self)
+             return merger.available and merger.can_merge()
+ 
+-        if not prefer_best and download and not can_merge():
++        if not prefer_best and not can_merge():
+             prefer_best = True
+             formats = self._get_formats(info_dict)

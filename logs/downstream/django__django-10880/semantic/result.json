@@ -1,0 +1,14 @@
+{
+  "task_id": "django__django-10880",
+  "repository": "django/django",
+  "base_commit": "838e432e3e5519c5383d12018e6c78f8ec7833c1",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 1337,
+  "output_tokens": 299,
+  "thinking_tokens": 0,
+  "total_tokens": 1636
+}

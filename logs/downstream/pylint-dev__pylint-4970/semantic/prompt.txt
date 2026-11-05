@@ -1,0 +1,387 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Setting `min-similarity-lines` to `0` should stop pylint from checking duplicate code
+### Current problem
+
+Setting `min-similarity-lines` to `0` in the rcfile doesn't disable checking for duplicate code, it instead treats every line of code as duplicate and raises many errors.
+
+### Desired solution
+
+Setting `min-similarity-lines` to `0` should disable the duplicate code check.
+
+It works that way in many other linters (like flake8). Setting a numerical value in flake8 to `0` (e.g. `max-line-length`) disables that check.
+
+### Additional context
+
+#214 requests being able to disable `R0801`, but it is still open
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: pylint/checkers/format.py
+Lines: 739-787
+Symbol: FormatChecker.check_lines
+
+    def check_lines(self, lines: str, lineno: int) -> None:
+        """
+        Check lines have :
+            - a final newline
+            - no trailing whitespace
+            - less than a maximum number of characters
+        """
+        # we're first going to do a rough check whether any lines in this set
+        # go over the line limit. If none of them do, then we don't need to
+        # parse out the pylint options later on and can just assume that these
+        # lines are clean
+
+        # we'll also handle the line ending check here to avoid double-iteration
+        # unless the line lengths are suspect
+
+        max_chars = self.config.max_line_length
+
+        split_lines = self.specific_splitlines(lines)
+
+        for offset, line in enumerate(split_lines):
+            self.check_line_ending(line, lineno + offset)
+
+        # hold onto the initial lineno for later
+        potential_line_length_warning = False
+        for offset, line in enumerate(split_lines):
+            # this check is purposefully simple and doesn't rstrip
+            # since this is running on every line you're checking it's
+            # advantageous to avoid doing a lot of work
+            if len(line) > max_chars:
+                potential_line_length_warning = True
+                break
+
+        # if there were no lines passing the max_chars config, we don't bother
+        # running the full line check (as we've met an even more strict condition)
+        if not potential_line_length_warning:
+            return
+
+        # Line length check may be deactivated through `pylint: disable` comment
+        mobj = OPTION_PO.search(lines)
+        if mobj:
+            if not self.is_line_length_check_activated(mobj):
+                # the line length check is deactivated, we can stop here
+                return
+            # The 'pylint: disable whatever' should not be taken into account for line length count
+            lines = self.remove_pylint_option_from_lines(mobj)
+
+        # here we re-run specific_splitlines since we have filtered out pylint options above
+        for offset, line in enumerate(self.specific_splitlines(lines)):
+            self.check_line_length(line, lineno + offset)
+
+--- Chunk 2 ---
+File: tests/test_check_parallel.py
+Lines: 410-484
+Symbol: TestCheckParallel.test_compare_workers_to_single_proc
+
+    def test_compare_workers_to_single_proc(self, num_files, num_jobs, num_checkers):
+        """Compares the 3 key parameters for check_parallel() produces the same results
+
+        The intent here is to ensure that the check_parallel() operates on each file,
+        without ordering issues, irrespective of the number of workers used and the
+        number of checkers applied.
+
+        This test becomes more important if we want to change how we parametrise the
+        checkers, for example if we aim to batch the files across jobs."""
+
+        # define the stats we expect to get back from the runs, these should only vary
+        # with the number of files.
+        expected_stats = {
+            "by_module": {
+                # pylint: disable-next=consider-using-f-string
+                "--test-file_data-name-%d--"
+                % idx: {
+                    "convention": 0,
+                    "error": 0,
+                    "fatal": 0,
+                    "info": 0,
+                    "refactor": 0,
+                    "statement": 18,
+                    "warning": 0,
+                }
+                for idx in range(num_files)
+            },
+            "by_msg": {},
+            "convention": 0,
+            "error": 0,
+            "fatal": 0,
+            "info": 0,
+            "refactor": 0,
+            "statement": 18 * num_files,
+            "warning": 0,
+        }
+
+        file_infos = _gen_file_datas(num_files)
+
+        # Loop for single-proc and mult-proc so we can ensure the same linter-config
+        for do_single_proc in range(2):
+            linter = PyLinter(reporter=Reporter())
+
+            # Assign between 1 and 3 checkers to the linter, they should not change the
+            # results of the lint
+            linter.register_checker(SequentialTestChecker(linter))
+            if num_checkers > 1:
+                linter.register_checker(ExtraSequentialTestChecker(linter))
+            if num_checkers > 2:
+                linter.register_checker(ThirdSequentialTestChecker(linter))
+
+            if do_single_proc:
+                # establish the baseline
+                assert (
+                    linter.config.jobs == 1
+                ), "jobs>1 are ignored when calling _check_files"
+                linter._check_files(linter.get_ast, file_infos)
+                assert linter.msg_status == 0, "We should not fail the lint"
+                stats_single_proc = linter.stats
+            else:
+                check_parallel(
+                    linter,
+                    jobs=num_jobs,
+                    files=file_infos,
+                    arguments=None,
+                )
+                stats_check_parallel = linter.stats
+                assert linter.msg_status == 0, "We should not fail the lint"
+
+        assert (
+            stats_single_proc == stats_check_parallel
+        ), "Single-proc and check_parallel() should return the same thing"
+        assert (
+            stats_check_parallel == expected_stats
+        ), "The lint is returning unexpected results, has something changed?"
+
+--- Chunk 3 ---
+File: tests/lint/unittest_lint.py
+Lines: 783-809
+Symbol: test_multiprocessing
+
+def test_multiprocessing(jobs: int) -> None:
+    """Check that multiprocessing does not create duplicates."""
+    # For the bug (#3584) to show up we need more than one file with issues
+    # per process
+    filenames = [
+        "special_attr_scope_lookup_crash.py",
+        "syntax_error.py",
+        "unused_variable.py",
+        "wildcard.py",
+        "wrong_import_position.py",
+    ]
+
+    reporter = testutils.GenericTestReporter()
+    linter = PyLinter()
+    linter.config.jobs = jobs
+    linter.config.persistent = 0
+    linter.open()
+    linter.set_reporter(reporter)
+
+    try:
+        sys.path.append(os.path.dirname(REGRTEST_DATA_DIR))
+        linter.check([os.path.join(REGRTEST_DATA_DIR, fname) for fname in filenames])
+    finally:
+        sys.path.pop()
+
+    messages = reporter.messages
+    assert len(messages) == len(set(messages))
+
+--- Chunk 4 ---
+File: tests/test_config.py
+Lines: 13-36
+Symbol: check_configuration_file_reader
+
+def check_configuration_file_reader(config_file: PosixPath) -> Run:
+    """Initialize pylint with the given configuration file and check that
+    what we initialized the linter with what was expected.
+    """
+    args = ["--rcfile", str(config_file), __file__]
+    # If we used `pytest.raises(SystemExit)`, the `runner` variable
+    # would not be accessible outside the `with` block.
+    with unittest.mock.patch("sys.exit") as mocked_exit:
+        # Do not actually run checks, that could be slow. Do not mock
+        # `Pylinter.check`: it calls `Pylinter.initialize` which is
+        # needed to properly set up messages inclusion/exclusion
+        # in `_msg_states`, used by `is_message_enabled`.
+        with unittest.mock.patch("pylint.lint.pylinter.check_parallel"):
+            runner = pylint.lint.Run(args)
+
+    # "logging-not-lazy" and "logging-format-interpolation"
+    expected_disabled = {"W1201", "W1202"}
+    for msgid in expected_disabled:
+        assert not runner.linter.is_message_enabled(msgid)
+    assert runner.linter.config.jobs == 10
+    assert runner.linter.config.reports
+
+    mocked_exit.assert_called_once_with(0)
+    return runner
+
+--- Chunk 5 ---
+File: pylint/checkers/similar.py
+Lines: 797-812
+Symbol: SimilarChecker.set_option
+
+    def set_option(self, optname, value, action=None, optdict=None):
+        """method called to set an option (registered in the options list)
+
+        Overridden to report options setting to Similar
+        """
+        BaseChecker.set_option(self, optname, value, action, optdict)
+        if optname == "min-similarity-lines":
+            self.min_lines = self.config.min_similarity_lines
+        elif optname == "ignore-comments":
+            self.ignore_comments = self.config.ignore_comments
+        elif optname == "ignore-docstrings":
+            self.ignore_docstrings = self.config.ignore_docstrings
+        elif optname == "ignore-imports":
+            self.ignore_imports = self.config.ignore_imports
+        elif optname == "ignore-signatures":
+            self.ignore_signatures = self.config.ignore_signatures
+
+--- Chunk 6 ---
+File: pylint/checkers/similar.py
+Lines: 876-884
+Symbol: usage
+
+def usage(status=0):
+    """display command line usage information"""
+    print("finds copy pasted blocks in a set of files")
+    print()
+    print(
+        "Usage: symilar [-d|--duplicates min_duplicated_lines] \
+[-i|--ignore-comments] [--ignore-docstrings] [--ignore-imports] [--ignore-signatures] file1..."
+    )
+    sys.exit(status)
+
+--- Chunk 7 ---
+File: tests/checkers/unittest_similar.py
+Lines: 342-371
+Symbol: test_lines_without_meaningful_content_do_not_trigger_similarity
+
+def test_lines_without_meaningful_content_do_not_trigger_similarity() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run([SIMILAR3, SIMILAR4])
+    assert ex.value.code == 0
+    assert (
+        output.getvalue().strip()
+        == (
+            f"""
+14 similar lines in 2 files
+=={SIMILAR3}:[11:25]
+=={SIMILAR4}:[11:25]
+   b = (
+       (
+           [
+               "Lines 12-25 still trigger a similarity...",
+               "...warning, because..."
+           ],
+           [
+               "...even after ignoring lines with only symbols..."
+           ],
+       ),
+       (
+           "...there are still 5 similar lines in this code block.",
+       )
+   )
+TOTAL lines=50 duplicates=14 percent=28.00
+"""
+        ).strip()
+    )
+
+--- Chunk 8 ---
+File: tests/functional/l/line_too_long.py
+Lines: 58-66
+Symbol: issue_2957_bis
+
+def issue_2957_bis():
+    # +3: [line-too-long]
+    # +4: [line-too-long]
+    """
+    This is a very very very long line within a docstring that should trigger a pylint C0301 error line-too-long
+
+    Even spread on multiple lines, the disable command is still effective on very very very, maybe too much long docstring
+    """
+    return True
+
+--- Chunk 9 ---
+File: pylint/checkers/similar.py
+Lines: 887-929
+Symbol: Run
+
+def Run(argv=None):
+    """standalone command line access point"""
+    if argv is None:
+        argv = sys.argv[1:]
+
+    s_opts = "hdi"
+    l_opts = (
+        "help",
+        "duplicates=",
+        "ignore-comments",
+        "ignore-imports",
+        "ignore-docstrings",
+        "ignore-signatures",
+    )
+    min_lines = DEFAULT_MIN_SIMILARITY_LINE
+    ignore_comments = False
+    ignore_docstrings = False
+    ignore_imports = False
+    ignore_signatures = False
+    opts, args = getopt(argv, s_opts, l_opts)
+    for opt, val in opts:
+        if opt in ("-d", "--duplicates"):
+            min_lines = int(val)
+        elif opt in ("-h", "--help"):
+            usage()
+        elif opt in ("-i", "--ignore-comments"):
+            ignore_comments = True
+        elif opt in ("--ignore-docstrings",):
+            ignore_docstrings = True
+        elif opt in ("--ignore-imports",):
+            ignore_imports = True
+        elif opt in ("--ignore-signatures",):
+            ignore_signatures = True
+    if not args:
+        usage(1)
+    sim = Similar(
+        min_lines, ignore_comments, ignore_docstrings, ignore_imports, ignore_signatures
+    )
+    for filename in args:
+        with open(filename, encoding="utf-8") as stream:
+            sim.append_stream(filename, stream)
+    sim.run()
+    sys.exit(0)
+
+--- Chunk 10 ---
+File: tests/benchmark/test_baseline_benchmarks.py
+Lines: 208-225
+Symbol: TestEstablishBaselineBenchmarks.test_baseline_lots_of_files_j1_empty_checker
+
+    def test_baseline_lots_of_files_j1_empty_checker(self, benchmark):
+        """Baselines pylint for a single extra checker being run in -j1, for N-files
+
+        We use a checker that does no work, so the cost is just that of the system at
+        scale"""
+        if benchmark.disabled:
+            benchmark(print, "skipping, only benchmark large file counts")
+            return  # _only_ run this test is profiling
+        linter = PyLinter(reporter=Reporter())
+        linter.config.jobs = 1
+        linter.register_checker(NoWorkChecker(linter))
+        fileinfos = [self.empty_filepath for _ in range(self.lot_of_files)]
+        assert linter.config.jobs == 1
+        assert len(linter._checkers) == 2, "Should have 'master' and 'sleeper'"
+        benchmark(linter.check, fileinfos)
+        assert (
+            linter.msg_status == 0
+        ), f"Expected no errors to be thrown: {pprint.pformat(linter.reporter.messages)}"
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

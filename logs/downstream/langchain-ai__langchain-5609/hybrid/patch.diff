@@ -1,0 +1,37 @@
+```diff
+--- langchain/agents/mrkl/output_parser.py
++++ langchain/agents/mrkl/output_parser.py
+@@ -15,11 +15,6 @@
+ 
+     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+-        if FINAL_ANSWER_ACTION in text:
+-            return AgentFinish(
+-                {"output": text.split(FINAL_ANSWER_ACTION)[-1].strip()}, text
+-            )
+-        # \s matches against tab/newline/whitespace
+-        regex = (
+-            r"Action\s*\d*\s*:[\s]*(.*?)[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
+-        )
+-        match = re.search(regex, text, re.DOTALL)
+-        if not match:
++        includes_answer = FINAL_ANSWER_ACTION in text
++        # \s matches against tab/newline/whitespace
++        regex = (
++            r"Action\s*\d*\s*:[\s]*(.*?)[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
++        )
++        match = re.search(regex, text, re.DOTALL)
++        if not match:
++            if includes_answer:
++                return AgentFinish(
++                    {"output": text.split(FINAL_ANSWER_ACTION)[-1].strip()}, text
++                )
+             if not re.search(r"Action\s*\d*\s*:[\s]*(.*?)", text, re.DOTALL):
+                 raise OutputParserException(
+                     f"Could not parse LLM output: `{text}`",
+@@ -39,6 +34,8 @@
+                 raise OutputParserException(f"Could not parse LLM output: `{text}`")
++        if includes_answer:
++            raise OutputParserException(f"Parsing LLM output produced both a final answer and a parseable action: `{text}`")
+         action = match.group(1).strip()
+         action_input = match.group(2)
+```

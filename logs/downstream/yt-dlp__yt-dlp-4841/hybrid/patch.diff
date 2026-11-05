@@ -1,0 +1,7 @@
+--- yt_dlp/extractor/discoveryplus.py
++++ yt_dlp/extractor/discoveryplus.py
+@@ -107,3 +107,3 @@
+         for f in formats:
+-            if 'h264.io' in f['url']:
++            if any(domain in f['url'] for domain in ('h264.io', 'akamaized.net')):
+                 f['http_headers'] = self.geo_verification_headers()

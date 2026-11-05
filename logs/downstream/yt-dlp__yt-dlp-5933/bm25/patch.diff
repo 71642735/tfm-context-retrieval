@@ -1,0 +1,11 @@
+--- yt_dlp/options.py
++++ yt_dlp/options.py
+@@ -1071,7 +1071,7 @@
+ 
+     # 3. System configuration
+     system_config_files = [
+-        os.path.join(config_dir, 'yt-dlp.conf')
++        os.path.join(config_dir, 'yt-dlp.conf') for config_dir in system_config_dirs()
+     ] if not opts.ignore_config else []
+ 
+     # 4. Command-line configuration

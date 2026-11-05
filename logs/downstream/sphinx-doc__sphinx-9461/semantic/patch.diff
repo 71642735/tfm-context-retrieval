@@ -1,0 +1,40 @@
+```diff
+--- sphinx/ext/autodoc/__init__.py
++++ sphinx/ext/autodoc/__init__.py
+@@ -1479,7 +1479,7 @@
+         return False
+ 
+     def import_object(self, raiseerror: bool = False) -> bool:
+-        result = super().import_object(raiseerror)
++        res = super().import_object(raiseerror)
+         if self.object:
+             # to prevent the AttributeError (see issue #30), check self.object
+             # has __isabstractmethod__ attribute.
+@@ -1487,7 +1487,14 @@
+                 getattr(safe_get_members(self.object, self.env)[1].get('fget'),
+                         '__isabstractmethod__', False):
+                 self.object.__isabstractmethod__ = True
+-        return result
++            elif (isinstance(self.object, classmethod) and
++                  hasattr(self.object, '__func__') and
++                  isinstance(self.object.__func__, property)):
++                if getattr(self.object.__func__, '__isabstractmethod__', False):
++                    self.object.__isabstractmethod__ = True
++                if getattr(self.object.__func__, '__doc__', None):
++                    self.object.__doc__ = self.object.__func__.__doc__
++        return res
+ 
+     def add_directive_header(self, sig: str) -> None:
+         super().add_directive_header(sig)
+@@ -1510,6 +1517,10 @@
+                 if isinstance(self.object, classmethod):
+                     self.add_line('   :classmethod:', source)
+             else:
++                if (isinstance(self.object, classmethod) and
++                      hasattr(self.object, '__func__') and
++                      isinstance(self.object.__func__, property)):
++                    self.add_line('   :classmethod:', source)
+                 self.add_line('   :property:', source)
+ 
+ 
+```

@@ -1,0 +1,25 @@
+```diff
+--- autogpt/commands/file_operations.py
++++ autogpt/commands/file_operations.py
+@@ -37,7 +37,9 @@
+ 
+ @command(
+     "list_files",
+-    "List files in a directory",
++    "List files in a directory. Note: For large directory trees, results may be truncated to fit the context window.",
+     "directory",
+     '"directory": "<directory>"',
+ )
+ def list_files(directory: str, agent: Agent) -> list[str] | str:
+     """List files in a directory"""
+     if not os.path.isdir(directory):
+         return f"Error: The directory {directory} does not exist or is not a directory."
+-    return get_files(directory)
++    files = get_files(directory)
++    
++    # Truncate file list if it's extremely large to prevent context window overflow
++    max_files = 200
++    if len(files) > max_files:
++        return files[:max_files] + [f"... and {len(files) - max_files} more files (truncated)."]
++    return files
+```

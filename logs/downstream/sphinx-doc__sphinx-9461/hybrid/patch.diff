@@ -1,0 +1,28 @@
+```diff
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -1473,7 +1473,7 @@
+         return False
+ 
+     def import_object(self, *args: Any) -> bool:
+-        result = super().import_object(*args)
++        res = super().import_object(*args)
+         if result:
+             # if the object is a property, find its docstring via its getter
+             try:
+@@ -1486,7 +1486,11 @@
+                     docstring = getdoc(self.object.fget, self.get_attr,
+                                        self.config.autodoc_inherit_docstrings,
+                                        self.parent, self.object_name)
+-                    if docstring:
++                    # If it's a classmethod + property combination, fget might be bound
++                    # or return the docstring correctly; but if the object itself is a class
++                    # method descriptor or returns the value, let's make sure we assign docstring.
++                    if docstring and not getattr(self.object, '__doc__', None):
+                         self.object.__doc__ = docstring
+             except AttributeError:
+                 pass
+-        return result
++        return res
+```

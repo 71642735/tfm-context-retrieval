@@ -1,0 +1,307 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Query syntax error with condition and distinct combination
+Description
+	
+A Count annotation containing both a Case condition and a distinct=True param produces a query error on Django 2.2 (whatever the db backend). A space is missing at least (... COUNT(DISTINCTCASE WHEN ...).
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/expressions/tests.py
+Lines: 1508-1510
+Symbol: ReprTests.test_distinct_aggregates
+
+    def test_distinct_aggregates(self):
+        self.assertEqual(repr(Count('a', distinct=True)), "Count(F(a), distinct=True)")
+        self.assertEqual(repr(Count('*', distinct=True)), "Count('*', distinct=True)")
+
+--- Chunk 2 ---
+File: django/db/models/sql/query.py
+Lines: 1748-1753
+Symbol: Query.add_distinct_fields
+
+    def add_distinct_fields(self, *field_names):
+        """
+        Add and resolve the given fields to the query's "distinct on" clause.
+        """
+        self.distinct_fields = field_names
+        self.distinct = True
+
+--- Chunk 3 ---
+File: tests/aggregation/tests.py
+Lines: 473-485
+Symbol: AggregateTestCase.test_sum_distinct_aggregate
+
+    def test_sum_distinct_aggregate(self):
+        """
+        Sum on a distinct() QuerySet should aggregate only the distinct items.
+        """
+        authors = Author.objects.filter(book__in=[self.b5, self.b6])
+        self.assertEqual(authors.count(), 3)
+
+        distinct_authors = authors.distinct()
+        self.assertEqual(distinct_authors.count(), 2)
+
+        # Selected author ages are 57 and 46
+        age_sum = distinct_authors.aggregate(Sum('age'))
+        self.assertEqual(age_sum['age__sum'], 103)
+
+--- Chunk 4 ---
+File: django/db/models/query.py
+Lines: 1066-1074
+Symbol: QuerySet.distinct
+
+    def distinct(self, *field_names):
+        """
+        Return a new QuerySet instance that will select only distinct results.
+        """
+        assert self.query.can_filter(), \
+            "Cannot create distinct fields once a slice has been taken."
+        obj = self._chain()
+        obj.query.add_distinct_fields(*field_names)
+        return obj
+
+--- Chunk 5 ---
+File: tests/filtered_relation/tests.py
+Lines: 349-395
+Symbol: FilteredRelationAggregationTests.test_aggregate
+
+    def test_aggregate(self):
+        """
+        filtered_relation() not only improves performance but also creates
+        correct results when aggregating with multiple LEFT JOINs.
+
+        Books can be reserved then rented by a borrower. Each reservation and
+        rental session are recorded with Reservation and RentalSession models.
+        Every time a reservation or a rental session is over, their state is
+        changed to 'stopped'.
+
+        Goal: Count number of books that are either currently reserved or
+        rented by borrower1 or available.
+        """
+        qs = Book.objects.annotate(
+            is_reserved_or_rented_by=Case(
+                When(reservation__state=Reservation.NEW, then=F('reservation__borrower__pk')),
+                When(rental_session__state=RentalSession.NEW, then=F('rental_session__borrower__pk')),
+                default=None,
+            )
+        ).filter(
+            Q(is_reserved_or_rented_by=self.borrower1.pk) | Q(state=Book.AVAILABLE)
+        ).distinct()
+        self.assertEqual(qs.count(), 1)
+        # If count is equal to 1, the same aggregation should return in the
+        # same result but it returns 4.
+        self.assertSequenceEqual(qs.annotate(total=Count('pk')).values('total'), [{'total': 4}])
+        # With FilteredRelation, the result is as expected (1).
+        qs = Book.objects.annotate(
+            active_reservations=FilteredRelation(
+                'reservation', condition=Q(
+                    reservation__state=Reservation.NEW,
+                    reservation__borrower=self.borrower1,
+                )
+            ),
+        ).annotate(
+            active_rental_sessions=FilteredRelation(
+                'rental_session', condition=Q(
+                    rental_session__state=RentalSession.NEW,
+                    rental_session__borrower=self.borrower1,
+                )
+            ),
+        ).filter(
+            (Q(active_reservations__isnull=False) | Q(active_rental_sessions__isnull=False)) |
+            Q(state=Book.AVAILABLE)
+        ).distinct()
+        self.assertEqual(qs.count(), 1)
+        self.assertSequenceEqual(qs.annotate(total=Count('pk')).values('total'), [{'total': 1}])
+
+--- Chunk 6 ---
+File: django/db/models/sql/query.py
+Lines: 532-631
+Symbol: Query.combine
+
+    def combine(self, rhs, connector):
+        """
+        Merge the 'rhs' query into the current one (with any 'rhs' effects
+        being applied *after* (that is, "to the right of") anything in the
+        current query. 'rhs' is not modified during a call to this function.
+
+        The 'connector' parameter describes how to connect filters from the
+        'rhs' query.
+        """
+        assert self.model == rhs.model, \
+            "Cannot combine queries on two different base models."
+        assert self.can_filter(), \
+            "Cannot combine queries once a slice has been taken."
+        assert self.distinct == rhs.distinct, \
+            "Cannot combine a unique query with a non-unique query."
+        assert self.distinct_fields == rhs.distinct_fields, \
+            "Cannot combine queries with different distinct fields."
+
+        # Work out how to relabel the rhs aliases, if necessary.
+        change_map = {}
+        conjunction = (connector == AND)
+
+        # Determine which existing joins can be reused. When combining the
+        # query with AND we must recreate all joins for m2m filters. When
+        # combining with OR we can reuse joins. The reason is that in AND
+        # case a single row can't fulfill a condition like:
+        #     revrel__col=1 & revrel__col=2
+        # But, there might be two different related rows matching this
+        # condition. In OR case a single True is enough, so single row is
+        # enough, too.
+        #
+        # Note that we will be creating duplicate joins for non-m2m joins in
+        # the AND case. The results will be correct but this creates too many
+        # joins. This is something that could be fixed later on.
+        reuse = set() if conjunction else set(self.alias_map)
+        # Base table must be present in the query - this is the same
+        # table on both sides.
+        self.get_initial_alias()
+        joinpromoter = JoinPromoter(connector, 2, False)
+        joinpromoter.add_votes(
+            j for j in self.alias_map if self.alias_map[j].join_type == INNER)
+        rhs_votes = set()
+        # Now, add the joins from rhs query into the new query (skipping base
+        # table).
+        rhs_tables = list(rhs.alias_map)[1:]
+        for alias in rhs_tables:
+            join = rhs.alias_map[alias]
+            # If the left side of the join was already relabeled, use the
+            # updated alias.
+            join = join.relabeled_clone(change_map)
+            new_alias = self.join(join, reuse=reuse)
+            if join.join_type == INNER:
+                rhs_votes.add(new_alias)
+            # We can't reuse the same join again in the query. If we have two
+            # distinct joins for the same connection in rhs query, then the
+            # combined query must have two joins, too.
+            reuse.discard(new_alias)
+            if alias != new_alias:
+                change_map[alias] = new_alias
+            if not rhs.alias_refcount[alias]:
+                # The alias was unused in the rhs query. Unref it so that it
+                # will be unused in the new query, too. We have to add and
+                # unref the alias so that join promotion has information of
+                # the join type for the unused alias.
+                self.unref_alias(new_alias)
+        joinpromoter.add_votes(rhs_votes)
+        joinpromoter.update_join_types(self)
+
+        # Now relabel a copy of the rhs where-clause and add it to the current
+        # one.
+        w = rhs.where.clone()
+        w.relabel_aliases(change_map)
+        self.where.add(w, connector)
+
+        # Selection columns and extra extensions are those provided by 'rhs'.
+        if rhs.select:
+            self.set_select([col.relabeled_clone(change_map) for col in rhs.select])
+        else:
+            self.select = ()
+
+        if connector == OR:
+            # It would be nice to be able to handle this, but the queries don't
+            # really make sense (or return consistent value sets). Not worth
+            # the extra complexity when you can write a real query instead.
+            if self._extra and rhs._extra:
+                raise ValueError("When merging querysets using 'or', you cannot have extra(select=…) on both sides.")
+        self.extra.update(rhs.extra)
+        extra_select_mask = set()
+        if self.extra_select_mask is not None:
+            extra_select_mask.update(self.extra_select_mask)
+        if rhs.extra_select_mask is not None:
+            extra_select_mask.update(rhs.extra_select_mask)
+        if extra_select_mask:
+            self.set_extra_mask(extra_select_mask)
+        self.extra_tables += rhs.extra_tables
+
+        # Ordering uses the 'rhs' ordering, unless it has none, in which case
+        # the current ordering is used.
+        self.order_by = rhs.order_by or self.order_by
+        self.extra_order_by = rhs.extra_order_by or self.extra_order_by
+
+--- Chunk 7 ---
+File: tests/expressions/tests.py
+Lines: 1512-1526
+Symbol: ReprTests.test_filtered_aggregates
+
+    def test_filtered_aggregates(self):
+        filter = Q(a=1)
+        self.assertEqual(repr(Avg('a', filter=filter)), "Avg(F(a), filter=(AND: ('a', 1)))")
+        self.assertEqual(repr(Count('a', filter=filter)), "Count(F(a), filter=(AND: ('a', 1)))")
+        self.assertEqual(repr(Max('a', filter=filter)), "Max(F(a), filter=(AND: ('a', 1)))")
+        self.assertEqual(repr(Min('a', filter=filter)), "Min(F(a), filter=(AND: ('a', 1)))")
+        self.assertEqual(repr(StdDev('a', filter=filter)), "StdDev(F(a), filter=(AND: ('a', 1)), sample=False)")
+        self.assertEqual(repr(Sum('a', filter=filter)), "Sum(F(a), filter=(AND: ('a', 1)))")
+        self.assertEqual(
+            repr(Variance('a', sample=True, filter=filter)),
+            "Variance(F(a), filter=(AND: ('a', 1)), sample=True)"
+        )
+        self.assertEqual(
+            repr(Count('a', filter=filter, distinct=True)), "Count(F(a), distinct=True, filter=(AND: ('a', 1)))"
+        )
+
+--- Chunk 8 ---
+File: tests/queries/tests.py
+Lines: 3389-3404
+Symbol: DisjunctionPromotionTests.test_disjunction_promotion5_demote
+
+    def test_disjunction_promotion5_demote(self):
+        qs = BaseA.objects.filter(Q(a=1) | Q(a=2))
+        # Note that the above filters on a force the join to an
+        # inner join even if it is trimmed.
+        self.assertEqual(str(qs.query).count('JOIN'), 0)
+        qs = qs.filter(Q(a__f1='foo') | Q(b__f1='foo'))
+        # So, now the a__f1 join doesn't need promotion.
+        self.assertEqual(str(qs.query).count('INNER JOIN'), 1)
+        # But b__f1 does.
+        self.assertEqual(str(qs.query).count('LEFT OUTER JOIN'), 1)
+        qs = BaseA.objects.filter(Q(a__f1='foo') | Q(b__f1='foo'))
+        # Now the join to a is created as LOUTER
+        self.assertEqual(str(qs.query).count('LEFT OUTER JOIN'), 2)
+        qs = qs.filter(Q(a=1) | Q(a=2))
+        self.assertEqual(str(qs.query).count('INNER JOIN'), 1)
+        self.assertEqual(str(qs.query).count('LEFT OUTER JOIN'), 1)
+
+--- Chunk 9 ---
+File: tests/queries/tests.py
+Lines: 3406-3418
+Symbol: DisjunctionPromotionTests.test_disjunction_promotion6
+
+    def test_disjunction_promotion6(self):
+        qs = BaseA.objects.filter(Q(a=1) | Q(a=2))
+        self.assertEqual(str(qs.query).count('JOIN'), 0)
+        qs = BaseA.objects.filter(Q(a__f1='foo') & Q(b__f1='foo'))
+        self.assertEqual(str(qs.query).count('INNER JOIN'), 2)
+        self.assertEqual(str(qs.query).count('LEFT OUTER JOIN'), 0)
+
+        qs = BaseA.objects.filter(Q(a__f1='foo') & Q(b__f1='foo'))
+        self.assertEqual(str(qs.query).count('LEFT OUTER JOIN'), 0)
+        self.assertEqual(str(qs.query).count('INNER JOIN'), 2)
+        qs = qs.filter(Q(a=1) | Q(a=2))
+        self.assertEqual(str(qs.query).count('INNER JOIN'), 2)
+        self.assertEqual(str(qs.query).count('LEFT OUTER JOIN'), 0)
+
+--- Chunk 10 ---
+File: django/db/models/constraints.py
+Lines: 70-77
+Symbol: UniqueConstraint.__init__
+
+    def __init__(self, *, fields, name, condition=None):
+        if not fields:
+            raise ValueError('At least one field is required to define a unique constraint.')
+        if not isinstance(condition, (type(None), Q)):
+            raise ValueError('UniqueConstraint.condition must be a Q instance.')
+        self.fields = tuple(fields)
+        self.condition = condition
+        super().__init__(name)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

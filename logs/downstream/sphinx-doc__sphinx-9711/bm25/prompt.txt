@@ -1,0 +1,615 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+needs_extensions checks versions using strings
+### Describe the bug
+
+The `needs_extensions` check is handy for verifying minimum extension versions, but it only checks versions in a 'string-like' manner. This means any version >9 is not allowed for any check of something >1. That is, treated as string '0.6' > '0.10', but treated as versions '0.6' < '0.10'. Since Sphinx does the former, some extension versions may not be allowed when they should be.
+
+### How to Reproduce
+
+```
+$ git clone https://github.com/anntzer/mplcursors
+$ cd mplcursors
+$ pip install -r .doc-requirements.txt
+$ pip install -e .
+$ make -C doc html
+```
+This passes just fine, because the requirements pin sphinx-gallery to 0.9. But if you then update to the current 0.10 release:
+
+```
+$ pip install sphinx-gallery==0.10
+$ make -C doc html
+```
+results in a failure due to a "not new enough" version:
+```
+Running Sphinx v4.1.2
+loading translations [en]... done
+making output directory... done
+
+Sphinx version error:
+This project needs the extension sphinx_gallery.gen_gallery at least in version 0.6.0 and therefore cannot be built with the loaded version (0.10.0).
+```
+
+### Expected behavior
+
+sphinx-gallery 0.10.0 should be accepted if 0.6 is the minimum specified.
+
+### Your project
+
+https://github.com/anntzer/mplcursors
+
+### Screenshots
+
+_No response_
+
+### OS
+
+Fedora
+
+### Python version
+
+3.9.6
+
+### Sphinx version
+
+4.1.2
+
+### Sphinx extensions
+
+_No response_
+
+### Extra tools
+
+_No response_
+
+### Additional context
+
+_No response_
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sphinx/extension.py
+Lines: 42-58
+Symbol: verify_needs_extensions
+
+def verify_needs_extensions(app: "Sphinx", config: Config) -> None:
+    """Verify the required Sphinx extensions are loaded."""
+    if config.needs_extensions is None:
+        return
+
+    for extname, reqversion in config.needs_extensions.items():
+        extension = app.extensions.get(extname)
+        if extension is None:
+            logger.warning(__('The %s extension is required by needs_extensions settings, '
+                              'but it is not loaded.'), extname)
+            continue
+
+        if extension.version == 'unknown version' or reqversion > extension.version:
+            raise VersionRequirementError(__('This project needs the extension %s at least in '
+                                             'version %s and therefore cannot be built with '
+                                             'the loaded version (%s).') %
+                                          (extname, reqversion, extension.version))
+
+--- Chunk 2 ---
+File: tests/test_environment_indexentries.py
+Lines: 18-46
+Symbol: test_create_single_index
+
+def test_create_single_index(app):
+    text = (".. index:: docutils\n"
+            ".. index:: Python\n"
+            ".. index:: pip; install\n"
+            ".. index:: pip; upgrade\n"
+            ".. index:: Sphinx\n"
+            ".. index:: Ель\n"
+            ".. index:: ёлка\n"
+            ".. index:: ‏עברית‎\n"
+            ".. index:: 9-symbol\n"
+            ".. index:: &-symbol\n"
+            ".. index:: £100\n")
+    restructuredtext.parse(app, text)
+    index = IndexEntries(app.env).create_index(app.builder)
+    assert len(index) == 6
+    assert index[0] == ('Symbols', [('&-symbol', [[('', '#index-9')], [], None]),
+                                    ('9-symbol', [[('', '#index-8')], [], None]),
+                                    ('£100', [[('', '#index-10')], [], None])])
+    assert index[1] == ('D', [('docutils', [[('', '#index-0')], [], None])])
+    assert index[2] == ('P', [('pip', [[], [('install', [('', '#index-2')]),
+                                            ('upgrade', [('', '#index-3')])], None]),
+                              ('Python', [[('', '#index-1')], [], None])])
+    assert index[3] == ('S', [('Sphinx', [[('', '#index-4')], [], None])])
+    assert index[4] == ('Е',
+                        [('ёлка', [[('', '#index-6')], [], None]),
+                         ('Ель', [[('', '#index-5')], [], None])])
+    # Here the word starts with U+200F RIGHT-TO-LEFT MARK, which should be
+    # ignored when getting the first letter.
+    assert index[5] == ('ע', [('‏עברית‎', [[('', '#index-7')], [], None])])
+
+--- Chunk 3 ---
+File: tests/test_util.py
+Lines: 114-130
+Symbol: test_parselinenos
+
+def test_parselinenos():
+    assert parselinenos('1,2,3', 10) == [0, 1, 2]
+    assert parselinenos('4, 5, 6', 10) == [3, 4, 5]
+    assert parselinenos('-4', 10) == [0, 1, 2, 3]
+    assert parselinenos('7-9', 10) == [6, 7, 8]
+    assert parselinenos('7-', 10) == [6, 7, 8, 9]
+    assert parselinenos('1,7-', 10) == [0, 6, 7, 8, 9]
+    assert parselinenos('7-7', 10) == [6]
+    assert parselinenos('11-', 10) == [10]
+    with pytest.raises(ValueError):
+        parselinenos('1-2-3', 10)
+    with pytest.raises(ValueError):
+        parselinenos('abc-def', 10)
+    with pytest.raises(ValueError):
+        parselinenos('-', 10)
+    with pytest.raises(ValueError):
+        parselinenos('3-1', 10)
+
+--- Chunk 4 ---
+File: sphinx/registry.py
+Lines: 415-459
+Symbol: SphinxComponentRegistry.load_extension
+
+    def load_extension(self, app: "Sphinx", extname: str) -> None:
+        """Load a Sphinx extension."""
+        if extname in app.extensions:  # already loaded
+            return
+        if extname in EXTENSION_BLACKLIST:
+            logger.warning(__('the extension %r was already merged with Sphinx since '
+                              'version %s; this extension is ignored.'),
+                           extname, EXTENSION_BLACKLIST[extname])
+            return
+
+        # update loading context
+        prefix = __('while setting up extension %s:') % extname
+        with prefixed_warnings(prefix):
+            try:
+                mod = import_module(extname)
+            except ImportError as err:
+                logger.verbose(__('Original exception:\n') + traceback.format_exc())
+                raise ExtensionError(__('Could not import extension %s') % extname,
+                                     err) from err
+
+            setup = getattr(mod, 'setup', None)
+            if setup is None:
+                logger.warning(__('extension %r has no setup() function; is it really '
+                                  'a Sphinx extension module?'), extname)
+                metadata: Dict[str, Any] = {}
+            else:
+                try:
+                    metadata = setup(app)
+                except VersionRequirementError as err:
+                    # add the extension name to the version required
+                    raise VersionRequirementError(
+                        __('The %s extension used by this project needs at least '
+                           'Sphinx v%s; it therefore cannot be built with this '
+                           'version.') % (extname, err)
+                    ) from err
+
+            if metadata is None:
+                metadata = {}
+            elif not isinstance(metadata, dict):
+                logger.warning(__('extension %r returned an unsupported object from '
+                                  'its setup() function; it should return None or a '
+                                  'metadata dictionary'), extname)
+                metadata = {}
+
+            app.extensions[extname] = Extension(extname, mod, **metadata)
+
+--- Chunk 5 ---
+File: sphinx/application.py
+Lines: 488-525
+Symbol: Sphinx.add_config_value
+
+    def add_config_value(self, name: str, default: Any, rebuild: Union[bool, str],
+                         types: Any = ()) -> None:
+        """Register a configuration value.
+
+        This is necessary for Sphinx to recognize new values and set default
+        values accordingly.
+
+
+        :param name: The name of the configuration value.  It is recommended to be prefixed
+                     with the extension name (ex. ``html_logo``, ``epub_title``)
+        :param default: The default value of the configuration.
+        :param rebuild: The condition of rebuild.  It must be one of those values:
+
+                        * ``'env'`` if a change in the setting only takes effect when a
+                          document is parsed -- this means that the whole environment must be
+                          rebuilt.
+                        * ``'html'`` if a change in the setting needs a full rebuild of HTML
+                          documents.
+                        * ``''`` if a change in the setting will not need any special rebuild.
+        :param types: The type of configuration value.  A list of types can be specified.  For
+                      example, ``[str]`` is used to describe a configuration that takes string
+                      value.
+
+        .. versionchanged:: 0.4
+           If the *default* value is a callable, it will be called with the
+           config object as its argument in order to get the default value.
+           This can be used to implement config values whose default depends on
+           other values.
+
+        .. versionchanged:: 0.6
+           Changed *rebuild* from a simple boolean (equivalent to ``''`` or
+           ``'env'``) to a string.  However, booleans are still accepted and
+           converted internally.
+        """
+        logger.debug('[app] adding config value: %r', (name, default, rebuild, types))
+        if rebuild in (False, True):
+            rebuild = 'env' if rebuild else ''
+        self.config.add(name, default, rebuild, types)
+
+--- Chunk 6 ---
+File: sphinx/application.py
+Lines: 395-406
+Symbol: Sphinx.require_sphinx
+
+    def require_sphinx(self, version: str) -> None:
+        """Check the Sphinx version if requested.
+
+        Compare *version* with the version of the running Sphinx, and abort the
+        build when it is too old.
+
+        :param version: The required version in the form of ``major.minor``.
+
+        .. versionadded:: 1.0
+        """
+        if version > sphinx.__display_version__[:3]:
+            raise VersionRequirementError(version)
+
+--- Chunk 7 ---
+File: sphinx/cmd/quickstart.py
+Lines: 191-326
+Symbol: ask_user
+
+def ask_user(d: Dict) -> None:
+    """Ask the user for quickstart values missing from *d*.
+
+    Values are:
+
+    * path:      root path
+    * sep:       separate source and build dirs (bool)
+    * dot:       replacement for dot in _templates etc.
+    * project:   project name
+    * author:    author names
+    * version:   version of project
+    * release:   release of project
+    * language:  document language
+    * suffix:    source file suffix
+    * master:    master document name
+    * extensions:  extensions to use (list)
+    * makefile:  make Makefile
+    * batchfile: make command file
+    """
+
+    print(bold(__('Welcome to the Sphinx %s quickstart utility.')) % __display_version__)
+    print()
+    print(__('Please enter values for the following settings (just press Enter to\n'
+             'accept a default value, if one is given in brackets).'))
+
+    if 'path' in d:
+        print()
+        print(bold(__('Selected root path: %s')) % d['path'])
+    else:
+        print()
+        print(__('Enter the root path for documentation.'))
+        d['path'] = do_prompt(__('Root path for the documentation'), '.', is_path)
+
+    while path.isfile(path.join(d['path'], 'conf.py')) or \
+            path.isfile(path.join(d['path'], 'source', 'conf.py')):
+        print()
+        print(bold(__('Error: an existing conf.py has been found in the '
+                      'selected root path.')))
+        print(__('sphinx-quickstart will not overwrite existing Sphinx projects.'))
+        print()
+        d['path'] = do_prompt(__('Please enter a new root path (or just Enter to exit)'),
+                              '', is_path_or_empty)
+        if not d['path']:
+            sys.exit(1)
+
+    if 'sep' not in d:
+        print()
+        print(__('You have two options for placing the build directory for Sphinx output.\n'
+                 'Either, you use a directory "_build" within the root path, or you separate\n'
+                 '"source" and "build" directories within the root path.'))
+        d['sep'] = do_prompt(__('Separate source and build directories (y/n)'), 'n', boolean)
+
+    if 'dot' not in d:
+        print()
+        print(__('Inside the root directory, two more directories will be created; "_templates"\n'      # NOQA
+                 'for custom HTML templates and "_static" for custom stylesheets and other static\n'    # NOQA
+                 'files. You can enter another prefix (such as ".") to replace the underscore.'))       # NOQA
+        d['dot'] = do_prompt(__('Name prefix for templates and static dir'), '_', ok)
+
+    if 'project' not in d:
+        print()
+        print(__('The project name will occur in several places in the built documentation.'))
+        d['project'] = do_prompt(__('Project name'))
+    if 'author' not in d:
+        d['author'] = do_prompt(__('Author name(s)'))
+
+    if 'version' not in d:
+        print()
+        print(__('Sphinx has the notion of a "version" and a "release" for the\n'
+                 'software. Each version can have multiple releases. For example, for\n'
+                 'Python the version is something like 2.5 or 3.0, while the release is\n'
+                 'something like 2.5.1 or 3.0a1. If you don\'t need this dual structure,\n'
+                 'just set both to the same value.'))
+        d['version'] = do_prompt(__('Project version'), '', allow_empty)
+    if 'release' not in d:
+        d['release'] = do_prompt(__('Project release'), d['version'], allow_empty)
+
+    if 'language' not in d:
+        print()
+        print(__('If the documents are to be written in a language other than English,\n'
+                 'you can select a language here by its language code. Sphinx will then\n'
+                 'translate text that it generates into that language.\n'
+                 '\n'
+                 'For a list of supported codes, see\n'
+                 'https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language.'))  # NOQA
+        d['language'] = do_prompt(__('Project language'), 'en')
+        if d['language'] == 'en':
+            d['language'] = None
+
+    if 'suffix' not in d:
+        print()
+        print(__('The file name suffix for source files. Commonly, this is either ".txt"\n'
+                 'or ".rst". Only files with this suffix are considered documents.'))
+        d['suffix'] = do_prompt(__('Source file suffix'), '.rst', suffix)
+
+    if 'master' not in d:
+        print()
+        print(__('One document is special in that it is considered the top node of the\n'
+                 '"contents tree", that is, it is the root of the hierarchical structure\n'
+                 'of the documents. Normally, this is "index", but if your "index"\n'
+                 'document is a custom template, you can also set this to another filename.'))
+        d['master'] = do_prompt(__('Name of your master document (without suffix)'), 'index')
+
+    while path.isfile(path.join(d['path'], d['master'] + d['suffix'])) or \
+            path.isfile(path.join(d['path'], 'source', d['master'] + d['suffix'])):
+        print()
+        print(bold(__('Error: the master file %s has already been found in the '
+                      'selected root path.') % (d['master'] + d['suffix'])))
+        print(__('sphinx-quickstart will not overwrite the existing file.'))
+        print()
+        d['master'] = do_prompt(__('Please enter a new file name, or rename the '
+                                   'existing file and press Enter'), d['master'])
+
+    if 'extensions' not in d:
+        print(__('Indicate which of the following Sphinx extensions should be enabled:'))
+        d['extensions'] = []
+        for name, description in EXTENSIONS.items():
+            if do_prompt('%s: %s (y/n)' % (name, description), 'n', boolean):
+                d['extensions'].append('sphinx.ext.%s' % name)
+
+        # Handle conflicting options
+        if {'sphinx.ext.imgmath', 'sphinx.ext.mathjax'}.issubset(d['extensions']):
+            print(__('Note: imgmath and mathjax cannot be enabled at the same time. '
+                     'imgmath has been deselected.'))
+            d['extensions'].remove('sphinx.ext.imgmath')
+
+    if 'makefile' not in d:
+        print()
+        print(__('A Makefile and a Windows command file can be generated for you so that you\n'
+                 'only have to run e.g. `make html\' instead of invoking sphinx-build\n'
+                 'directly.'))
+        d['makefile'] = do_prompt(__('Create Makefile? (y/n)'), 'y', boolean)
+
+    if 'batchfile' not in d:
+        d['batchfile'] = do_prompt(__('Create Windows command file? (y/n)'), 'y', boolean)
+    print()
+
+--- Chunk 8 ---
+File: sphinx/application.py
+Lines: 138-270
+Symbol: Sphinx.__init__
+
+    def __init__(self, srcdir: str, confdir: Optional[str], outdir: str, doctreedir: str,
+                 buildername: str, confoverrides: Dict = None,
+                 status: IO = sys.stdout, warning: IO = sys.stderr,
+                 freshenv: bool = False, warningiserror: bool = False, tags: List[str] = None,
+                 verbosity: int = 0, parallel: int = 0, keep_going: bool = False) -> None:
+        self.phase = BuildPhase.INITIALIZATION
+        self.verbosity = verbosity
+        self.extensions: Dict[str, Extension] = {}
+        self.builder: Optional[Builder] = None
+        self.env: Optional[BuildEnvironment] = None
+        self.project: Optional[Project] = None
+        self.registry = SphinxComponentRegistry()
+
+        # validate provided directories
+        self.srcdir = abspath(srcdir)
+        self.outdir = abspath(outdir)
+        self.doctreedir = abspath(doctreedir)
+
+        if not path.isdir(self.srcdir):
+            raise ApplicationError(__('Cannot find source directory (%s)') %
+                                   self.srcdir)
+
+        if path.exists(self.outdir) and not path.isdir(self.outdir):
+            raise ApplicationError(__('Output directory (%s) is not a directory') %
+                                   self.outdir)
+
+        if self.srcdir == self.outdir:
+            raise ApplicationError(__('Source directory and destination '
+                                      'directory cannot be identical'))
+
+        self.parallel = parallel
+
+        if status is None:
+            self._status: IO = StringIO()
+            self.quiet: bool = True
+        else:
+            self._status = status
+            self.quiet = False
+
+        if warning is None:
+            self._warning: IO = StringIO()
+        else:
+            self._warning = warning
+        self._warncount = 0
+        self.keep_going = warningiserror and keep_going
+        if self.keep_going:
+            self.warningiserror = False
+        else:
+            self.warningiserror = warningiserror
+        logging.setup(self, self._status, self._warning)
+
+        self.events = EventManager(self)
+
+        # keep last few messages for traceback
+        # This will be filled by sphinx.util.logging.LastMessagesWriter
+        self.messagelog: deque = deque(maxlen=10)
+
+        # say hello to the world
+        logger.info(bold(__('Running Sphinx v%s') % sphinx.__display_version__))
+
+        # notice for parallel build on macOS and py38+
+        if sys.version_info > (3, 8) and platform.system() == 'Darwin' and parallel > 1:
+            logger.info(bold(__("For security reasons, parallel mode is disabled on macOS and "
+                                "python3.8 and above. For more details, please read "
+                                "https://github.com/sphinx-doc/sphinx/issues/6803")))
+
+        # status code for command-line application
+        self.statuscode = 0
+
+        # read config
+        self.tags = Tags(tags)
+        if confdir is None:
+            # set confdir to srcdir if -C given (!= no confdir); a few pieces
+            # of code expect a confdir to be set
+            self.confdir = self.srcdir
+            self.config = Config({}, confoverrides or {})
+        else:
+            self.confdir = abspath(confdir)
+            self.config = Config.read(self.confdir, confoverrides or {}, self.tags)
+
+        # initialize some limited config variables before initialize i18n and loading
+        # extensions
+        self.config.pre_init_values()
+
+        # set up translation infrastructure
+        self._init_i18n()
+
+        # check the Sphinx version if requested
+        if self.config.needs_sphinx and self.config.needs_sphinx > sphinx.__display_version__:
+            raise VersionRequirementError(
+                __('This project needs at least Sphinx v%s and therefore cannot '
+                   'be built with this version.') % self.config.needs_sphinx)
+
+        # load all built-in extension modules
+        for extension in builtin_extensions:
+            self.setup_extension(extension)
+
+        # load all user-given extension modules
+        for extension in self.config.extensions:
+            self.setup_extension(extension)
+
+        # preload builder module (before init config values)
+        self.preload_builder(buildername)
+
+        if not path.isdir(outdir):
+            with progress_message(__('making output directory')):
+                ensuredir(outdir)
+
+        # the config file itself can be an extension
+        if self.config.setup:
+            prefix = __('while setting up extension %s:') % "conf.py"
+            with prefixed_warnings(prefix):
+                if callable(self.config.setup):
+                    self.config.setup(self)
+                else:
+                    raise ConfigError(
+                        __("'setup' as currently defined in conf.py isn't a Python callable. "
+                           "Please modify its definition to make it a callable function. "
+                           "This is needed for conf.py to behave as a Sphinx extension.")
+                    )
+
+        # now that we know all config values, collect them from conf.py
+        self.config.init_values()
+        self.events.emit('config-inited', self.config)
+
+        # create the project
+        self.project = Project(self.srcdir, self.config.source_suffix)
+        # create the builder
+        self.builder = self.create_builder(buildername)
+        # set up the build environment
+        self._init_env(freshenv)
+        # set up the builder
+        self._init_builder()
+
+--- Chunk 9 ---
+File: sphinx/util/stemmer/porter.py
+Lines: 33-47
+Symbol: PorterStemmer.__init__
+
+    def __init__(self) -> None:
+        """The main part of the stemming algorithm starts here.
+        b is a buffer holding a word to be stemmed. The letters are in b[k0],
+        b[k0+1] ... ending at b[k]. In fact k0 = 0 in this demo program. k is
+        readjusted downwards as the stemming progresses. Zero termination is
+        not in fact used in the algorithm.
+
+        Note that only lower case sequences are stemmed. Forcing to lower case
+        should be done before stem(...) is called.
+        """
+
+        self.b = ""     # buffer for word to be stemmed
+        self.k = 0
+        self.k0 = 0
+        self.j = 0      # j is a general offset into the string
+
+--- Chunk 10 ---
+File: sphinx/ext/napoleon/__init__.py
+Lines: 297-331
+Symbol: setup
+
+def setup(app: Sphinx) -> Dict[str, Any]:
+    """Sphinx extension setup function.
+
+    When the extension is loaded, Sphinx imports this module and executes
+    the ``setup()`` function, which in turn notifies Sphinx of everything
+    the extension offers.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        Application object representing the Sphinx process
+
+    See Also
+    --------
+    `The Sphinx documentation on Extensions
+    <https://www.sphinx-doc.org/extensions.html>`_
+
+    `The Extension Tutorial <https://www.sphinx-doc.org/extdev/tutorial.html>`_
+
+    `The Extension API <https://www.sphinx-doc.org/extdev/appapi.html>`_
+
+    """
+    if not isinstance(app, Sphinx):
+        # probably called by tests
+        return {'version': __version__, 'parallel_read_safe': True}
+
+    _patch_python_domain()
+
+    app.setup_extension('sphinx.ext.autodoc')
+    app.connect('autodoc-process-docstring', _process_docstring)
+    app.connect('autodoc-skip-member', _skip_member)
+
+    for name, (default, rebuild) in Config._config_values.items():
+        app.add_config_value(name, default, rebuild)
+    return {'version': __version__, 'parallel_read_safe': True}
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

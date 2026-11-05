@@ -1,0 +1,14 @@
+{
+  "task_id": "keras-team__keras-19863",
+  "repository": "keras-team/keras",
+  "base_commit": "f6cf6a0e77dd504cfc35dd499dd8694b0b80b4ae",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 13121,
+  "output_tokens": 202,
+  "thinking_tokens": 0,
+  "total_tokens": 13323
+}

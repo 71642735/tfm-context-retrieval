@@ -1,0 +1,534 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Setting `min-similarity-lines` to `0` should stop pylint from checking duplicate code
+### Current problem
+
+Setting `min-similarity-lines` to `0` in the rcfile doesn't disable checking for duplicate code, it instead treats every line of code as duplicate and raises many errors.
+
+### Desired solution
+
+Setting `min-similarity-lines` to `0` should disable the duplicate code check.
+
+It works that way in many other linters (like flake8). Setting a numerical value in flake8 to `0` (e.g. `max-line-length`) disables that check.
+
+### Additional context
+
+#214 requests being able to disable `R0801`, but it is still open
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: pylint/checkers/format.py
+Lines: 739-787
+Symbol: FormatChecker.check_lines
+
+    def check_lines(self, lines: str, lineno: int) -> None:
+        """
+        Check lines have :
+            - a final newline
+            - no trailing whitespace
+            - less than a maximum number of characters
+        """
+        # we're first going to do a rough check whether any lines in this set
+        # go over the line limit. If none of them do, then we don't need to
+        # parse out the pylint options later on and can just assume that these
+        # lines are clean
+
+        # we'll also handle the line ending check here to avoid double-iteration
+        # unless the line lengths are suspect
+
+        max_chars = self.config.max_line_length
+
+        split_lines = self.specific_splitlines(lines)
+
+        for offset, line in enumerate(split_lines):
+            self.check_line_ending(line, lineno + offset)
+
+        # hold onto the initial lineno for later
+        potential_line_length_warning = False
+        for offset, line in enumerate(split_lines):
+            # this check is purposefully simple and doesn't rstrip
+            # since this is running on every line you're checking it's
+            # advantageous to avoid doing a lot of work
+            if len(line) > max_chars:
+                potential_line_length_warning = True
+                break
+
+        # if there were no lines passing the max_chars config, we don't bother
+        # running the full line check (as we've met an even more strict condition)
+        if not potential_line_length_warning:
+            return
+
+        # Line length check may be deactivated through `pylint: disable` comment
+        mobj = OPTION_PO.search(lines)
+        if mobj:
+            if not self.is_line_length_check_activated(mobj):
+                # the line length check is deactivated, we can stop here
+                return
+            # The 'pylint: disable whatever' should not be taken into account for line length count
+            lines = self.remove_pylint_option_from_lines(mobj)
+
+        # here we re-run specific_splitlines since we have filtered out pylint options above
+        for offset, line in enumerate(self.specific_splitlines(lines)):
+            self.check_line_length(line, lineno + offset)
+
+--- Chunk 2 ---
+File: pylint/checkers/similar.py
+Lines: 797-812
+Symbol: SimilarChecker.set_option
+
+    def set_option(self, optname, value, action=None, optdict=None):
+        """method called to set an option (registered in the options list)
+
+        Overridden to report options setting to Similar
+        """
+        BaseChecker.set_option(self, optname, value, action, optdict)
+        if optname == "min-similarity-lines":
+            self.min_lines = self.config.min_similarity_lines
+        elif optname == "ignore-comments":
+            self.ignore_comments = self.config.ignore_comments
+        elif optname == "ignore-docstrings":
+            self.ignore_docstrings = self.config.ignore_docstrings
+        elif optname == "ignore-imports":
+            self.ignore_imports = self.config.ignore_imports
+        elif optname == "ignore-signatures":
+            self.ignore_signatures = self.config.ignore_signatures
+
+--- Chunk 3 ---
+File: tests/checkers/unittest_similar.py
+Lines: 342-371
+Symbol: test_lines_without_meaningful_content_do_not_trigger_similarity
+
+def test_lines_without_meaningful_content_do_not_trigger_similarity() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run([SIMILAR3, SIMILAR4])
+    assert ex.value.code == 0
+    assert (
+        output.getvalue().strip()
+        == (
+            f"""
+14 similar lines in 2 files
+=={SIMILAR3}:[11:25]
+=={SIMILAR4}:[11:25]
+   b = (
+       (
+           [
+               "Lines 12-25 still trigger a similarity...",
+               "...warning, because..."
+           ],
+           [
+               "...even after ignoring lines with only symbols..."
+           ],
+       ),
+       (
+           "...there are still 5 similar lines in this code block.",
+       )
+   )
+TOTAL lines=50 duplicates=14 percent=28.00
+"""
+        ).strip()
+    )
+
+--- Chunk 4 ---
+File: tests/test_check_parallel.py
+Lines: 274-343
+Symbol: TestCheckParallel.test_sequential_checkers_work
+
+    def test_sequential_checkers_work(self) -> None:
+        """Tests original basic types of checker works as expected in -jN
+
+        This means that a sequential checker should return the same data for a given
+        file-stream irrespective of whether its run in -j1 or -jN
+        """
+        linter = PyLinter(reporter=Reporter())
+
+        # Add a sequential checker to ensure it records data against some streams
+        linter.register_checker(SequentialTestChecker(linter))
+        linter.enable("R9999")
+
+        # Create a dummy file, the actual contents of which will be ignored by the
+        # register test checkers, but it will trigger at least a single-job to be run.
+        single_file_container = _gen_file_datas(count=1)
+
+        # Invoke the lint process in a multiprocess way, although we only specify one
+        # job.
+        check_parallel(linter, jobs=1, files=single_file_container, arguments=None)
+        assert len(linter.get_checkers()) == 2, (
+            "We should only have the 'master' and 'sequential-checker' "
+            "checkers registered"
+        )
+        assert {
+            "by_module": {
+                "--test-file_data-name-0--": {
+                    "convention": 0,
+                    "error": 0,
+                    "fatal": 0,
+                    "info": 0,
+                    "refactor": 0,
+                    "statement": 18,
+                    "warning": 0,
+                }
+            },
+            "by_msg": {},
+            "convention": 0,
+            "error": 0,
+            "fatal": 0,
+            "info": 0,
+            "refactor": 0,
+            "statement": 18,
+            "warning": 0,
+        } == linter.stats
+
+        # now run the regular mode of checking files and check that, in this proc, we
+        # collect the right data
+        filepath = single_file_container[0][1]  # get the filepath element
+        linter.check(filepath)
+        assert {
+            "by_module": {
+                "input.similar1": {  # module is the only change from previous
+                    "convention": 0,
+                    "error": 0,
+                    "fatal": 0,
+                    "info": 0,
+                    "refactor": 0,
+                    "statement": 18,
+                    "warning": 0,
+                }
+            },
+            "by_msg": {},
+            "convention": 0,
+            "error": 0,
+            "fatal": 0,
+            "info": 0,
+            "refactor": 0,
+            "statement": 18,
+            "warning": 0,
+        } == linter.stats
+
+--- Chunk 5 ---
+File: pylint/checkers/format.py
+Lines: 466-558
+Symbol: FormatChecker.process_tokens
+
+    def process_tokens(self, tokens):
+        """process tokens and search for :
+
+        _ too long lines (i.e. longer than <max_chars>)
+        _ optionally bad construct (if given, bad_construct must be a compiled
+          regular expression).
+        """
+        self._bracket_stack = [None]
+        indents = [0]
+        check_equal = False
+        line_num = 0
+        self._lines = {}
+        self._visited_lines = {}
+        token_handlers = self._prepare_token_dispatcher()
+        self._last_line_ending = None
+        last_blank_line_num = 0
+        for idx, (tok_type, token, start, _, line) in enumerate(tokens):
+            if start[0] != line_num:
+                line_num = start[0]
+                # A tokenizer oddity: if an indented line contains a multi-line
+                # docstring, the line member of the INDENT token does not contain
+                # the full line; therefore we check the next token on the line.
+                if tok_type == tokenize.INDENT:
+                    self.new_line(TokenWrapper(tokens), idx - 1, idx + 1)
+                else:
+                    self.new_line(TokenWrapper(tokens), idx - 1, idx)
+
+            if tok_type == tokenize.NEWLINE:
+                # a program statement, or ENDMARKER, will eventually follow,
+                # after some (possibly empty) run of tokens of the form
+                #     (NL | COMMENT)* (INDENT | DEDENT+)?
+                # If an INDENT appears, setting check_equal is wrong, and will
+                # be undone when we see the INDENT.
+                check_equal = True
+                self._check_line_ending(token, line_num)
+            elif tok_type == tokenize.INDENT:
+                check_equal = False
+                self.check_indent_level(token, indents[-1] + 1, line_num)
+                indents.append(indents[-1] + 1)
+            elif tok_type == tokenize.DEDENT:
+                # there's nothing we need to check here!  what's important is
+                # that when the run of DEDENTs ends, the indentation of the
+                # program statement (or ENDMARKER) that triggered the run is
+                # equal to what's left at the top of the indents stack
+                check_equal = True
+                if len(indents) > 1:
+                    del indents[-1]
+            elif tok_type == tokenize.NL:
+                if not line.strip("\r\n"):
+                    last_blank_line_num = line_num
+            elif tok_type not in (tokenize.COMMENT, tokenize.ENCODING):
+                # This is the first concrete token following a NEWLINE, so it
+                # must be the first token of the next program statement, or an
+                # ENDMARKER; the "line" argument exposes the leading whitespace
+                # for this statement; in the case of ENDMARKER, line is an empty
+                # string, so will properly match the empty string with which the
+                # "indents" stack was seeded
+                if check_equal:
+                    check_equal = False
+                    self.check_indent_level(line, indents[-1], line_num)
+
+            if tok_type == tokenize.NUMBER and token.endswith("l"):
+                self.add_message("lowercase-l-suffix", line=line_num)
+
+            try:
+                handler = token_handlers[token]
+            except KeyError:
+                pass
+            else:
+                handler(tokens, idx)
+
+        line_num -= 1  # to be ok with "wc -l"
+        if line_num > self.config.max_module_lines:
+            # Get the line where the too-many-lines (or its message id)
+            # was disabled or default to 1.
+            message_definition = self.linter.msgs_store.get_message_definitions(
+                "too-many-lines"
+            )[0]
+            names = (message_definition.msgid, "too-many-lines")
+            line = next(
+                filter(None, (self.linter._pragma_lineno.get(name) for name in names)),
+                1,
+            )
+            self.add_message(
+                "too-many-lines",
+                args=(line_num, self.config.max_module_lines),
+                line=line,
+            )
+
+        # See if there are any trailing lines.  Do not complain about empty
+        # files like __init__.py markers.
+        if line_num == last_blank_line_num and line_num > 0:
+            self.add_message("trailing-newlines", line=line_num)
+
+--- Chunk 6 ---
+File: tests/message/unittest_message_definition_store.py
+Lines: 212-229
+Symbol: TestMessageDefinitionStore.test_message_help_minmax
+
+    def test_message_help_minmax(self, store: MessageDefinitionStore) -> None:
+        # build the message manually to be python version independent
+        message_definition = store.get_message_definitions("E1234")[0]
+        self._compare_messages(
+            """:duplicate-keyword-arg (E1234): *Duplicate keyword argument %r in %s call*
+  Used when a function call passes the same keyword argument multiple times.
+  This message belongs to the achecker checker. It can't be emitted when using
+  Python >= 2.6.""",
+            message_definition,
+            checkerref=True,
+        )
+        self._compare_messages(
+            """:duplicate-keyword-arg (E1234): *Duplicate keyword argument %r in %s call*
+  Used when a function call passes the same keyword argument multiple times.
+  This message can't be emitted when using Python >= 2.6.""",
+            message_definition,
+            checkerref=False,
+        )
+
+--- Chunk 7 ---
+File: tests/functional/l/line_too_long.py
+Lines: 58-66
+Symbol: issue_2957_bis
+
+def issue_2957_bis():
+    # +3: [line-too-long]
+    # +4: [line-too-long]
+    """
+    This is a very very very long line within a docstring that should trigger a pylint C0301 error line-too-long
+
+    Even spread on multiple lines, the disable command is still effective on very very very, maybe too much long docstring
+    """
+    return True
+
+--- Chunk 8 ---
+File: pylint/utils/file_state.py
+Lines: 32-91
+Symbol: FileState._collect_block_lines
+
+    def _collect_block_lines(self, msgs_store, node, msg_state):
+        """Recursively walk (depth first) AST to collect block level options
+        line numbers.
+        """
+        for child in node.get_children():
+            self._collect_block_lines(msgs_store, child, msg_state)
+        first = node.fromlineno
+        last = node.tolineno
+        # first child line number used to distinguish between disable
+        # which are the first child of scoped node with those defined later.
+        # For instance in the code below:
+        #
+        # 1.   def meth8(self):
+        # 2.        """test late disabling"""
+        # 3.        pylint: disable=not-callable
+        # 4.        print(self.blip)
+        # 5.        pylint: disable=no-member
+        # 6.        print(self.bla)
+        #
+        # E1102 should be disabled from line 1 to 6 while E1101 from line 5 to 6
+        #
+        # this is necessary to disable locally messages applying to class /
+        # function using their fromlineno
+        if (
+            isinstance(node, (nodes.Module, nodes.ClassDef, nodes.FunctionDef))
+            and node.body
+        ):
+            firstchildlineno = node.body[0].fromlineno
+        else:
+            firstchildlineno = last
+        for msgid, lines in msg_state.items():
+            for lineno, state in list(lines.items()):
+                original_lineno = lineno
+                if first > lineno or last < lineno:
+                    continue
+                # Set state for all lines for this block, if the
+                # warning is applied to nodes.
+                message_definitions = msgs_store.get_message_definitions(msgid)
+                for message_definition in message_definitions:
+                    if message_definition.scope == WarningScope.NODE:
+                        if lineno > firstchildlineno:
+                            state = True
+                        first_, last_ = node.block_range(lineno)
+                    else:
+                        first_ = lineno
+                        last_ = last
+                for line in range(first_, last_ + 1):
+                    # do not override existing entries
+                    if line in self._module_msgs_state.get(msgid, ()):
+                        continue
+                    if line in lines:  # state change in the same block
+                        state = lines[line]
+                        original_lineno = line
+                    if not state:
+                        self._suppression_mapping[(msgid, line)] = original_lineno
+                    try:
+                        self._module_msgs_state[msgid][line] = state
+                    except KeyError:
+                        self._module_msgs_state[msgid] = {line: state}
+                del lines[lineno]
+
+--- Chunk 9 ---
+File: tests/test_check_parallel.py
+Lines: 410-484
+Symbol: TestCheckParallel.test_compare_workers_to_single_proc
+
+    def test_compare_workers_to_single_proc(self, num_files, num_jobs, num_checkers):
+        """Compares the 3 key parameters for check_parallel() produces the same results
+
+        The intent here is to ensure that the check_parallel() operates on each file,
+        without ordering issues, irrespective of the number of workers used and the
+        number of checkers applied.
+
+        This test becomes more important if we want to change how we parametrise the
+        checkers, for example if we aim to batch the files across jobs."""
+
+        # define the stats we expect to get back from the runs, these should only vary
+        # with the number of files.
+        expected_stats = {
+            "by_module": {
+                # pylint: disable-next=consider-using-f-string
+                "--test-file_data-name-%d--"
+                % idx: {
+                    "convention": 0,
+                    "error": 0,
+                    "fatal": 0,
+                    "info": 0,
+                    "refactor": 0,
+                    "statement": 18,
+                    "warning": 0,
+                }
+                for idx in range(num_files)
+            },
+            "by_msg": {},
+            "convention": 0,
+            "error": 0,
+            "fatal": 0,
+            "info": 0,
+            "refactor": 0,
+            "statement": 18 * num_files,
+            "warning": 0,
+        }
+
+        file_infos = _gen_file_datas(num_files)
+
+        # Loop for single-proc and mult-proc so we can ensure the same linter-config
+        for do_single_proc in range(2):
+            linter = PyLinter(reporter=Reporter())
+
+            # Assign between 1 and 3 checkers to the linter, they should not change the
+            # results of the lint
+            linter.register_checker(SequentialTestChecker(linter))
+            if num_checkers > 1:
+                linter.register_checker(ExtraSequentialTestChecker(linter))
+            if num_checkers > 2:
+                linter.register_checker(ThirdSequentialTestChecker(linter))
+
+            if do_single_proc:
+                # establish the baseline
+                assert (
+                    linter.config.jobs == 1
+                ), "jobs>1 are ignored when calling _check_files"
+                linter._check_files(linter.get_ast, file_infos)
+                assert linter.msg_status == 0, "We should not fail the lint"
+                stats_single_proc = linter.stats
+            else:
+                check_parallel(
+                    linter,
+                    jobs=num_jobs,
+                    files=file_infos,
+                    arguments=None,
+                )
+                stats_check_parallel = linter.stats
+                assert linter.msg_status == 0, "We should not fail the lint"
+
+        assert (
+            stats_single_proc == stats_check_parallel
+        ), "Single-proc and check_parallel() should return the same thing"
+        assert (
+            stats_check_parallel == expected_stats
+        ), "The lint is returning unexpected results, has something changed?"
+
+--- Chunk 10 ---
+File: tests/checkers/unittest_similar.py
+Lines: 48-74
+Symbol: test_ignore_comments
+
+def test_ignore_comments() -> None:
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run(["--ignore-comments", SIMILAR1, SIMILAR2])
+    assert ex.value.code == 0
+    assert (
+        output.getvalue().strip()
+        == (
+            f"""
+10 similar lines in 2 files
+=={SIMILAR1}:[0:11]
+=={SIMILAR2}:[0:11]
+   import one
+   from two import two
+   three
+   four
+   five
+   six
+   # A full line comment
+   seven
+   eight
+   nine
+   ''' ten
+TOTAL lines=62 duplicates=10 percent=16.13
+"""
+        ).strip()
+    )
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

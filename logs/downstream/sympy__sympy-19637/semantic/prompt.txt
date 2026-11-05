@@ -1,0 +1,129 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+kernS: 'kern' referenced before assignment
+from sympy.core.sympify import kernS
+
+text = "(2*x)/(x-1)"
+expr = kernS(text)  
+//  hit = kern in s
+// UnboundLocalError: local variable 'kern' referenced before assignment
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sympy/parsing/latex/_antlr/latexparser.py
+Lines: 2222-2223
+Symbol: LaTeXParser.Func_normalContext.FUNC_SINH
+
+        def FUNC_SINH(self):
+            return self.getToken(LaTeXParser.FUNC_SINH, 0)
+
+--- Chunk 2 ---
+File: sympy/parsing/latex/_antlr/latexparser.py
+Lines: 2186-2187
+Symbol: LaTeXParser.Func_normalContext.FUNC_SIN
+
+        def FUNC_SIN(self):
+            return self.getToken(LaTeXParser.FUNC_SIN, 0)
+
+--- Chunk 3 ---
+File: sympy/core/tests/test_evalf.py
+Lines: 462-465
+Symbol: test_issue_4945
+
+def test_issue_4945():
+    from sympy.abc import H
+    from sympy import zoo
+    assert (H/0).evalf(subs={H:1}) == zoo*H
+
+--- Chunk 4 ---
+File: sympy/integrals/tests/test_manual.py
+Lines: 490-499
+Symbol: test_manual_subs
+
+def test_manual_subs():
+    x, y = symbols('x y')
+    expr = log(x) + exp(x)
+    # if log(x) is y, then exp(y) is x
+    assert manual_subs(expr, log(x), y) == y + exp(exp(y))
+    # if exp(x) is y, then log(y) need not be x
+    assert manual_subs(expr, exp(x), y) == log(x) + y
+
+    raises(ValueError, lambda: manual_subs(expr, x))
+    raises(ValueError, lambda: manual_subs(expr, exp(x), x, y))
+
+--- Chunk 5 ---
+File: sympy/printing/tests/test_latex.py
+Lines: 2196-2199
+Symbol: test_issue_13559
+
+def test_issue_13559():
+    from sympy.parsing.sympy_parser import parse_expr
+    expr = parse_expr('5/1', evaluate=False)
+    assert latex(expr) == r"\frac{5}{1}"
+
+--- Chunk 6 ---
+File: sympy/parsing/tests/test_sympy_parser.py
+Lines: 111-119
+Symbol: test_local_dict
+
+def test_local_dict():
+    local_dict = {
+        'my_function': lambda x: x + 2
+    }
+    inputs = {
+        'my_function(2)': Integer(4)
+    }
+    for text, result in inputs.items():
+        assert parse_expr(text, local_dict=local_dict) == result
+
+--- Chunk 7 ---
+File: sympy/external/tests/test_sage.py
+Lines: 80-84
+Symbol: test_basics
+
+def test_basics():
+    check_expression("x", "x")
+    check_expression("x**2", "x")
+    check_expression("x**2+y**3", "x y")
+    check_expression("1/(x+y)**2-x**3/4", "x y")
+
+--- Chunk 8 ---
+File: sympy/series/tests/test_nseries.py
+Lines: 509-517
+Symbol: test_issue_5925
+
+def test_issue_5925():
+    sx = sqrt(x + z).series(z, 0, 1)
+    sxy = sqrt(x + y + z).series(z, 0, 1)
+    s1, s2 = sx.subs(x, x + y), sxy
+    assert (s1 - s2).expand().removeO().simplify() == 0
+
+    sx = sqrt(x + z).series(z, 0, 1)
+    sxy = sqrt(x + y + z).series(z, 0, 1)
+    assert sxy.subs({x:1, y:2}) == sx.subs(x, 3)
+
+--- Chunk 9 ---
+File: sympy/integrals/rubi/tests/test_utility_function.py
+Lines: 1485-1486
+Symbol: test_KnownSineIntegrandQ
+
+def test_KnownSineIntegrandQ():
+    assert KnownSineIntegrandQ((a + b*sin(a + b*x))**m, x)
+
+--- Chunk 10 ---
+File: sympy/integrals/transforms.py
+Lines: 1069-1070
+Symbol: _laplace_transform.sbs
+
+    def sbs(expr):
+        return expr.subs(s, s_)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

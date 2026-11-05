@@ -1,0 +1,730 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Nominal scale should be drawn the same way as categorical scales
+Three distinctive things happen on the categorical axis in seaborn's categorical plots:
+
+1. The scale is drawn to +/- 0.5 from the first and last tick, rather than using the normal margin logic
+2. A grid is not shown, even when it otherwise would be with the active style
+3. If on the y axis, the axis is inverted
+
+It probably makes sense to have `so.Nominal` scales (including inferred ones) do this too. Some comments on implementation:
+
+1. This is actually trickier than you'd think; I may have posted an issue over in matplotlib about this at one point, or just discussed on their gitter. I believe the suggested approach is to add an invisible artist with sticky edges and set the margin to 0. Feels like a hack! I might have looked into setting the sticky edges _on the spine artist_ at one point?
+
+2. Probably straightforward to do in `Plotter._finalize_figure`. Always a good idea? How do we defer to the theme if the user wants to force a grid? Should the grid be something that is set in the scale object itself
+
+3. Probably straightforward to implement but I am not exactly sure where would be best.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: seaborn/_oldcore.py
+Lines: 1359-1450
+Symbol: VectorPlotter.scale_categorical
+
+    def scale_categorical(self, axis, order=None, formatter=None):
+        """
+        Enforce categorical (fixed-scale) rules for the data on given axis.
+
+        Parameters
+        ----------
+        axis : "x" or "y"
+            Axis of the plot to operate on.
+        order : list
+            Order that unique values should appear in.
+        formatter : callable
+            Function mapping values to a string representation.
+
+        Returns
+        -------
+        self
+
+        """
+        # This method both modifies the internal representation of the data
+        # (converting it to string) and sets some attributes on self. It might be
+        # a good idea to have a separate object attached to self that contains the
+        # information in those attributes (i.e. whether to enforce variable order
+        # across facets, the order to use) similar to the SemanticMapping objects
+        # we have for semantic variables. That object could also hold the converter
+        # objects that get used, if we can decouple those from an existing axis
+        # (cf. https://github.com/matplotlib/matplotlib/issues/19229).
+        # There are some interactions with faceting information that would need
+        # to be thought through, since the converts to use depend on facets.
+        # If we go that route, these methods could become "borrowed" methods similar
+        # to what happens with the alternate semantic mapper constructors, although
+        # that approach is kind of fussy and confusing.
+
+        # TODO this method could also set the grid state? Since we like to have no
+        # grid on the categorical axis by default. Again, a case where we'll need to
+        # store information until we use it, so best to have a way to collect the
+        # attributes that this method sets.
+
+        # TODO if we are going to set visual properties of the axes with these methods,
+        # then we could do the steps currently in CategoricalPlotter._adjust_cat_axis
+
+        # TODO another, and distinct idea, is to expose a cut= param here
+
+        _check_argument("axis", ["x", "y"], axis)
+
+        # Categorical plots can be "univariate" in which case they get an anonymous
+        # category label on the opposite axis.
+        if axis not in self.variables:
+            self.variables[axis] = None
+            self.var_types[axis] = "categorical"
+            self.plot_data[axis] = ""
+
+        # If the "categorical" variable has a numeric type, sort the rows so that
+        # the default result from categorical_order has those values sorted after
+        # they have been coerced to strings. The reason for this is so that later
+        # we can get facet-wise orders that are correct.
+        # XXX Should this also sort datetimes?
+        # It feels more consistent, but technically will be a default change
+        # If so, should also change categorical_order to behave that way
+        if self.var_types[axis] == "numeric":
+            self.plot_data = self.plot_data.sort_values(axis, kind="mergesort")
+
+        # Now get a reference to the categorical data vector
+        cat_data = self.plot_data[axis]
+
+        # Get the initial categorical order, which we do before string
+        # conversion to respect the original types of the order list.
+        # Track whether the order is given explicitly so that we can know
+        # whether or not to use the order constructed here downstream
+        self._var_ordered[axis] = order is not None or cat_data.dtype.name == "category"
+        order = pd.Index(categorical_order(cat_data, order))
+
+        # Then convert data to strings. This is because in matplotlib,
+        # "categorical" data really mean "string" data, so doing this artists
+        # will be drawn on the categorical axis with a fixed scale.
+        # TODO implement formatter here; check that it returns strings?
+        if formatter is not None:
+            cat_data = cat_data.map(formatter)
+            order = order.map(formatter)
+        else:
+            cat_data = cat_data.astype(str)
+            order = order.astype(str)
+
+        # Update the levels list with the type-converted order variable
+        self.var_levels[axis] = order
+
+        # Now ensure that seaborn will use categorical rules internally
+        self.var_types[axis] = "categorical"
+
+        # Put the string-typed categorical vector back into the plot_data structure
+        self.plot_data[axis] = cat_data
+
+        return self
+
+--- Chunk 2 ---
+File: seaborn/categorical.py
+Lines: 195-224
+Symbol: _CategoricalPlotterNew._adjust_cat_axis
+
+    def _adjust_cat_axis(self, ax, axis):
+        """Set ticks and limits for a categorical variable."""
+        # Note: in theory, this could happen in _attach for all categorical axes
+        # But two reasons not to do that:
+        # - If it happens before plotting, autoscaling messes up the plot limits
+        # - It would change existing plots from other seaborn functions
+        if self.var_types[axis] != "categorical":
+            return
+
+        # If both x/y data are empty, the correct way to set up the plot is
+        # somewhat undefined; because we don't add null category data to the plot in
+        # this case we don't *have* a categorical axis (yet), so best to just bail.
+        if self.plot_data[axis].empty:
+            return
+
+        # We can infer the total number of categories (including those from previous
+        # plots that are not part of the plot we are currently making) from the number
+        # of ticks, which matplotlib sets up while doing unit conversion. This feels
+        # slightly risky, as if we are relying on something that may be a matplotlib
+        # implementation detail. But I cannot think of a better way to keep track of
+        # the state from previous categorical calls (see GH2516 for context)
+        n = len(getattr(ax, f"get_{axis}ticks")())
+
+        if axis == "x":
+            ax.xaxis.grid(False)
+            ax.set_xlim(-.5, n - .5, auto=None)
+        else:
+            ax.yaxis.grid(False)
+            # Note limits that correspond to previously-inverted y axis
+            ax.set_ylim(n - .5, -.5, auto=None)
+
+--- Chunk 3 ---
+File: seaborn/categorical.py
+Lines: 121-168
+Symbol: _CategoricalPlotterNew._hue_backcompat
+
+    def _hue_backcompat(self, color, palette, hue_order, force_hue=False):
+        """Implement backwards compatibility for hue parametrization.
+
+        Note: the force_hue parameter is used so that functions can be shown to
+        pass existing tests during refactoring and then tested for new behavior.
+        It can be removed after completion of the work.
+
+        """
+        # The original categorical functions applied a palette to the categorical axis
+        # by default. We want to require an explicit hue mapping, to be more consistent
+        # with how things work elsewhere now. I don't think there's any good way to
+        # do this gently -- because it's triggered by the default value of hue=None,
+        # users would always get a warning, unless we introduce some sentinel "default"
+        # argument for this change. That's possible, but asking users to set `hue=None`
+        # on every call is annoying.
+        # We are keeping the logic for implementing the old behavior in with the current
+        # system so that (a) we can punt on that decision and (b) we can ensure that
+        # refactored code passes old tests.
+        default_behavior = color is None or palette is not None
+        if force_hue and "hue" not in self.variables and default_behavior:
+            self._redundant_hue = True
+            self.plot_data["hue"] = self.plot_data[self.cat_axis]
+            self.variables["hue"] = self.variables[self.cat_axis]
+            self.var_types["hue"] = "categorical"
+            hue_order = self.var_levels[self.cat_axis]
+
+            # Because we convert the categorical axis variable to string,
+            # we need to update a dictionary palette too
+            if isinstance(palette, dict):
+                palette = {str(k): v for k, v in palette.items()}
+
+        else:
+            self._redundant_hue = False
+
+        # Previously, categorical plots had a trick where color= could seed the palette.
+        # Because that's an explicit parameterization, we are going to give it one
+        # release cycle with a warning before removing.
+        if "hue" in self.variables and palette is None and color is not None:
+            if not isinstance(color, str):
+                color = mpl.colors.to_hex(color)
+            palette = f"dark:{color}"
+            msg = (
+                "Setting a gradient palette using color= is deprecated and will be "
+                f"removed in version 0.13. Set `palette='{palette}'` for same effect."
+            )
+            warnings.warn(msg, FutureWarning)
+
+        return palette, hue_order
+
+--- Chunk 4 ---
+File: seaborn/_marks/bar.py
+Lines: 133-173
+Symbol: Bar._plot
+
+    def _plot(self, split_gen, scales, orient):
+
+        val_idx = ["y", "x"].index(orient)
+
+        for _, data, ax in split_gen():
+
+            bars, vals = self._make_patches(data, scales, orient)
+
+            for bar in bars:
+
+                # Because we are clipping the artist (see below), the edges end up
+                # looking half as wide as they actually are. I don't love this clumsy
+                # workaround, which is going to cause surprises if you work with the
+                # artists directly. We may need to revisit after feedback.
+                bar.set_linewidth(bar.get_linewidth() * 2)
+                linestyle = bar.get_linestyle()
+                if linestyle[1]:
+                    linestyle = (linestyle[0], tuple(x / 2 for x in linestyle[1]))
+                bar.set_linestyle(linestyle)
+
+                # This is a bit of a hack to handle the fact that the edge lines are
+                # centered on the actual extents of the bar, and overlap when bars are
+                # stacked or dodged. We may discover that this causes problems and needs
+                # to be revisited at some point. Also it should be faster to clip with
+                # a bbox than a path, but I cant't work out how to get the intersection
+                # with the axes bbox.
+                bar.set_clip_path(bar.get_path(), bar.get_transform() + ax.transData)
+                if self.artist_kws.get("clip_on", True):
+                    # It seems the above hack undoes the default axes clipping
+                    bar.set_clip_box(ax.bbox)
+                bar.sticky_edges[val_idx][:] = (0, np.inf)
+                ax.add_patch(bar)
+
+            # Add a container which is useful for, e.g. Axes.bar_label
+            if Version(mpl.__version__) >= Version("3.4.0"):
+                orientation = {"x": "vertical", "y": "horizontal"}[orient]
+                container_kws = dict(datavalues=vals, orientation=orientation)
+            else:
+                container_kws = {}
+            container = mpl.container.BarContainer(bars, **container_kws)
+            ax.add_container(container)
+
+--- Chunk 5 ---
+File: seaborn/_core/scales.py
+Lines: 149-228
+Symbol: Nominal._setup
+
+    def _setup(
+        self, data: Series, prop: Property, axis: Axis | None = None,
+    ) -> Scale:
+
+        new = copy(self)
+        if new._tick_params is None:
+            new = new.tick()
+        if new._label_params is None:
+            new = new.label()
+
+        # TODO flexibility over format() which isn't great for numbers / dates
+        stringify = np.vectorize(format)
+
+        units_seed = categorical_order(data, new.order)
+
+        # TODO move to Nominal._get_scale?
+        # TODO this needs some more complicated rethinking about how to pass
+        # a unit dictionary down to these methods, along with how much we want
+        # to invest in their API. What is it useful for tick() to do here?
+        # (Ordinal may be different if we draw that contrast).
+        # Any customization we do to allow, e.g., label wrapping will probably
+        # require defining our own Formatter subclass.
+        # We could also potentially implement auto-wrapping in an Axis subclass
+        # (see Axis.draw ... it already is computing the bboxes).
+        # major_locator, minor_locator = new._get_locators(**new._tick_params)
+        # major_formatter = new._get_formatter(major_locator, **new._label_params)
+
+        class CatScale(mpl.scale.LinearScale):
+            name = None  # To work around mpl<3.4 compat issues
+
+            def set_default_locators_and_formatters(self, axis):
+                ...
+                # axis.set_major_locator(major_locator)
+                # if minor_locator is not None:
+                #     axis.set_minor_locator(minor_locator)
+                # axis.set_major_formatter(major_formatter)
+
+        mpl_scale = CatScale(data.name)
+        if axis is None:
+            axis = PseudoAxis(mpl_scale)
+
+            # TODO Currently just used in non-Coordinate contexts, but should
+            # we use this to (A) set the padding we want for categorial plots
+            # and (B) allow the values parameter for a Coordinate to set xlim/ylim
+            axis.set_view_interval(0, len(units_seed) - 1)
+
+        new._matplotlib_scale = mpl_scale
+
+        # TODO array cast necessary to handle float/int mixture, which we need
+        # to solve in a more systematic way probably
+        # (i.e. if we have [1, 2.5], do we want [1.0, 2.5]? Unclear)
+        axis.update_units(stringify(np.array(units_seed)))
+
+        # TODO define this more centrally
+        def convert_units(x):
+            # TODO only do this with explicit order?
+            # (But also category dtype?)
+            # TODO isin fails when units_seed mixes numbers and strings (numpy error?)
+            # but np.isin also does not seem any faster? (Maybe not broadcasting in C)
+            # keep = x.isin(units_seed)
+            keep = np.array([x_ in units_seed for x_ in x], bool)
+            out = np.full(len(x), np.nan)
+            out[keep] = axis.convert_units(stringify(x[keep]))
+            return out
+
+        new._pipeline = [
+            convert_units,
+            prop.get_mapping(new, data),
+            # TODO how to handle color representation consistency?
+        ]
+
+        def spacer(x):
+            return 1
+
+        new._spacer = spacer
+
+        if prop.legend:
+            new._legend = units_seed, list(stringify(units_seed))
+
+        return new
+
+--- Chunk 6 ---
+File: seaborn/categorical.py
+Lines: 56-119
+Symbol: _CategoricalPlotterNew.__init__
+
+    def __init__(
+        self,
+        data=None,
+        variables={},
+        order=None,
+        orient=None,
+        require_numeric=False,
+        legend="auto",
+    ):
+
+        super().__init__(data=data, variables=variables)
+
+        # This method takes care of some bookkeeping that is necessary because the
+        # original categorical plots (prior to the 2021 refactor) had some rules that
+        # don't fit exactly into the logic of _core. It may be wise to have a second
+        # round of refactoring that moves the logic deeper, but this will keep things
+        # relatively sensible for now.
+
+        # For wide data, orient determines assignment to x/y differently from the
+        # wide_structure rules in _core. If we do decide to make orient part of the
+        # _core variable assignment, we'll want to figure out how to express that.
+        if self.input_format == "wide" and orient == "h":
+            self.plot_data = self.plot_data.rename(columns={"x": "y", "y": "x"})
+            orig_variables = set(self.variables)
+            orig_x = self.variables.pop("x", None)
+            orig_y = self.variables.pop("y", None)
+            orig_x_type = self.var_types.pop("x", None)
+            orig_y_type = self.var_types.pop("y", None)
+            if "x" in orig_variables:
+                self.variables["y"] = orig_x
+                self.var_types["y"] = orig_x_type
+            if "y" in orig_variables:
+                self.variables["x"] = orig_y
+                self.var_types["x"] = orig_y_type
+
+        # The concept of an "orientation" is important to the original categorical
+        # plots, but there's no provision for it in _core, so we need to do it here.
+        # Note that it could be useful for the other functions in at least two ways
+        # (orienting a univariate distribution plot from long-form data and selecting
+        # the aggregation axis in lineplot), so we may want to eventually refactor it.
+        self.orient = infer_orient(
+            x=self.plot_data.get("x", None),
+            y=self.plot_data.get("y", None),
+            orient=orient,
+            require_numeric=require_numeric,
+        )
+
+        self.legend = legend
+
+        # Short-circuit in the case of an empty plot
+        if not self.has_xy_data:
+            return
+
+        # Categorical plots can be "univariate" in which case they get an anonymous
+        # category label on the opposite axis. Note: this duplicates code in the core
+        # scale_categorical function. We need to do it here because of the next line.
+        if self.cat_axis not in self.variables:
+            self.variables[self.cat_axis] = None
+            self.var_types[self.cat_axis] = "categorical"
+            self.plot_data[self.cat_axis] = ""
+
+        # Categorical variables have discrete levels that we need to track
+        cat_levels = categorical_order(self.plot_data[self.cat_axis], order)
+        self.var_levels[self.cat_axis] = cat_levels
+
+--- Chunk 7 ---
+File: seaborn/_core/plot.py
+Lines: 909-946
+Symbol: Plotter._repr_png_
+
+    def _repr_png_(self) -> tuple[bytes, dict[str, float]]:
+
+        # TODO better to do this through a Jupyter hook? e.g.
+        # ipy = IPython.core.formatters.get_ipython()
+        # fmt = ipy.display_formatter.formatters["text/html"]
+        # fmt.for_type(Plot, ...)
+        # Would like to have a svg option too, not sure how to make that flexible
+
+        # TODO use matplotlib backend directly instead of going through savefig?
+
+        # TODO perhaps have self.show() flip a switch to disable this, so that
+        # user does not end up with two versions of the figure in the output
+
+        # TODO use bbox_inches="tight" like the inline backend?
+        # pro: better results,  con: (sometimes) confusing results
+        # Better solution would be to default (with option to change)
+        # to using constrained/tight layout.
+
+        # TODO need to decide what the right default behavior here is:
+        # - Use dpi=72 to match default InlineBackend figure size?
+        # - Accept a generic "scaling" somewhere and scale DPI from that,
+        #   either with 1x -> 72 or 1x -> 96 and the default scaling be .75?
+        # - Listen to rcParams? InlineBackend behavior makes that so complicated :(
+        # - Do we ever want to *not* use retina mode at this point?
+
+        from PIL import Image
+
+        dpi = 96
+        buffer = io.BytesIO()
+
+        with theme_context(self._theme):
+            self._figure.savefig(buffer, dpi=dpi * 2, format="png", bbox_inches="tight")
+        data = buffer.getvalue()
+
+        scaling = .85 / 2
+        w, h = Image.open(buffer).size
+        metadata = {"width": w * scaling, "height": h * scaling}
+        return data, metadata
+
+--- Chunk 8 ---
+File: seaborn/_core/plot.py
+Lines: 389-476
+Symbol: Plot.add
+
+    def add(
+        self,
+        mark: Mark,
+        *transforms: Stat | Mark,
+        orient: str | None = None,
+        legend: bool = True,
+        data: DataSource = None,
+        **variables: VariableSpec,
+    ) -> Plot:
+        """
+        Specify a layer of the visualization in terms of mark and data transform(s).
+
+        This is the main method for specifying how the data should be visualized.
+        It can be called multiple times with different arguments to define
+        a plot with multiple layers.
+
+        Parameters
+        ----------
+        mark : :class:`Mark`
+            The visual representation of the data to use in this layer.
+        transforms : :class:`Stat` or :class:`Move`
+            Objects representing transforms to be applied before plotting the data.
+            Currently, at most one :class:`Stat` can be used, and it
+            must be passed first. This constraint will be relaxed in the future.
+        orient : "x", "y", "v", or "h"
+            The orientation of the mark, which also affects how transforms are computed.
+            Typically corresponds to the axis that defines groups for aggregation.
+            The "v" (vertical) and "h" (horizontal) options are synonyms for "x" / "y",
+            but may be more intuitive with some marks. When not provided, an
+            orientation will be inferred from characteristics of the data and scales.
+        legend : bool
+            Option to suppress the mark/mappings for this layer from the legend.
+        data : DataFrame or dict
+            Data source to override the global source provided in the constructor.
+        variables : data vectors or identifiers
+            Additional layer-specific variables, including variables that will be
+            passed directly to the transforms without scaling.
+
+        Examples
+        --------
+        .. include:: ../docstrings/objects.Plot.add.rst
+
+        """
+        if not isinstance(mark, Mark):
+            msg = f"mark must be a Mark instance, not {type(mark)!r}."
+            raise TypeError(msg)
+
+        # TODO This API for transforms was a late decision, and previously Plot.add
+        # accepted 0 or 1 Stat instances and 0, 1, or a list of Move instances.
+        # It will take some work to refactor the internals so that Stat and Move are
+        # treated identically, and until then well need to "unpack" the transforms
+        # here and enforce limitations on the order / types.
+
+        stat: Optional[Stat]
+        move: Optional[List[Move]]
+        error = False
+        if not transforms:
+            stat, move = None, None
+        elif isinstance(transforms[0], Stat):
+            stat = transforms[0]
+            move = [m for m in transforms[1:] if isinstance(m, Move)]
+            error = len(move) != len(transforms) - 1
+        else:
+            stat = None
+            move = [m for m in transforms if isinstance(m, Move)]
+            error = len(move) != len(transforms)
+
+        if error:
+            msg = " ".join([
+                "Transforms must have at most one Stat type (in the first position),",
+                "and all others must be a Move type. Given transform type(s):",
+                ", ".join(str(type(t).__name__) for t in transforms) + "."
+            ])
+            raise TypeError(msg)
+
+        new = self._clone()
+        new._layers.append({
+            "mark": mark,
+            "stat": stat,
+            "move": move,
+            # TODO it doesn't work to supply scalars to variables, but it should
+            "vars": variables,
+            "source": data,
+            "legend": legend,
+            "orient": {"v": "x", "h": "y"}.get(orient, orient),  # type: ignore
+        })
+
+        return new
+
+--- Chunk 9 ---
+File: seaborn/_core/plot.py
+Lines: 795-813
+Symbol: Plot.show
+
+    def show(self, **kwargs) -> None:
+        """
+        Compile the plot and display it by hooking into pyplot.
+
+        Calling this method is not necessary to render a plot in notebook context,
+        but it may be in other environments (e.g., in a terminal). After compiling the
+        plot, it calls :func:`matplotlib.pyplot.show` (passing any keyword parameters).
+
+        Unlike other :class:`Plot` methods, there is no return value. This should be
+        the last method you call when specifying a plot.
+
+        """
+        # TODO make pyplot configurable at the class level, and when not using,
+        # import IPython.display and call on self to populate cell output?
+
+        # Keep an eye on whether matplotlib implements "attaching" an existing
+        # figure to pyplot: https://github.com/matplotlib/matplotlib/pull/14024
+
+        self.plot(pyplot=True).show(**kwargs)
+
+--- Chunk 10 ---
+File: seaborn/_oldcore.py
+Lines: 1155-1297
+Symbol: VectorPlotter._attach
+
+    def _attach(
+        self,
+        obj,
+        allowed_types=None,
+        log_scale=None,
+    ):
+        """Associate the plotter with an Axes manager and initialize its units.
+
+        Parameters
+        ----------
+        obj : :class:`matplotlib.axes.Axes` or :class:'FacetGrid`
+            Structural object that we will eventually plot onto.
+        allowed_types : str or list of str
+            If provided, raise when either the x or y variable does not have
+            one of the declared seaborn types.
+        log_scale : bool, number, or pair of bools or numbers
+            If not False, set the axes to use log scaling, with the given
+            base or defaulting to 10. If a tuple, interpreted as separate
+            arguments for the x and y axes.
+
+        """
+        from .axisgrid import FacetGrid
+        if isinstance(obj, FacetGrid):
+            self.ax = None
+            self.facets = obj
+            ax_list = obj.axes.flatten()
+            if obj.col_names is not None:
+                self.var_levels["col"] = obj.col_names
+            if obj.row_names is not None:
+                self.var_levels["row"] = obj.row_names
+        else:
+            self.ax = obj
+            self.facets = None
+            ax_list = [obj]
+
+        # Identify which "axis" variables we have defined
+        axis_variables = set("xy").intersection(self.variables)
+
+        # -- Verify the types of our x and y variables here.
+        # This doesn't really make complete sense being here here, but it's a fine
+        # place for it, given  the current system.
+        # (Note that for some plots, there might be more complicated restrictions)
+        # e.g. the categorical plots have their own check that as specific to the
+        # non-categorical axis.
+        if allowed_types is None:
+            allowed_types = ["numeric", "datetime", "categorical"]
+        elif isinstance(allowed_types, str):
+            allowed_types = [allowed_types]
+
+        for var in axis_variables:
+            var_type = self.var_types[var]
+            if var_type not in allowed_types:
+                err = (
+                    f"The {var} variable is {var_type}, but one of "
+                    f"{allowed_types} is required"
+                )
+                raise TypeError(err)
+
+        # -- Get axis objects for each row in plot_data for type conversions and scaling
+
+        facet_dim = {"x": "col", "y": "row"}
+
+        self.converters = {}
+        for var in axis_variables:
+            other_var = {"x": "y", "y": "x"}[var]
+
+            converter = pd.Series(index=self.plot_data.index, name=var, dtype=object)
+            share_state = getattr(self.facets, f"_share{var}", True)
+
+            # Simplest cases are that we have a single axes, all axes are shared,
+            # or sharing is only on the orthogonal facet dimension. In these cases,
+            # all datapoints get converted the same way, so use the first axis
+            if share_state is True or share_state == facet_dim[other_var]:
+                converter.loc[:] = getattr(ax_list[0], f"{var}axis")
+
+            else:
+
+                # Next simplest case is when no axes are shared, and we can
+                # use the axis objects within each facet
+                if share_state is False:
+                    for axes_vars, axes_data in self.iter_data():
+                        ax = self._get_axes(axes_vars)
+                        converter.loc[axes_data.index] = getattr(ax, f"{var}axis")
+
+                # In the more complicated case, the axes are shared within each
+                # "file" of the facetgrid. In that case, we need to subset the data
+                # for that file and assign it the first axis in the slice of the grid
+                else:
+
+                    names = getattr(self.facets, f"{share_state}_names")
+                    for i, level in enumerate(names):
+                        idx = (i, 0) if share_state == "row" else (0, i)
+                        axis = getattr(self.facets.axes[idx], f"{var}axis")
+                        converter.loc[self.plot_data[share_state] == level] = axis
+
+            # Store the converter vector, which we use elsewhere (e.g comp_data)
+            self.converters[var] = converter
+
+            # Now actually update the matplotlib objects to do the conversion we want
+            grouped = self.plot_data[var].groupby(self.converters[var], sort=False)
+            for converter, seed_data in grouped:
+                if self.var_types[var] == "categorical":
+                    if self._var_ordered[var]:
+                        order = self.var_levels[var]
+                    else:
+                        order = None
+                    seed_data = categorical_order(seed_data, order)
+                converter.update_units(seed_data)
+
+        # -- Set numerical axis scales
+
+        # First unpack the log_scale argument
+        if log_scale is None:
+            scalex = scaley = False
+        else:
+            # Allow single value or x, y tuple
+            try:
+                scalex, scaley = log_scale
+            except TypeError:
+                scalex = log_scale if "x" in self.variables else False
+                scaley = log_scale if "y" in self.variables else False
+
+        # Now use it
+        for axis, scale in zip("xy", (scalex, scaley)):
+            if scale:
+                for ax in ax_list:
+                    set_scale = getattr(ax, f"set_{axis}scale")
+                    if scale is True:
+                        set_scale("log")
+                    else:
+                        if Version(mpl.__version__) >= Version("3.3"):
+                            set_scale("log", base=scale)
+                        else:
+                            set_scale("log", **{f"base{axis}": scale})
+
+        # For categorical y, we want the "first" level to be at the top of the axis
+        if self.var_types.get("y", None) == "categorical":
+            for ax in ax_list:
+                try:
+                    ax.yaxis.set_inverted(True)
+                except AttributeError:  # mpl < 3.1
+                    if not ax.yaxis_inverted():
+                        ax.invert_yaxis()
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

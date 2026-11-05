@@ -1,0 +1,873 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+[Version 2023.01.02] /etc/yt-dlp.conf is not loaded
+### DO NOT REMOVE OR SKIP THE ISSUE TEMPLATE
+
+- [X] I understand that I will be **blocked** if I remove or skip any mandatory\* field
+
+### Checklist
+
+- [X] I'm reporting a bug unrelated to a specific site
+- [X] I've verified that I'm running yt-dlp version **2023.01.02** ([update instructions](https://github.com/yt-dlp/yt-dlp#update)) or later (specify commit)
+- [X] I've checked that all provided URLs are playable in a browser with the same IP and same login details
+- [X] I've checked that all URLs and arguments with special characters are [properly quoted or escaped](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#video-url-contains-an-ampersand--and-im-getting-some-strange-output-1-2839-or-v-is-not-recognized-as-an-internal-or-external-command)
+- [X] I've searched the [bugtracker](https://github.com/yt-dlp/yt-dlp/issues?q=) for similar issues **including closed ones**. DO NOT post duplicates
+- [X] I've read the [guidelines for opening an issue](https://github.com/yt-dlp/yt-dlp/blob/master/CONTRIBUTING.md#opening-an-issue)
+
+### Provide a description that is worded well enough to be understood
+
+Hi,
+it seems that since version 2023.01.02 the upload date from YouTube-Videos can't (?) be extracted by the following output template:
+
+-o %(title)s_[%(upload_date>%Y-%m-%d)s]_[%(id)s].%(ext)s
+
+Title and ID are extracted correectly.
+Template configuration is stored in stored in /etc/yt-dlp.conf and worked until New Years Eve.
+
+Can anybody confirm?
+Best Regards /M.
+
+### Provide verbose output that clearly demonstrates the problem
+
+- [X] Run **your** yt-dlp command with **-vU** flag added (`yt-dlp -vU <your command line>`)
+- [X] Copy the WHOLE output (starting with `[debug] Command-line config`) and insert it below
+
+### Complete Verbose Output
+
+```shell
+~/!_temp$ yt-dlp -vU aqz-KE-bpKQ
+[debug] Command-line config: ['-vU', 'aqz-KE-bpKQ']
+[debug] User config: []
+[debug] System config: []
+[debug] Encodings: locale UTF-8, fs utf-8, pref UTF-8, out utf-8, error utf-8, screen utf-8
+[debug] yt-dlp version 2023.01.02 [d83b0ad] (zip)
+[debug] Python 3.8.6 (CPython x86_64 64bit) - Linux-3.10.105-x86_64-with-glibc2.2.5 (OpenSSL 1.0.2u-fips  20 Dec 2019, glibc 2.20-2014.11)
+[debug] exe versions: ffmpeg 2.7.7 (needs_adtstoasc)
+[debug] Optional libraries: sqlite3-2.6.0
+[debug] Proxy map: {}
+[debug] Loaded 1754 extractors
+[debug] Fetching release info: https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest
+Latest version: 2023.01.02, Current version: 2023.01.02
+yt-dlp is up to date (2023.01.02)
+[youtube] Extracting URL: aqz-KE-bpKQ
+[youtube] aqz-KE-bpKQ: Downloading webpage
+[youtube] aqz-KE-bpKQ: Downloading android player API JSON
+[youtube] aqz-KE-bpKQ: Downloading player e5f6cbd5
+[debug] Saving youtube-nsig.e5f6cbd5 to cache
+[debug] [youtube] Decrypted nsig KM0AnFlHKvzynxTEb => M-TXZDH19wD2Gw
+[debug] Sort order given by extractor: quality, res, fps, hdr:12, source, vcodec:vp9.2, channels, acodec, lang, proto
+[debug] Formats sorted by: hasvid, ie_pref, quality, res, fps, hdr:12(7), source, vcodec:vp9.2(10), channels, acodec, lang, proto, filesize, fs_approx, tbr, vbr, abr, asr, vext, aext, hasaud, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] aqz-KE-bpKQ: Downloading 1 format(s): 315+258
+[debug] Invoking http downloader on "https://rr5---sn-4g5edn6r.googlevideo.com/videoplayback?expire=1672887224&ei=WOe1Y-yXAYi-1wKk6IXQAg&ip=2003%3Aea%3Aef05%3Aeb96%3A211%3A32ff%3Afe6c%3A2425&id=o-AGvLJndvkTeT6li5AUwg5mnE6UUjuUVETaKwyvERggfH&itag=315&source=youtube&requiressl=yes&mh=aP&mm=31%2C26&mn=sn-4g5edn6r%2Csn-5hnekn7k&ms=au%2Conr&mv=m&mvi=5&pl=35&initcwndbps=1205000&spc=zIddbFRRa6UKdjxzwGyjfRYDNLe4VyE&vprv=1&svpuc=1&mime=video%2Fwebm&gir=yes&clen=1536155487&dur=634.566&lmt=1662347928284893&mt=1672865118&fvip=5&keepalive=yes&fexp=24007246&c=ANDROID&txp=553C434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRgIhANdZpV1XvXGH7Wmns5qLfBZUvdbSk3G7y9ssW_O9g6q7AiEAw4ybzvEiuBk5zrgiz286CiYAJe-IYqa0Jexz9Ulp7jc%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRAIgNqrEiAh7LhPh0amLC0Ogq90mTTFBi-YcGLcUUE0IOHMCID_TozeBlYc0f2LfvwLf03VbnL4U7iaMYL9DFKg-u81K"
+[download] Destination: Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f315.webm
+[download] 100% of    1.43GiB in 00:03:55 at 6.23MiB/s
+[debug] Invoking http downloader on "https://rr5---sn-4g5edn6r.googlevideo.com/videoplayback?expire=1672887224&ei=WOe1Y-yXAYi-1wKk6IXQAg&ip=2003%3Aea%3Aef05%3Aeb96%3A211%3A32ff%3Afe6c%3A2425&id=o-AGvLJndvkTeT6li5AUwg5mnE6UUjuUVETaKwyvERggfH&itag=258&source=youtube&requiressl=yes&mh=aP&mm=31%2C26&mn=sn-4g5edn6r%2Csn-5hnekn7k&ms=au%2Conr&mv=m&mvi=5&pl=35&initcwndbps=1205000&spc=zIddbFRRa6UKdjxzwGyjfRYDNLe4VyE&vprv=1&svpuc=1&mime=audio%2Fmp4&gir=yes&clen=30767520&dur=634.624&lmt=1662204997981909&mt=1672865118&fvip=5&keepalive=yes&fexp=24007246&c=ANDROID&txp=5532434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Cgir%2Cclen%2Cdur%2Clmt&sig=AOq0QJ8wRQIgRDJv5TpU6rOr20YsqgG-4CrdYdBVYX9KBaR_WpbyXMgCIQDkaCtNYYB3xn2XdiwW0Ur5G6EBfyOQ2s5y-vX9VUvSjQ%3D%3D&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRAIgNqrEiAh7LhPh0amLC0Ogq90mTTFBi-YcGLcUUE0IOHMCID_TozeBlYc0f2LfvwLf03VbnL4U7iaMYL9DFKg-u81K"
+[download] Destination: Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f258.m4a
+[download] 100% of   29.34MiB in 00:00:04 at 6.16MiB/s
+[Merger] Merging formats into "Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].mkv"
+[debug] ffmpeg command line: ffmpeg -y -loglevel repeat+info -i 'file:Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f315.webm' -i 'file:Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f258.m4a' -c copy -map 0:v:0 -map 1:a:0 -movflags +faststart 'file:Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].temp.mkv'
+Deleting original file Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f315.webm (pass -k to keep)
+Deleting original file Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film [aqz-KE-bpKQ].f258.m4a (pass -k to keep)
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: setup.py
+Lines: 118-169
+Symbol: main
+
+def main():
+    if sys.argv[1:2] == ['py2exe']:
+        params = py2exe_params()
+        try:
+            from py2exe import freeze
+        except ImportError:
+            import py2exe  # noqa: F401
+            warnings.warn('You are using an outdated version of py2exe. Support for this version will be removed in the future')
+            params['console'][0].update(params.pop('version_info'))
+            params['options'] = {'py2exe': params.pop('options')}
+        else:
+            return freeze(**params)
+    else:
+        params = build_params()
+
+    setup(
+        name='yt-dlp',
+        version=VERSION,
+        maintainer='pukkandan',
+        maintainer_email='pukkandan.ytdlp@gmail.com',
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        long_description_content_type='text/markdown',
+        url='https://github.com/yt-dlp/yt-dlp',
+        packages=packages(),
+        install_requires=REQUIREMENTS,
+        python_requires='>=3.7',
+        project_urls={
+            'Documentation': 'https://github.com/yt-dlp/yt-dlp#readme',
+            'Source': 'https://github.com/yt-dlp/yt-dlp',
+            'Tracker': 'https://github.com/yt-dlp/yt-dlp/issues',
+            'Funding': 'https://github.com/yt-dlp/yt-dlp/blob/master/Collaborators.md#collaborators',
+        },
+        classifiers=[
+            'Topic :: Multimedia :: Video',
+            'Development Status :: 5 - Production/Stable',
+            'Environment :: Console',
+            'Programming Language :: Python',
+            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10',
+            'Programming Language :: Python :: 3.11',
+            'Programming Language :: Python :: Implementation',
+            'Programming Language :: Python :: Implementation :: CPython',
+            'Programming Language :: Python :: Implementation :: PyPy',
+            'License :: Public Domain',
+            'Operating System :: OS Independent',
+        ],
+        cmdclass={'build_lazy_extractors': build_lazy_extractors},
+        **params
+    )
+
+--- Chunk 2 ---
+File: yt_dlp/downloader/hls.py
+Lines: 24-53
+Symbol: HlsFD.can_download
+
+    def can_download(manifest, info_dict, allow_unplayable_formats=False):
+        UNSUPPORTED_FEATURES = [
+            # r'#EXT-X-BYTERANGE',  # playlists composed of byte ranges of media files [2]
+
+            # Live streams heuristic does not always work (e.g. geo restricted to Germany
+            # http://hls-geo.daserste.de/i/videoportal/Film/c_620000/622873/format,716451,716457,716450,716458,716459,.mp4.csmil/index_4_av.m3u8?null=0)
+            # r'#EXT-X-MEDIA-SEQUENCE:(?!0$)',  # live streams [3]
+
+            # This heuristic also is not correct since segments may not be appended as well.
+            # Twitch vods of finished streams have EXT-X-PLAYLIST-TYPE:EVENT despite
+            # no segments will definitely be appended to the end of the playlist.
+            # r'#EXT-X-PLAYLIST-TYPE:EVENT',  # media segments may be appended to the end of
+            #                                 # event media playlists [4]
+            # r'#EXT-X-MAP:',  # media initialization [5]
+            # 1. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.4
+            # 2. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.2
+            # 3. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.2
+            # 4. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.5
+            # 5. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.5
+        ]
+        if not allow_unplayable_formats:
+            UNSUPPORTED_FEATURES += [
+                r'#EXT-X-KEY:METHOD=(?!NONE|AES-128)',  # encrypted streams [1]
+            ]
+
+        def check_results():
+            yield not info_dict.get('is_live')
+            for feature in UNSUPPORTED_FEATURES:
+                yield not re.search(feature, manifest)
+        return all(check_results())
+
+--- Chunk 3 ---
+File: yt_dlp/extractor/dailymotion.py
+Lines: 220-332
+Symbol: DailymotionIE._real_extract
+
+    def _real_extract(self, url):
+        url, smuggled_data = unsmuggle_url(url)
+        video_id, playlist_id = self._match_valid_url(url).groups()
+
+        if playlist_id:
+            if self._yes_playlist(playlist_id, video_id):
+                return self.url_result(
+                    'http://www.dailymotion.com/playlist/' + playlist_id,
+                    'DailymotionPlaylist', playlist_id)
+
+        password = self.get_param('videopassword')
+        media = self._call_api(
+            'media', video_id, '''... on Video {
+      %s
+      stats {
+        likes {
+          total
+        }
+        views {
+          total
+        }
+      }
+    }
+    ... on Live {
+      %s
+      audienceCount
+      isOnAir
+    }''' % (self._COMMON_MEDIA_FIELDS, self._COMMON_MEDIA_FIELDS), 'Downloading media JSON metadata',
+            'password: "%s"' % self.get_param('videopassword') if password else None)
+        xid = media['xid']
+
+        metadata = self._download_json(
+            'https://www.dailymotion.com/player/metadata/video/' + xid,
+            xid, 'Downloading metadata JSON',
+            query=traverse_obj(smuggled_data, 'query') or {'app': 'com.dailymotion.neon'})
+
+        error = metadata.get('error')
+        if error:
+            title = error.get('title') or error['raw_message']
+            # See https://developer.dailymotion.com/api#access-error
+            if error.get('code') == 'DM007':
+                allowed_countries = try_get(media, lambda x: x['geoblockedCountries']['allowed'], list)
+                self.raise_geo_restricted(msg=title, countries=allowed_countries)
+            raise ExtractorError(
+                '%s said: %s' % (self.IE_NAME, title), expected=True)
+
+        title = metadata['title']
+        is_live = media.get('isOnAir')
+        formats = []
+        for quality, media_list in metadata['qualities'].items():
+            for m in media_list:
+                media_url = m.get('url')
+                media_type = m.get('type')
+                if not media_url or media_type == 'application/vnd.lumberjack.manifest':
+                    continue
+                if media_type == 'application/x-mpegURL':
+                    formats.extend(self._extract_m3u8_formats(
+                        media_url, video_id, 'mp4', live=is_live, m3u8_id='hls', fatal=False))
+                else:
+                    f = {
+                        'url': media_url,
+                        'format_id': 'http-' + quality,
+                    }
+                    m = re.search(r'/H264-(\d+)x(\d+)(?:-(60)/)?', media_url)
+                    if m:
+                        width, height, fps = map(int_or_none, m.groups())
+                        f.update({
+                            'fps': fps,
+                            'height': height,
+                            'width': width,
+                        })
+                    formats.append(f)
+        for f in formats:
+            f['url'] = f['url'].split('#')[0]
+            if not f.get('fps') and f['format_id'].endswith('@60'):
+                f['fps'] = 60
+
+        subtitles = {}
+        subtitles_data = try_get(metadata, lambda x: x['subtitles']['data'], dict) or {}
+        for subtitle_lang, subtitle in subtitles_data.items():
+            subtitles[subtitle_lang] = [{
+                'url': subtitle_url,
+            } for subtitle_url in subtitle.get('urls', [])]
+
+        thumbnails = []
+        for height, poster_url in metadata.get('posters', {}).items():
+            thumbnails.append({
+                'height': int_or_none(height),
+                'id': height,
+                'url': poster_url,
+            })
+
+        owner = metadata.get('owner') or {}
+        stats = media.get('stats') or {}
+        get_count = lambda x: int_or_none(try_get(stats, lambda y: y[x + 's']['total']))
+
+        return {
+            'id': video_id,
+            'title': title,
+            'description': clean_html(media.get('description')),
+            'thumbnails': thumbnails,
+            'duration': int_or_none(metadata.get('duration')) or None,
+            'timestamp': int_or_none(metadata.get('created_time')),
+            'uploader': owner.get('screenname'),
+            'uploader_id': owner.get('id') or metadata.get('screenname'),
+            'age_limit': 18 if metadata.get('explicit') else 0,
+            'tags': metadata.get('tags'),
+            'view_count': get_count('view') or int_or_none(media.get('audienceCount')),
+            'like_count': get_count('like'),
+            'formats': formats,
+            'subtitles': subtitles,
+            'is_live': is_live,
+        }
+
+--- Chunk 4 ---
+File: yt_dlp/extractor/sbs.py
+Lines: 75-103
+Symbol: SBSIE._real_extract
+
+    def _real_extract(self, url):
+        video_id = self._match_id(url)
+        player_params = self._download_json(
+            'http://www.sbs.com.au/api/video_pdkvars/id/%s?form=json' % video_id, video_id)
+
+        error = player_params.get('error')
+        if error:
+            error_message = 'Sorry, The video you are looking for does not exist.'
+            video_data = error.get('results') or {}
+            error_code = error.get('errorCode')
+            if error_code == 'ComingSoon':
+                error_message = '%s is not yet available.' % video_data.get('title', '')
+            elif error_code in ('Forbidden', 'intranetAccessOnly'):
+                error_message = 'Sorry, This video cannot be accessed via this website'
+            elif error_code == 'Expired':
+                error_message = 'Sorry, %s is no longer available.' % video_data.get('title', '')
+            raise ExtractorError('%s said: %s' % (self.IE_NAME, error_message), expected=True)
+
+        urls = player_params['releaseUrls']
+        theplatform_url = (urls.get('progressive') or urls.get('html')
+                           or urls.get('standard') or player_params['relatedItemsURL'])
+
+        return {
+            '_type': 'url_transparent',
+            'ie_key': 'ThePlatform',
+            'id': video_id,
+            'url': smuggle_url(self._proto_relative_url(theplatform_url), {'force_smil_url': True}),
+            'is_live': player_params.get('streamType') == 'live',
+        }
+
+--- Chunk 5 ---
+File: yt_dlp/extractor/npo.py
+Lines: 294-472
+Symbol: NPOIE._get_old_info
+
+    def _get_old_info(self, video_id):
+        metadata = self._download_json(
+            'http://e.omroep.nl/metadata/%s' % video_id,
+            video_id,
+            # We have to remove the javascript callback
+            transform_source=strip_jsonp,
+        )
+
+        error = metadata.get('error')
+        if error:
+            raise ExtractorError(error, expected=True)
+
+        # For some videos actual video id (prid) is different (e.g. for
+        # http://www.omroepwnl.nl/video/fragment/vandaag-de-dag-verkiezingen__POMS_WNL_853698
+        # video id is POMS_WNL_853698 but prid is POW_00996502)
+        video_id = metadata.get('prid') or video_id
+
+        # titel is too generic in some cases so utilize aflevering_titel as well
+        # when available (e.g. http://tegenlicht.vpro.nl/afleveringen/2014-2015/access-to-africa.html)
+        title = metadata['titel']
+        sub_title = metadata.get('aflevering_titel')
+        if sub_title and sub_title != title:
+            title += ': %s' % sub_title
+
+        token = self._get_token(video_id)
+
+        formats = []
+        urls = set()
+
+        def is_legal_url(format_url):
+            return format_url and format_url not in urls and re.match(
+                r'^(?:https?:)?//', format_url)
+
+        QUALITY_LABELS = ('Laag', 'Normaal', 'Hoog')
+        QUALITY_FORMATS = ('adaptive', 'wmv_sb', 'h264_sb', 'wmv_bb', 'h264_bb', 'wvc1_std', 'h264_std')
+
+        quality_from_label = qualities(QUALITY_LABELS)
+        quality_from_format_id = qualities(QUALITY_FORMATS)
+        items = self._download_json(
+            'http://ida.omroep.nl/app.php/%s' % video_id, video_id,
+            'Downloading formats JSON', query={
+                'adaptive': 'yes',
+                'token': token,
+            })['items'][0]
+        for num, item in enumerate(items):
+            item_url = item.get('url')
+            if not is_legal_url(item_url):
+                continue
+            urls.add(item_url)
+            format_id = self._search_regex(
+                r'video/ida/([^/]+)', item_url, 'format id',
+                default=None)
+
+            item_label = item.get('label')
+
+            def add_format_url(format_url):
+                width = int_or_none(self._search_regex(
+                    r'(\d+)[xX]\d+', format_url, 'width', default=None))
+                height = int_or_none(self._search_regex(
+                    r'\d+[xX](\d+)', format_url, 'height', default=None))
+                if item_label in QUALITY_LABELS:
+                    quality = quality_from_label(item_label)
+                    f_id = item_label
+                elif item_label in QUALITY_FORMATS:
+                    quality = quality_from_format_id(format_id)
+                    f_id = format_id
+                else:
+                    quality, f_id = [None] * 2
+                formats.append({
+                    'url': format_url,
+                    'format_id': f_id,
+                    'width': width,
+                    'height': height,
+                    'quality': quality,
+                })
+
+            # Example: http://www.npo.nl/de-nieuwe-mens-deel-1/21-07-2010/WO_VPRO_043706
+            if item.get('contentType') in ('url', 'audio'):
+                add_format_url(item_url)
+                continue
+
+            try:
+                stream_info = self._download_json(
+                    item_url + '&type=json', video_id,
+                    'Downloading %s stream JSON'
+                    % item_label or item.get('format') or format_id or num)
+            except ExtractorError as ee:
+                if isinstance(ee.cause, compat_HTTPError) and ee.cause.code == 404:
+                    error = (self._parse_json(
+                        ee.cause.read().decode(), video_id,
+                        fatal=False) or {}).get('errorstring')
+                    if error:
+                        raise ExtractorError(error, expected=True)
+                raise
+            # Stream URL instead of JSON, example: npo:LI_NL1_4188102
+            if isinstance(stream_info, compat_str):
+                if not stream_info.startswith('http'):
+                    continue
+                video_url = stream_info
+            # JSON
+            else:
+                video_url = stream_info.get('url')
+            if not video_url or 'vodnotavailable.' in video_url or video_url in urls:
+                continue
+            urls.add(video_url)
+            if determine_ext(video_url) == 'm3u8':
+                formats.extend(self._extract_m3u8_formats(
+                    video_url, video_id, ext='mp4',
+                    entry_protocol='m3u8_native', m3u8_id='hls', fatal=False))
+            else:
+                add_format_url(video_url)
+
+        is_live = metadata.get('medium') == 'live'
+
+        if not is_live:
+            for num, stream in enumerate(metadata.get('streams', [])):
+                stream_url = stream.get('url')
+                if not is_legal_url(stream_url):
+                    continue
+                urls.add(stream_url)
+                # smooth streaming is not supported
+                stream_type = stream.get('type', '').lower()
+                if stream_type in ['ss', 'ms']:
+                    continue
+                if stream_type == 'hds':
+                    f4m_formats = self._extract_f4m_formats(
+                        stream_url, video_id, fatal=False)
+                    # f4m downloader downloads only piece of live stream
+                    for f4m_format in f4m_formats:
+                        f4m_format['preference'] = -5
+                    formats.extend(f4m_formats)
+                elif stream_type == 'hls':
+                    formats.extend(self._extract_m3u8_formats(
+                        stream_url, video_id, ext='mp4', fatal=False))
+                # Example: http://www.npo.nl/de-nieuwe-mens-deel-1/21-07-2010/WO_VPRO_043706
+                elif '.asf' in stream_url:
+                    asx = self._download_xml(
+                        stream_url, video_id,
+                        'Downloading stream %d ASX playlist' % num,
+                        transform_source=fix_xml_ampersands, fatal=False)
+                    if not asx:
+                        continue
+                    ref = asx.find('./ENTRY/Ref')
+                    if ref is None:
+                        continue
+                    video_url = ref.get('href')
+                    if not video_url or video_url in urls:
+                        continue
+                    urls.add(video_url)
+                    formats.append({
+                        'url': video_url,
+                        'ext': stream.get('formaat', 'asf'),
+                        'quality': stream.get('kwaliteit'),
+                        'preference': -10,
+                    })
+                else:
+                    formats.append({
+                        'url': stream_url,
+                        'quality': stream.get('kwaliteit'),
+                    })
+
+        subtitles = {}
+        if metadata.get('tt888') == 'ja':
+            subtitles['nl'] = [{
+                'ext': 'vtt',
+                'url': 'http://tt888.omroep.nl/tt888/%s' % video_id,
+            }]
+
+        return {
+            'id': video_id,
+            'title': title,
+            'description': metadata.get('info'),
+            'thumbnail': metadata.get('images', [{'url': None}])[-1]['url'],
+            'upload_date': unified_strdate(metadata.get('gidsdatum')),
+            'duration': parse_duration(metadata.get('tijdsduur')),
+            'formats': formats,
+            'subtitles': subtitles,
+            'is_live': is_live,
+        }
+
+--- Chunk 6 ---
+File: yt_dlp/extractor/brightcove.py
+Lines: 793-851
+Symbol: BrightcoveNewIE._extract_brightcove_urls
+
+    def _extract_brightcove_urls(ie, webpage):
+        # Reference:
+        # 1. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/publish-video.html#setvideoiniframe
+        # 2. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/publish-video.html#tag
+        # 3. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/publish-video.html#setvideousingjavascript
+        # 4. http://docs.brightcove.com/en/video-cloud/brightcove-player/guides/in-page-embed-player-implementation.html
+        # 5. https://support.brightcove.com/en/video-cloud/docs/dynamically-assigning-videos-player
+
+        entries = []
+
+        # Look for iframe embeds [1]
+        for _, url in re.findall(
+                r'<iframe[^>]+src=(["\'])((?:https?:)?//players\.brightcove\.net/\d+/[^/]+/index\.html.+?)\1', webpage):
+            entries.append(url if url.startswith('http') else 'http:' + url)
+
+        # Look for <video> tags [2] and embed_in_page embeds [3]
+        # [2] looks like:
+        for video, script_tag, account_id, player_id, embed in re.findall(
+                r'''(?isx)
+                    (<video(?:-js)?\s+[^>]*\bdata-video-id\s*=\s*['"]?[^>]+>)
+                    (?:.*?
+                        (<script[^>]+
+                            src=["\'](?:https?:)?//players\.brightcove\.net/
+                            (\d+)/([^/]+)_([^/]+)/index(?:\.min)?\.js
+                        )
+                    )?
+                ''', webpage):
+            attrs = extract_attributes(video)
+
+            # According to examples from [4] it's unclear whether video id
+            # may be optional and what to do when it is
+            video_id = attrs.get('data-video-id')
+            if not video_id:
+                continue
+
+            account_id = account_id or attrs.get('data-account')
+            if not account_id:
+                continue
+
+            player_id = player_id or attrs.get('data-player') or 'default'
+            embed = embed or attrs.get('data-embed') or 'default'
+
+            bc_url = 'http://players.brightcove.net/%s/%s_%s/index.html?videoId=%s' % (
+                account_id, player_id, embed, video_id)
+
+            # Some brightcove videos may be embedded with video tag only and
+            # without script tag or any mentioning of brightcove at all. Such
+            # embeds are considered ambiguous since they are matched based only
+            # on data-video-id and data-account attributes and in the wild may
+            # not be brightcove embeds at all. Let's check reconstructed
+            # brightcove URLs in case of such embeds and only process valid
+            # ones. By this we ensure there is indeed a brightcove embed.
+            if not script_tag and not ie._is_valid_url(
+                    bc_url, video_id, 'possible brightcove video'):
+                continue
+
+            entries.append(bc_url)
+
+        return entries
+
+--- Chunk 7 ---
+File: yt_dlp/extractor/common.py
+Lines: 892-918
+Symbol: InfoExtractor.__check_blocked
+
+    def __check_blocked(self, content):
+        first_block = content[:512]
+        if ('<title>Access to this site is blocked</title>' in content
+                and 'Websense' in first_block):
+            msg = 'Access to this webpage has been blocked by Websense filtering software in your network.'
+            blocked_iframe = self._html_search_regex(
+                r'<iframe src="([^"]+)"', content,
+                'Websense information URL', default=None)
+            if blocked_iframe:
+                msg += ' Visit %s for more details' % blocked_iframe
+            raise ExtractorError(msg, expected=True)
+        if '<title>The URL you requested has been blocked</title>' in first_block:
+            msg = (
+                'Access to this webpage has been blocked by Indian censorship. '
+                'Use a VPN or proxy server (with --proxy) to route around it.')
+            block_msg = self._html_search_regex(
+                r'</h1><p>(.*?)</p>',
+                content, 'block message', default=None)
+            if block_msg:
+                msg += ' (Message: "%s")' % block_msg.replace('\n', ' ')
+            raise ExtractorError(msg, expected=True)
+        if ('<title>TTK :: Доступ к ресурсу ограничен</title>' in content
+                and 'blocklist.rkn.gov.ru' in content):
+            raise ExtractorError(
+                'Access to this webpage has been blocked by decision of the Russian government. '
+                'Visit http://blocklist.rkn.gov.ru/ for a block reason.',
+                expected=True)
+
+--- Chunk 8 ---
+File: yt_dlp/extractor/youku.py
+Lines: 150-222
+Symbol: YoukuIE._real_extract
+
+    def _real_extract(self, url):
+        video_id = self._match_id(url)
+
+        self._set_cookie('youku.com', '__ysuid', self.get_ysuid())
+        self._set_cookie('youku.com', 'xreferrer', 'http://www.youku.com')
+
+        _, urlh = self._download_webpage_handle(
+            'https://log.mmstat.com/eg.js', video_id, 'Retrieving cna info')
+        # The etag header is '"foobar"'; let's remove the double quotes
+        cna = urlh.headers['etag'][1:-1]
+
+        # request basic data
+        basic_data_params = {
+            'vid': video_id,
+            'ccode': '0524',
+            'client_ip': '192.168.1.1',
+            'utid': cna,
+            'client_ts': time.time() / 1000,
+        }
+
+        video_password = self.get_param('videopassword')
+        if video_password:
+            basic_data_params['password'] = video_password
+
+        headers = {
+            'Referer': url,
+        }
+        headers.update(self.geo_verification_headers())
+        data = self._download_json(
+            'https://ups.youku.com/ups/get.json', video_id,
+            'Downloading JSON metadata',
+            query=basic_data_params, headers=headers)['data']
+
+        error = data.get('error')
+        if error:
+            error_note = error.get('note')
+            if error_note is not None and '因版权原因无法观看此视频' in error_note:
+                raise ExtractorError(
+                    'Youku said: Sorry, this video is available in China only', expected=True)
+            elif error_note and '该视频被设为私密' in error_note:
+                raise ExtractorError(
+                    'Youku said: Sorry, this video is private', expected=True)
+            else:
+                msg = 'Youku server reported error %i' % error.get('code')
+                if error_note is not None:
+                    msg += ': ' + error_note
+                raise ExtractorError(msg)
+
+        # get video title
+        video_data = data['video']
+        title = video_data['title']
+
+        formats = [{
+            'url': stream['m3u8_url'],
+            'format_id': self.get_format_name(stream.get('stream_type')),
+            'ext': 'mp4',
+            'protocol': 'm3u8_native',
+            'filesize': int(stream.get('size')),
+            'width': stream.get('width'),
+            'height': stream.get('height'),
+        } for stream in data['stream'] if stream.get('channel_type') != 'tail']
+
+        return {
+            'id': video_id,
+            'title': title,
+            'formats': formats,
+            'duration': video_data.get('seconds'),
+            'thumbnail': video_data.get('logo'),
+            'uploader': video_data.get('username'),
+            'uploader_id': str_or_none(video_data.get('userid')),
+            'uploader_url': data.get('uploader', {}).get('homepage'),
+            'tags': video_data.get('tags'),
+        }
+
+--- Chunk 9 ---
+File: yt_dlp/extractor/redbee.py
+Lines: 270-379
+Symbol: RTBFIE._real_extract
+
+    def _real_extract(self, url):
+        live, media_id = self._match_valid_url(url).groups()
+        embed_page = self._download_webpage(
+            'https://www.rtbf.be/auvio/embed/' + ('direct' if live else 'media'),
+            media_id, query={'id': media_id})
+
+        media_data = self._html_search_regex(r'data-media="([^"]+)"', embed_page, 'media data', fatal=False)
+        if not media_data:
+            if re.search(r'<div[^>]+id="js-error-expired"[^>]+class="(?![^"]*hidden)', embed_page):
+                raise ExtractorError('Livestream has ended.', expected=True)
+            if re.search(r'<div[^>]+id="js-sso-connect"[^>]+class="(?![^"]*hidden)', embed_page):
+                self.raise_login_required()
+
+            raise ExtractorError('Could not find media data')
+
+        data = self._parse_json(media_data, media_id)
+
+        error = data.get('error')
+        if error:
+            raise ExtractorError('%s said: %s' % (self.IE_NAME, error), expected=True)
+
+        provider = data.get('provider')
+        if provider in self._PROVIDERS:
+            return self.url_result(data['url'], self._PROVIDERS[provider])
+
+        title = traverse_obj(data, 'subtitle', 'title')
+        is_live = data.get('isLive')
+        height_re = r'-(\d+)p\.'
+        formats, subtitles = [], {}
+
+        # The old api still returns m3u8 and mpd manifest for livestreams, but these are 'fake'
+        # since all they contain is a 20s video that is completely unrelated.
+        # https://github.com/yt-dlp/yt-dlp/issues/4656#issuecomment-1214461092
+        m3u8_url = None if data.get('isLive') else traverse_obj(data, 'urlHlsAes128', 'urlHls')
+        if m3u8_url:
+            fmts, subs = self._extract_m3u8_formats_and_subtitles(
+                m3u8_url, media_id, 'mp4', m3u8_id='hls', fatal=False)
+            formats.extend(fmts)
+            self._merge_subtitles(subs, target=subtitles)
+
+        fix_url = lambda x: x.replace('//rtbf-vod.', '//rtbf.') if '/geo/drm/' in x else x
+        http_url = data.get('url')
+        if formats and http_url and re.search(height_re, http_url):
+            http_url = fix_url(http_url)
+            for m3u8_f in formats[:]:
+                height = m3u8_f.get('height')
+                if not height:
+                    continue
+                f = m3u8_f.copy()
+                del f['protocol']
+                f.update({
+                    'format_id': m3u8_f['format_id'].replace('hls-', 'http-'),
+                    'url': re.sub(height_re, '-%dp.' % height, http_url),
+                })
+                formats.append(f)
+        else:
+            sources = data.get('sources') or {}
+            for key, format_id in self._QUALITIES:
+                format_url = sources.get(key)
+                if not format_url:
+                    continue
+                height = int_or_none(self._search_regex(
+                    height_re, format_url, 'height', default=None))
+                formats.append({
+                    'format_id': format_id,
+                    'url': fix_url(format_url),
+                    'height': height,
+                })
+
+        mpd_url = None if data.get('isLive') else data.get('urlDash')
+        if mpd_url and (self.get_param('allow_unplayable_formats') or not data.get('drm')):
+            fmts, subs = self._extract_mpd_formats_and_subtitles(
+                mpd_url, media_id, mpd_id='dash', fatal=False)
+            formats.extend(fmts)
+            self._merge_subtitles(subs, target=subtitles)
+
+        audio_url = data.get('urlAudio')
+        if audio_url:
+            formats.append({
+                'format_id': 'audio',
+                'url': audio_url,
+                'vcodec': 'none',
+            })
+
+        for track in (data.get('tracks') or {}).values():
+            sub_url = track.get('url')
+            if not sub_url:
+                continue
+            subtitles.setdefault(track.get('lang') or 'fr', []).append({
+                'url': sub_url,
+            })
+
+        if not formats:
+            fmts, subs = self._get_formats_and_subtitles(url, f'live_{media_id}' if is_live else media_id)
+            formats.extend(fmts)
+            self._merge_subtitles(subs, target=subtitles)
+
+        return {
+            'id': media_id,
+            'formats': formats,
+            'title': title,
+            'description': strip_or_none(data.get('description')),
+            'thumbnail': data.get('thumbnail'),
+            'duration': float_or_none(data.get('realDuration')),
+            'timestamp': int_or_none(data.get('liveFrom')),
+            'series': data.get('programLabel'),
+            'subtitles': subtitles,
+            'is_live': is_live,
+            '_format_sort_fields': ('res', 'proto'),
+        }
+
+--- Chunk 10 ---
+File: yt_dlp/extractor/cda.py
+Lines: 103-159
+Symbol: CDAIE._perform_login
+
+    def _perform_login(self, username, password):
+        app_version = random.choice((
+            '1.2.88 build 15306',
+            '1.2.174 build 18469',
+        ))
+        android_version = random.randrange(8, 14)
+        phone_model = random.choice((
+            # x-kom.pl top selling Android smartphones, as of 2022-12-26
+            # https://www.x-kom.pl/g-4/c/1590-smartfony-i-telefony.html?f201-system-operacyjny=61322-android
+            'ASUS ZenFone 8',
+            'Motorola edge 20 5G',
+            'Motorola edge 30 neo 5G',
+            'Motorola moto g22',
+            'OnePlus Nord 2T 5G',
+            'Samsung Galaxy A32 SM‑A325F',
+            'Samsung Galaxy M13',
+            'Samsung Galaxy S20 FE 5G',
+            'Xiaomi 11T',
+            'Xiaomi POCO M4 Pro',
+            'Xiaomi Redmi 10',
+            'Xiaomi Redmi 10C',
+            'Xiaomi Redmi 9C NFC',
+            'Xiaomi Redmi Note 10 Pro',
+            'Xiaomi Redmi Note 11 Pro',
+            'Xiaomi Redmi Note 11',
+            'Xiaomi Redmi Note 11S 5G',
+            'Xiaomi Redmi Note 11S',
+            'realme 10',
+            'realme 9 Pro+',
+            'vivo Y33s',
+        ))
+        self._API_HEADERS['User-Agent'] = f'pl.cda 1.0 (version {app_version}; Android {android_version}; {phone_model})'
+
+        cached_bearer = self.cache.load(self._BEARER_CACHE, username) or {}
+        if cached_bearer.get('valid_until', 0) > datetime.datetime.now().timestamp() + 5:
+            self._API_HEADERS['Authorization'] = f'Bearer {cached_bearer["token"]}'
+            return
+
+        password_hash = base64.urlsafe_b64encode(hmac.new(
+            b's01m1Oer5IANoyBXQETzSOLWXgWs01m1Oer5bMg5xrTMMxRZ9Pi4fIPeFgIVRZ9PeXL8mPfXQETZGUAN5StRZ9P',
+            ''.join(f'{bytes((bt & 255, )).hex():0>2}'
+                    for bt in hashlib.md5(password.encode()).digest()).encode(),
+            hashlib.sha256).digest()).decode().replace('=', '')
+
+        token_res = self._download_json(
+            f'{self._BASE_API_URL}/oauth/token', None, 'Logging in', data=b'',
+            headers={**self._API_HEADERS, 'Authorization': self._LOGIN_REQUEST_AUTH},
+            query={
+                'grant_type': 'password',
+                'login': username,
+                'password': password_hash,
+            })
+        self.cache.store(self._BEARER_CACHE, username, {
+            'token': token_res['access_token'],
+            'valid_until': token_res['expires_in'] + datetime.datetime.now().timestamp(),
+        })
+        self._API_HEADERS['Authorization'] = f'Bearer {token_res["access_token"]}'
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

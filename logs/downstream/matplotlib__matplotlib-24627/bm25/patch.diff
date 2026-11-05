@@ -1,0 +1,24 @@
+diff --git a/lib/matplotlib/axes/_base.py b/lib/matplotlib/axes/_base.py
+--- lib/matplotlib/axes/_base.py
++++ lib/matplotlib/axes/_base.py
+@@ -1227,6 +1227,8 @@
+         for artist in [*self._children, self.patch]:
+             artist.axes = None
+             artist.figure = None
++        for artist in self._localaxes:
++            artist.axes = None
+         self._children = []
+         self._texts = []
+         self._artists = []
+diff --git a/lib/matplotlib/figure.py b/lib/matplotlib/figure.py
+--- lib/matplotlib/figure.py
++++ lib/matplotlib/figure.py
+@@ -1187,6 +1187,8 @@
+         for ax in tuple(self.axes):
+             ax.clear()
+             self._axstack.remove(ax)
++        for artist in self.artists:
++            artist.axes = None
+         self.artists = []
+         self.legends = []
+         self.subfigs = []

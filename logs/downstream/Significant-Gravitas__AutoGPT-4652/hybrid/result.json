@@ -1,0 +1,14 @@
+{
+  "task_id": "Significant-Gravitas__AutoGPT-4652",
+  "repository": "Significant-Gravitas/AutoGPT",
+  "base_commit": "9150f32f8b8602395534795ddd2d930a1684e419",
+  "retrieval_method": "hybrid",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 9271,
+  "output_tokens": 76,
+  "thinking_tokens": 0,
+  "total_tokens": 9347
+}

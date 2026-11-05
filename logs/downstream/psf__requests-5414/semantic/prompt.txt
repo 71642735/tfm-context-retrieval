@@ -1,0 +1,623 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Getting http://.example.com raises UnicodeError
+Attempting to get e.g. `http://.example.com` results in a `UnicodeError`. It seems like the intention so far has been to raise `InvalidUrl` instead (see e.g. [this line](https://github.com/psf/requests/blob/ca6f9af5dba09591007b15a7368bc0f006b7cc50/requests/models.py#L401)).
+
+I see there was some hesitation in fixing a similar issue (#4168) and would like to add that even catching the error just to rethrow as a requests exception would be beneficial.
+
+## Expected Result
+
+Based on PR #774: `InvalidUrl: URL has an invalid label.`
+
+## Actual Result
+
+`UnicodeError: encoding with 'idna' codec failed (UnicodeError: label empty or too long)`
+
+## Reproduction Steps
+
+```python3
+import requests
+requests.get("http://.example.com")
+```
+
+## System Information
+
+    $ python -m requests.help
+
+```
+{
+  "chardet": {
+    "version": "3.0.4"
+  },
+  "cryptography": {
+    "version": "2.8"
+  },
+  "idna": {
+    "version": "2.8"
+  },
+  "implementation": {
+    "name": "CPython",
+    "version": "3.8.0"
+  },
+  "platform": {
+    "release": "5.3.0-40-generic",
+    "system": "Linux"
+  },
+  "pyOpenSSL": {
+    "openssl_version": "1010104f",
+    "version": "19.1.0"
+  },
+  "requests": {
+    "version": "2.23.0"
+  },
+  "system_ssl": {
+    "version": "1010103f"
+  },
+  "urllib3": {
+    "version": "1.25.8"
+  },
+  "using_pyopenssl": true
+}
+```
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: requests/help.py
+Lines: 68-126
+Symbol: info
+
+def info():
+    """Generate information for a bug report."""
+    try:
+        platform_info = {
+            'system': platform.system(),
+            'release': platform.release(),
+        }
+    except IOError:
+        platform_info = {
+            'system': 'Unknown',
+            'release': 'Unknown',
+        }
+
+    implementation_info = _implementation()
+    urllib3_info = {'version': urllib3.__version__}
+    charset_normalizer_info = {'version': None}
+    chardet_info = {'version': None}
+    if charset_normalizer:
+        charset_normalizer_info = {'version': charset_normalizer.__version__}
+    if chardet:
+        chardet_info = {'version': chardet.__version__}
+
+    pyopenssl_info = {
+        'version': None,
+        'openssl_version': '',
+    }
+    if OpenSSL:
+        pyopenssl_info = {
+            'version': OpenSSL.__version__,
+            'openssl_version': '%x' % OpenSSL.SSL.OPENSSL_VERSION_NUMBER,
+        }
+    cryptography_info = {
+        'version': getattr(cryptography, '__version__', ''),
+    }
+    idna_info = {
+        'version': getattr(idna, '__version__', ''),
+    }
+
+    system_ssl = ssl.OPENSSL_VERSION_NUMBER
+    system_ssl_info = {
+        'version': '%x' % system_ssl if system_ssl is not None else ''
+    }
+
+    return {
+        'platform': platform_info,
+        'implementation': implementation_info,
+        'system_ssl': system_ssl_info,
+        'using_pyopenssl': pyopenssl is not None,
+        'using_charset_normalizer': chardet is None,
+        'pyOpenSSL': pyopenssl_info,
+        'urllib3': urllib3_info,
+        'chardet': chardet_info,
+        'charset_normalizer': charset_normalizer_info,
+        'cryptography': cryptography_info,
+        'idna': idna_info,
+        'requests': {
+            'version': requests_version,
+        },
+    }
+
+--- Chunk 2 ---
+File: requests/models.py
+Lines: 360-444
+Symbol: PreparedRequest.prepare_url
+
+    def prepare_url(self, url, params):
+        """Prepares the given HTTP URL."""
+        #: Accept objects that have string representations.
+        #: We're unable to blindly call unicode/str functions
+        #: as this will include the bytestring indicator (b'')
+        #: on python 3.x.
+        #: https://github.com/psf/requests/pull/2238
+        if isinstance(url, bytes):
+            url = url.decode('utf8')
+        else:
+            url = unicode(url) if is_py2 else str(url)
+
+        # Remove leading whitespaces from url
+        url = url.lstrip()
+
+        # Don't do any URL preparation for non-HTTP schemes like `mailto`,
+        # `data` etc to work around exceptions from `url_parse`, which
+        # handles RFC 3986 only.
+        if ':' in url and not url.lower().startswith('http'):
+            self.url = url
+            return
+
+        # Support for unicode domain names and paths.
+        try:
+            scheme, auth, host, port, path, query, fragment = parse_url(url)
+        except LocationParseError as e:
+            raise InvalidURL(*e.args)
+
+        if not scheme:
+            error = ("Invalid URL {0!r}: No schema supplied. Perhaps you meant http://{0}?")
+            error = error.format(to_native_string(url, 'utf8'))
+
+            raise MissingSchema(error)
+
+        if not host:
+            raise InvalidURL("Invalid URL %r: No host supplied" % url)
+
+        # In general, we want to try IDNA encoding the hostname if the string contains
+        # non-ASCII characters. This allows users to automatically get the correct IDNA
+        # behaviour. For strings containing only ASCII characters, we need to also verify
+        # it doesn't start with a wildcard (*), before allowing the unencoded hostname.
+        if not unicode_is_ascii(host):
+            try:
+                host = self._get_idna_encoded_host(host)
+            except UnicodeError:
+                raise InvalidURL('URL has an invalid label.')
+        elif host.startswith(u'*'):
+            raise InvalidURL('URL has an invalid label.')
+
+        # Carefully reconstruct the network location
+        netloc = auth or ''
+        if netloc:
+            netloc += '@'
+        netloc += host
+        if port:
+            netloc += ':' + str(port)
+
+        # Bare domains aren't valid URLs.
+        if not path:
+            path = '/'
+
+        if is_py2:
+            if isinstance(scheme, str):
+                scheme = scheme.encode('utf-8')
+            if isinstance(netloc, str):
+                netloc = netloc.encode('utf-8')
+            if isinstance(path, str):
+                path = path.encode('utf-8')
+            if isinstance(query, str):
+                query = query.encode('utf-8')
+            if isinstance(fragment, str):
+                fragment = fragment.encode('utf-8')
+
+        if isinstance(params, (str, bytes)):
+            params = to_native_string(params)
+
+        enc_params = self._encode_params(params)
+        if enc_params:
+            if query:
+                query = '%s&%s' % (query, enc_params)
+            else:
+                query = enc_params
+
+        url = requote_uri(urlunparse([scheme, netloc, path, None, query, fragment]))
+        self.url = url
+
+--- Chunk 3 ---
+File: tests/test_lowlevel.py
+Lines: 234-268
+Symbol: test_digestauth_only_on_4xx
+
+def test_digestauth_only_on_4xx():
+    """Ensure we only send digestauth on 4xx challenges.
+
+    See https://github.com/psf/requests/issues/3772.
+    """
+    text_200_chal = (b'HTTP/1.1 200 OK\r\n'
+                     b'Content-Length: 0\r\n'
+                     b'WWW-Authenticate: Digest nonce="6bf5d6e4da1ce66918800195d6b9130d"'
+                     b', opaque="372825293d1c26955496c80ed6426e9e", '
+                     b'realm="me@kennethreitz.com", qop=auth\r\n\r\n')
+
+    auth = requests.auth.HTTPDigestAuth('user', 'pass')
+
+    def digest_response_handler(sock):
+        # Respond to GET with a 200 containing www-authenticate header.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert request_content.startswith(b"GET / HTTP/1.1")
+        sock.send(text_200_chal)
+
+        # Verify the client didn't respond with auth.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert request_content == b''
+
+        return request_content
+
+    close_server = threading.Event()
+    server = Server(digest_response_handler, wait_to_close_event=close_server)
+
+    with server as (host, port):
+        url = 'http://{}:{}/'.format(host, port)
+        r = requests.get(url, auth=auth)
+        # Verify server didn't receive auth from us.
+        assert r.status_code == 200
+        assert len(r.history) == 0
+        close_server.set()
+
+--- Chunk 4 ---
+File: requests/__init__.py
+Lines: 57-85
+Symbol: check_compatibility
+
+def check_compatibility(urllib3_version, chardet_version, charset_normalizer_version):
+    urllib3_version = urllib3_version.split('.')
+    assert urllib3_version != ['dev']  # Verify urllib3 isn't installed from git.
+
+    # Sometimes, urllib3 only reports its version as 16.1.
+    if len(urllib3_version) == 2:
+        urllib3_version.append('0')
+
+    # Check urllib3 for compatibility.
+    major, minor, patch = urllib3_version  # noqa: F811
+    major, minor, patch = int(major), int(minor), int(patch)
+    # urllib3 >= 1.21.1, <= 1.26
+    assert major == 1
+    assert minor >= 21
+    assert minor <= 26
+
+    # Check charset_normalizer for compatibility.
+    if chardet_version:
+        major, minor, patch = chardet_version.split('.')[:3]
+        major, minor, patch = int(major), int(minor), int(patch)
+        # chardet_version >= 3.0.2, < 5.0.0
+        assert (3, 0, 2) <= (major, minor, patch) < (5, 0, 0)
+    elif charset_normalizer_version:
+        major, minor, patch = charset_normalizer_version.split('.')[:3]
+        major, minor, patch = int(major), int(minor), int(patch)
+        # charset_normalizer >= 2.0.0 < 3.0.0
+        assert (2, 0, 0) <= (major, minor, patch) < (3, 0, 0)
+    else:
+        raise Exception("You need either charset_normalizer or chardet installed")
+
+--- Chunk 5 ---
+File: requests/help.py
+Lines: 35-65
+Symbol: _implementation
+
+def _implementation():
+    """Return a dict with the Python implementation and version.
+
+    Provide both the name and the version of the Python implementation
+    currently running. For example, on CPython 2.7.5 it will return
+    {'name': 'CPython', 'version': '2.7.5'}.
+
+    This function works best on CPython and PyPy: in particular, it probably
+    doesn't work for Jython or IronPython. Future investigation should be done
+    to work out the correct shape of the code for those platforms.
+    """
+    implementation = platform.python_implementation()
+
+    if implementation == 'CPython':
+        implementation_version = platform.python_version()
+    elif implementation == 'PyPy':
+        implementation_version = '%s.%s.%s' % (sys.pypy_version_info.major,
+                                               sys.pypy_version_info.minor,
+                                               sys.pypy_version_info.micro)
+        if sys.pypy_version_info.releaselevel != 'final':
+            implementation_version = ''.join([
+                implementation_version, sys.pypy_version_info.releaselevel
+            ])
+    elif implementation == 'Jython':
+        implementation_version = platform.python_version()  # Complete Guess
+    elif implementation == 'IronPython':
+        implementation_version = platform.python_version()  # Complete Guess
+    else:
+        implementation_version = 'Unknown'
+
+    return {'name': implementation, 'version': implementation_version}
+
+--- Chunk 6 ---
+File: requests/sessions.py
+Lines: 349-409
+Symbol: Session.__init__
+
+    def __init__(self):
+
+        #: A case-insensitive dictionary of headers to be sent on each
+        #: :class:`Request <Request>` sent from this
+        #: :class:`Session <Session>`.
+        self.headers = default_headers()
+
+        #: Default Authentication tuple or object to attach to
+        #: :class:`Request <Request>`.
+        self.auth = None
+
+        #: Dictionary mapping protocol or protocol and host to the URL of the proxy
+        #: (e.g. {'http': 'foo.bar:3128', 'http://host.name': 'foo.bar:4012'}) to
+        #: be used on each :class:`Request <Request>`.
+        self.proxies = {}
+
+        #: Event-handling hooks.
+        self.hooks = default_hooks()
+
+        #: Dictionary of querystring data to attach to each
+        #: :class:`Request <Request>`. The dictionary values may be lists for
+        #: representing multivalued query parameters.
+        self.params = {}
+
+        #: Stream response content default.
+        self.stream = False
+
+        #: SSL Verification default.
+        #: Defaults to `True`, requiring requests to verify the TLS certificate at the
+        #: remote end.
+        #: If verify is set to `False`, requests will accept any TLS certificate
+        #: presented by the server, and will ignore hostname mismatches and/or
+        #: expired certificates, which will make your application vulnerable to
+        #: man-in-the-middle (MitM) attacks.
+        #: Only set this to `False` for testing.
+        self.verify = True
+
+        #: SSL client certificate default, if String, path to ssl client
+        #: cert file (.pem). If Tuple, ('cert', 'key') pair.
+        self.cert = None
+
+        #: Maximum number of redirects allowed. If the request exceeds this
+        #: limit, a :class:`TooManyRedirects` exception is raised.
+        #: This defaults to requests.models.DEFAULT_REDIRECT_LIMIT, which is
+        #: 30.
+        self.max_redirects = DEFAULT_REDIRECT_LIMIT
+
+        #: Trust environment settings for proxy configuration, default
+        #: authentication and similar.
+        self.trust_env = True
+
+        #: A CookieJar containing all currently outstanding cookies set on this
+        #: session. By default it is a
+        #: :class:`RequestsCookieJar <requests.cookies.RequestsCookieJar>`, but
+        #: may be any other ``cookielib.CookieJar`` compatible object.
+        self.cookies = cookiejar_from_dict({})
+
+        # Default connection adapters.
+        self.adapters = OrderedDict()
+        self.mount('https://', HTTPAdapter())
+        self.mount('http://', HTTPAdapter())
+
+--- Chunk 7 ---
+File: tests/test_lowlevel.py
+Lines: 188-231
+Symbol: test_digestauth_401_only_sent_once
+
+def test_digestauth_401_only_sent_once():
+    """Ensure we correctly respond to a 401 challenge once, and then
+    stop responding if challenged again.
+    """
+    text_401 = (b'HTTP/1.1 401 UNAUTHORIZED\r\n'
+                b'Content-Length: 0\r\n'
+                b'WWW-Authenticate: Digest nonce="6bf5d6e4da1ce66918800195d6b9130d"'
+                b', opaque="372825293d1c26955496c80ed6426e9e", '
+                b'realm="me@kennethreitz.com", qop=auth\r\n\r\n')
+
+    expected_digest = (b'Authorization: Digest username="user", '
+                       b'realm="me@kennethreitz.com", '
+                       b'nonce="6bf5d6e4da1ce66918800195d6b9130d", uri="/"')
+
+    auth = requests.auth.HTTPDigestAuth('user', 'pass')
+
+    def digest_failed_response_handler(sock):
+        # Respond to initial GET with a challenge.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert request_content.startswith(b"GET / HTTP/1.1")
+        sock.send(text_401)
+
+        # Verify we receive an Authorization header in response, then
+        # challenge again.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert expected_digest in request_content
+        sock.send(text_401)
+
+        # Verify the client didn't respond to second challenge.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert request_content == b''
+
+        return request_content
+
+    close_server = threading.Event()
+    server = Server(digest_failed_response_handler, wait_to_close_event=close_server)
+
+    with server as (host, port):
+        url = 'http://{}:{}/'.format(host, port)
+        r = requests.get(url, auth=auth)
+        # Verify server didn't authenticate us.
+        assert r.status_code == 401
+        assert r.history[0].status_code == 401
+        close_server.set()
+
+--- Chunk 8 ---
+File: requests/auth.py
+Lines: 28-69
+Symbol: _basic_auth_str
+
+def _basic_auth_str(username, password):
+    """Returns a Basic Auth string."""
+
+    # "I want us to put a big-ol' comment on top of it that
+    # says that this behaviour is dumb but we need to preserve
+    # it because people are relying on it."
+    #    - Lukasa
+    #
+    # These are here solely to maintain backwards compatibility
+    # for things like ints. This will be removed in 3.0.0.
+    if not isinstance(username, basestring):
+        warnings.warn(
+            "Non-string usernames will no longer be supported in Requests "
+            "3.0.0. Please convert the object you've passed in ({!r}) to "
+            "a string or bytes object in the near future to avoid "
+            "problems.".format(username),
+            category=DeprecationWarning,
+        )
+        username = str(username)
+
+    if not isinstance(password, basestring):
+        warnings.warn(
+            "Non-string passwords will no longer be supported in Requests "
+            "3.0.0. Please convert the object you've passed in ({!r}) to "
+            "a string or bytes object in the near future to avoid "
+            "problems.".format(type(password)),
+            category=DeprecationWarning,
+        )
+        password = str(password)
+    # -- End Removal --
+
+    if isinstance(username, str):
+        username = username.encode('latin1')
+
+    if isinstance(password, str):
+        password = password.encode('latin1')
+
+    authstr = 'Basic ' + to_native_string(
+        b64encode(b':'.join((username, password))).strip()
+    )
+
+    return authstr
+
+--- Chunk 9 ---
+File: tests/test_lowlevel.py
+Lines: 123-185
+Symbol: test_digestauth_401_count_reset_on_redirect
+
+def test_digestauth_401_count_reset_on_redirect():
+    """Ensure we correctly reset num_401_calls after a successful digest auth,
+    followed by a 302 redirect to another digest auth prompt.
+
+    See https://github.com/psf/requests/issues/1979.
+    """
+    text_401 = (b'HTTP/1.1 401 UNAUTHORIZED\r\n'
+                b'Content-Length: 0\r\n'
+                b'WWW-Authenticate: Digest nonce="6bf5d6e4da1ce66918800195d6b9130d"'
+                b', opaque="372825293d1c26955496c80ed6426e9e", '
+                b'realm="me@kennethreitz.com", qop=auth\r\n\r\n')
+
+    text_302 = (b'HTTP/1.1 302 FOUND\r\n'
+                b'Content-Length: 0\r\n'
+                b'Location: /\r\n\r\n')
+
+    text_200 = (b'HTTP/1.1 200 OK\r\n'
+                b'Content-Length: 0\r\n\r\n')
+
+    expected_digest = (b'Authorization: Digest username="user", '
+                       b'realm="me@kennethreitz.com", '
+                       b'nonce="6bf5d6e4da1ce66918800195d6b9130d", uri="/"')
+
+    auth = requests.auth.HTTPDigestAuth('user', 'pass')
+
+    def digest_response_handler(sock):
+        # Respond to initial GET with a challenge.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert request_content.startswith(b"GET / HTTP/1.1")
+        sock.send(text_401)
+
+        # Verify we receive an Authorization header in response, then redirect.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert expected_digest in request_content
+        sock.send(text_302)
+
+        # Verify Authorization isn't sent to the redirected host,
+        # then send another challenge.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert b'Authorization:' not in request_content
+        sock.send(text_401)
+
+        # Verify Authorization is sent correctly again, and return 200 OK.
+        request_content = consume_socket_content(sock, timeout=0.5)
+        assert expected_digest in request_content
+        sock.send(text_200)
+
+        return request_content
+
+    close_server = threading.Event()
+    server = Server(digest_response_handler, wait_to_close_event=close_server)
+
+    with server as (host, port):
+        url = 'http://{}:{}/'.format(host, port)
+        r = requests.get(url, auth=auth)
+        # Verify server succeeded in authenticating.
+        assert r.status_code == 200
+        # Verify Authorization was sent in final request.
+        assert 'Authorization' in r.request.headers
+        assert r.request.headers['Authorization'].startswith('Digest ')
+        # Verify redirect happened as we expected.
+        assert r.history[0].status_code == 302
+        close_server.set()
+
+--- Chunk 10 ---
+File: tests/test_requests.py
+Lines: 1953-1994
+Symbol: TestRequests.test_custom_redirect_mixin
+
+    def test_custom_redirect_mixin(self, httpbin):
+        """Tests a custom mixin to overwrite ``get_redirect_target``.
+
+        Ensures a subclassed ``requests.Session`` can handle a certain type of
+        malformed redirect responses.
+
+        1. original request receives a proper response: 302 redirect
+        2. following the redirect, a malformed response is given:
+            status code = HTTP 200
+            location = alternate url
+        3. the custom session catches the edge case and follows the redirect
+        """
+        url_final = httpbin('html')
+        querystring_malformed = urlencode({'location': url_final})
+        url_redirect_malformed = httpbin('response-headers?%s' % querystring_malformed)
+        querystring_redirect = urlencode({'url': url_redirect_malformed})
+        url_redirect = httpbin('redirect-to?%s' % querystring_redirect)
+        urls_test = [url_redirect,
+                     url_redirect_malformed,
+                     url_final,
+                     ]
+
+        class CustomRedirectSession(requests.Session):
+            def get_redirect_target(self, resp):
+                # default behavior
+                if resp.is_redirect:
+                    return resp.headers['location']
+                # edge case - check to see if 'location' is in headers anyways
+                location = resp.headers.get('location')
+                if location and (location != resp.url):
+                    return location
+                return None
+
+        session = CustomRedirectSession()
+        r = session.get(urls_test[0])
+        assert len(r.history) == 2
+        assert r.status_code == 200
+        assert r.history[0].status_code == 302
+        assert r.history[0].is_redirect
+        assert r.history[1].status_code == 200
+        assert not r.history[1].is_redirect
+        assert r.url == urls_test[2]
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

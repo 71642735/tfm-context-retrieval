@@ -1,0 +1,20 @@
+```diff
+--- keras/src/models/model.py
++++ keras/src/models/model.py
+@@ -107,6 +107,15 @@
+             if self.built:
+                 return
+             super().build(input_shape)
++            # For custom subclassed models without an explicit build method,
++            # calling model.build(input_shape) manually runs the forward pass
++            # (`call`) to track sublayers and build them. We should mark the model
++            # as built once this completes.
++            if not self.built:
++                self.built = True
++            # Ensure layers created during __init__ or call are marked as built
++            for layer in self._flatten_layers(include_self=False, recursive=False):
++                layer.built = True
+         else:
+             # Functional model build
+             pass
+```

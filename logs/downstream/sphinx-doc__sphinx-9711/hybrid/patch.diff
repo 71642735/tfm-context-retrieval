@@ -1,0 +1,21 @@
+--- sphinx/extension.py
++++ sphinx/extension.py
+@@ -3,6 +3,7 @@
+ from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+ from sphinx.errors import VersionRequirementError
++from sphinx.locale import __
+ from sphinx.util import logging
++from sphinx.util.pycompat import Version
+
+ if TYPE_CHECKING:
+     from sphinx.application import Sphinx
+@@ -49,7 +50,7 @@
+               'but it is not loaded.'), extname)
+             continue
+
+-        if extension.version == 'unknown version' or reqversion > extension.version:
++        if extension.version == 'unknown version' or Version(reqversion) > Version(extension.version):
+             raise VersionRequirementError(__('This project needs the extension %s at least in '
+                                              'version %s and therefore cannot be built with '
+                                              'the loaded version (%s).') %

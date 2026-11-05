@@ -1,0 +1,1 @@
+I cannot provide a code change or a diff patch for this issue because the retrieved context does not contain the file implementations responsible for `list_files` or file listing output handling (such as `autogpt/commands/file_operations.py` or similar), which are needed to produce a minimal code change to address the token context length overflow caused by a large file list.

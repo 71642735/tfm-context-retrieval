@@ -1,0 +1,14 @@
+{
+  "task_id": "scikit-learn__scikit-learn-13439",
+  "repository": "scikit-learn/scikit-learn",
+  "base_commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+  "retrieval_method": "bm25",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 7724,
+  "output_tokens": 214,
+  "thinking_tokens": 0,
+  "total_tokens": 7938
+}

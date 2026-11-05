@@ -1,0 +1,17 @@
+```diff
+diff --git a/sympy/geometry/point.py b/sympy/geometry/point.py
+--- a/sympy/geometry/point.py
++++ b/sympy/geometry/point.py
+@@ -218,7 +218,10 @@
+         """
+         try:
+             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+-        except TypeError:
++        except (TypeError, ValueError):
++            if hasattr(other, '__mul__'):
++                return other.__radd__(self)
++            raise GeometryError("Don't know how to add {} and a Point object".format(other))
+             raise GeometryError("Don't know how to add {} and a Point object".format(other))
+ 
+         coords = [simplify(a + b) for a, b in zip(s, o)]
+```

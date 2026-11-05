@@ -1,0 +1,20 @@
+--- django/db/models/aggregates.py
+--- django/db/models/aggregates.py
++++ django/db/models/aggregates.py
+@@ -68,7 +68,7 @@
+ 
+     def get_source_expressions(self):
+         return [self.condition] if self.condition else []
+ 
+     def set_source_expressions(self, exprs):
+         self.condition = exprs[0] if exprs else None
+ 
+@@ -83,7 +83,7 @@
+         if self.distinct:
+             extra['distinct'] = 'DISTINCT'
+         if self.condition:
+-            extra['condition'] = self.condition.as_sql(compiler, connection, template='CASE WHEN %(condition)s THEN %(value)s')
++            extra['condition'] = self.condition.as_sql(compiler, connection, template=' CASE WHEN %(condition)s THEN %(value)s')
+         template = self.template
+         if extra.get('distinct') and extra.get('condition'):
+             template = self.distinct_include_template

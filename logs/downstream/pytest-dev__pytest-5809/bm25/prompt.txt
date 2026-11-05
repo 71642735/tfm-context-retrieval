@@ -1,0 +1,330 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Lexer "python3" in --pastebin feature causes HTTP errors
+The `--pastebin` option currently submits the output of `pytest` to `bpaste.net` using `lexer=python3`: https://github.com/pytest-dev/pytest/blob/d47b9d04d4cf824150caef46c9c888779c1b3f58/src/_pytest/pastebin.py#L68-L73
+
+For some `contents`, this will raise a "HTTP Error 400: Bad Request".
+
+As an example:
+~~~
+>>> from urllib.request import urlopen
+>>> with open("data.txt", "rb") as in_fh:
+...     data = in_fh.read()
+>>> url = "https://bpaste.net"
+>>> urlopen(url, data=data)
+HTTPError: Bad Request
+~~~
+with the attached [data.txt](https://github.com/pytest-dev/pytest/files/3561212/data.txt).
+
+This is the underlying cause for the problems mentioned in #5764.
+
+The call goes through fine if `lexer` is changed from `python3` to `text`. This would seem like the right thing to do in any case: the console output of a `pytest` run that is being uploaded is not Python code, but arbitrary text.
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: testing/test_pastebin.py
+Lines: 123-133
+Symbol: TestPaste.test_create_new_paste
+
+    def test_create_new_paste(self, pastebin, mocked_urlopen):
+        result = pastebin.create_new_paste(b"full-paste-contents")
+        assert result == "https://bpaste.net/show/3c0c6750bd"
+        assert len(mocked_urlopen) == 1
+        url, data = mocked_urlopen[0]
+        assert type(data) is bytes
+        lexer = "python3" if sys.version_info[0] >= 3 else "python"
+        assert url == "https://bpaste.net"
+        assert "lexer=%s" % lexer in data.decode()
+        assert "code=full-paste-contents" in data.decode()
+        assert "expiry=1week" in data.decode()
+
+--- Chunk 2 ---
+File: src/_pytest/pastebin.py
+Lines: 65-91
+Symbol: create_new_paste
+
+def create_new_paste(contents):
+    """
+    Creates a new paste using bpaste.net service.
+
+    :contents: paste contents as utf-8 encoded bytes
+    :returns: url to the pasted contents
+    """
+    import re
+
+    if sys.version_info < (3, 0):
+        from urllib import urlopen, urlencode
+    else:
+        from urllib.request import urlopen
+        from urllib.parse import urlencode
+
+    params = {
+        "code": contents,
+        "lexer": "python3" if sys.version_info[0] >= 3 else "python",
+        "expiry": "1week",
+    }
+    url = "https://bpaste.net"
+    response = urlopen(url, data=urlencode(params).encode("ascii")).read()
+    m = re.search(r'href="/raw/(\w+)"', response.decode("utf-8"))
+    if m:
+        return "%s/show/%s" % (url, m.group(1))
+    else:
+        return "bad response: " + response
+
+--- Chunk 3 ---
+File: testing/test_pastebin.py
+Lines: 96-121
+Symbol: TestPaste.mocked_urlopen
+
+    def mocked_urlopen(self, monkeypatch):
+        """
+        monkeypatch the actual urlopen calls done by the internal plugin
+        function that connects to bpaste service.
+        """
+        calls = []
+
+        def mocked(url, data):
+            calls.append((url, data))
+
+            class DummyFile(object):
+                def read(self):
+                    # part of html of a normal response
+                    return b'View <a href="/raw/3c0c6750bd">raw</a>.'
+
+            return DummyFile()
+
+        if sys.version_info < (3, 0):
+            import urllib
+
+            monkeypatch.setattr(urllib, "urlopen", mocked)
+        else:
+            import urllib.request
+
+            monkeypatch.setattr(urllib.request, "urlopen", mocked)
+        return calls
+
+--- Chunk 4 ---
+File: src/_pytest/monkeypatch.py
+Lines: 264-285
+Symbol: MonkeyPatch.syspath_prepend
+
+    def syspath_prepend(self, path):
+        """ Prepend ``path`` to ``sys.path`` list of import locations. """
+        from pkg_resources import fixup_namespace_packages
+
+        if self._savesyspath is None:
+            self._savesyspath = sys.path[:]
+        sys.path.insert(0, str(path))
+
+        # https://github.com/pypa/setuptools/blob/d8b901bc/docs/pkg_resources.txt#L162-L171
+        fixup_namespace_packages(str(path))
+
+        # A call to syspathinsert() usually means that the caller wants to
+        # import some dynamically created files, thus with python3 we
+        # invalidate its import caches.
+        # This is especially important when any namespace package is in used,
+        # since then the mtime based FileFinder cache (that gets created in
+        # this case already) gets not invalidated when writing the new files
+        # quickly afterwards.
+        if sys.version_info >= (3, 3):
+            from importlib import invalidate_caches
+
+            invalidate_caches()
+
+--- Chunk 5 ---
+File: src/_pytest/hookspec.py
+Lines: 402-415
+Symbol: pytest_report_from_serializable
+
+def pytest_report_from_serializable(config, data):
+    """
+    .. warning::
+        This hook is experimental and subject to change between pytest releases, even
+        bug fixes.
+
+        The intent is for this to be used by plugins maintained by the core-devs, such
+        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
+        'resultlog' plugin.
+
+        In the future it might become part of the public hook API.
+
+    Restores a report object previously serialized with pytest_report_to_serializable().
+    """
+
+--- Chunk 6 ---
+File: src/_pytest/capture.py
+Lines: 763-785
+Symbol: _readline_workaround
+
+def _readline_workaround():
+    """
+    Ensure readline is imported so that it attaches to the correct stdio
+    handles on Windows.
+
+    Pdb uses readline support where available--when not running from the Python
+    prompt, the readline module is not imported until running the pdb REPL.  If
+    running pytest with the --pdb option this means the readline module is not
+    imported until after I/O capture has been started.
+
+    This is a problem for pyreadline, which is often used to implement readline
+    support on Windows, as it does not attach to the correct handles for stdout
+    and/or stdin if they have been redirected by the FDCapture mechanism.  This
+    workaround ensures that readline is imported before I/O capture is setup so
+    that it can attach to the actual stdin/out for the console.
+
+    See https://github.com/pytest-dev/pytest/pull/1281
+    """
+    if sys.platform.startswith("win32"):
+        try:
+            import readline  # noqa: F401
+        except ImportError:
+            pass
+
+--- Chunk 7 ---
+File: src/_pytest/monkeypatch.py
+Lines: 114-134
+Symbol: MonkeyPatch.context
+
+    def context(self):
+        """
+        Context manager that returns a new :class:`MonkeyPatch` object which
+        undoes any patching done inside the ``with`` block upon exit:
+
+        .. code-block:: python
+
+            import functools
+            def test_partial(monkeypatch):
+                with monkeypatch.context() as m:
+                    m.setattr(functools, "partial", 3)
+
+        Useful in situations where it is desired to undo some patches before the test ends,
+        such as mocking ``stdlib`` functions that might break pytest itself if mocked (for examples
+        of this see `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_.
+        """
+        m = MonkeyPatch()
+        try:
+            yield m
+        finally:
+            m.undo()
+
+--- Chunk 8 ---
+File: testing/python/collect.py
+Lines: 1201-1226
+Symbol: test_dont_collect_non_function_callable
+
+def test_dont_collect_non_function_callable(testdir):
+    """Test for issue https://github.com/pytest-dev/pytest/issues/331
+
+    In this case an INTERNALERROR occurred trying to report the failure of
+    a test like this one because py test failed to get the source lines.
+    """
+    testdir.makepyfile(
+        """
+        class Oh(object):
+            def __call__(self):
+                pass
+
+        test_a = Oh()
+
+        def test_real():
+            pass
+    """
+    )
+    result = testdir.runpytest("-rw")
+    result.stdout.fnmatch_lines(
+        [
+            "*collected 1 item*",
+            "*test_dont_collect_non_function_callable.py:2: *cannot collect 'test_a' because it is not a function*",
+            "*1 passed, 1 warnings in *",
+        ]
+    )
+
+--- Chunk 9 ---
+File: src/_pytest/hookspec.py
+Lines: 384-398
+Symbol: pytest_report_to_serializable
+
+def pytest_report_to_serializable(config, report):
+    """
+    .. warning::
+        This hook is experimental and subject to change between pytest releases, even
+        bug fixes.
+
+        The intent is for this to be used by plugins maintained by the core-devs, such
+        as ``pytest-xdist``, ``pytest-subtests``, and as a replacement for the internal
+        'resultlog' plugin.
+
+        In the future it might become part of the public hook API.
+
+    Serializes the given report object into a data structure suitable for sending
+    over the wire, e.g. converted to JSON.
+    """
+
+--- Chunk 10 ---
+File: src/_pytest/capture.py
+Lines: 788-839
+Symbol: _py36_windowsconsoleio_workaround
+
+def _py36_windowsconsoleio_workaround(stream):
+    """
+    Python 3.6 implemented unicode console handling for Windows. This works
+    by reading/writing to the raw console handle using
+    ``{Read,Write}ConsoleW``.
+
+    The problem is that we are going to ``dup2`` over the stdio file
+    descriptors when doing ``FDCapture`` and this will ``CloseHandle`` the
+    handles used by Python to write to the console. Though there is still some
+    weirdness and the console handle seems to only be closed randomly and not
+    on the first call to ``CloseHandle``, or maybe it gets reopened with the
+    same handle value when we suspend capturing.
+
+    The workaround in this case will reopen stdio with a different fd which
+    also means a different handle by replicating the logic in
+    "Py_lifecycle.c:initstdio/create_stdio".
+
+    :param stream: in practice ``sys.stdout`` or ``sys.stderr``, but given
+        here as parameter for unittesting purposes.
+
+    See https://github.com/pytest-dev/py/issues/103
+    """
+    if not sys.platform.startswith("win32") or sys.version_info[:2] < (3, 6):
+        return
+
+    # bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666)
+    if not hasattr(stream, "buffer"):
+        return
+
+    buffered = hasattr(stream.buffer, "raw")
+    raw_stdout = stream.buffer.raw if buffered else stream.buffer
+
+    if not isinstance(raw_stdout, io._WindowsConsoleIO):
+        return
+
+    def _reopen_stdio(f, mode):
+        if not buffered and mode[0] == "w":
+            buffering = 0
+        else:
+            buffering = -1
+
+        return io.TextIOWrapper(
+            open(os.dup(f.fileno()), mode, buffering),
+            f.encoding,
+            f.errors,
+            f.newlines,
+            f.line_buffering,
+        )
+
+    sys.stdin = _reopen_stdio(sys.stdin, "rb")
+    sys.stdout = _reopen_stdio(sys.stdout, "wb")
+    sys.stderr = _reopen_stdio(sys.stderr, "wb")
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

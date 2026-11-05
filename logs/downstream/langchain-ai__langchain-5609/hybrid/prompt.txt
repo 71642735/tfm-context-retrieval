@@ -1,0 +1,578 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+OutputParsers currently allows model to hallucinate the output of an action
+### System Info
+
+The MRKL and chat output parsers currently will allow an LLM response to generate a valid action, as well as hallucinate a "final answer" based on that response.
+
+[Logic](https://github.com/hwchase17/langchain/blob/master/langchain/agents/chat/output_parser.py#L15)
+
+This is because the parser is returning an AgentFinish object immediately if `FINAL_ANSWER_ACTION` is in the text, rather than checking if the text also includes a valid action. I had this appear when using the Python agent, where the LLM returned a code block as the action, but simultaneously hallucinated the output and a final answer in one response. (In this case, it was quite obvious because the code block referred to a database which does not exist)
+
+I'm not sure if there are any situations where it is desired that a response should output an action as well as an answer?
+
+If this is not desired behaviour, it can be easily fixable by raising an exception if a response includes both a valid action, and "final answer" rather than returning immedately from either condition.
+
+### Who can help?
+
+@hwchase17 @agola11 
+
+### Information
+
+- [ ] The official example notebooks/scripts
+- [ ] My own modified scripts
+
+### Related Components
+
+- [ ] LLMs/Chat Models
+- [ ] Embedding Models
+- [ ] Prompts / Prompt Templates / Prompt Selectors
+- [X] Output Parsers
+- [ ] Document Loaders
+- [ ] Vector Stores / Retrievers
+- [ ] Memory
+- [ ] Agents / Agent Executors
+- [ ] Tools / Toolkits
+- [ ] Chains
+- [ ] Callbacks/Tracing
+- [ ] Async
+
+### Reproduction
+
+````py
+from langchain.agents.chat.output_parser import ChatOutputParser
+
+parser = ChatOutputParser()
+
+valid_action = """Action:
+```
+{
+"action": "Python REPL",
+"action_input": "print(\'Hello world!\')"
+}
+```
+final_answer = """Final Answer: Goodbye world!"""
+
+print(parser.parse(valid_action))  # outputs an AgentFinish
+print(parser.parse(final_answer))  # outputs an AgentAction
+print(parser.parse(valid_action + final_answer))  # outputs an AgentFinish, should probably raise an Exception
+````
+
+### Expected behavior
+
+An exception should likely be raised if an LLM returns a response that both includes a final answer, and a parse-able action, rather than skipping the action and returning the final answer, since it probably hallucinated an output/observation from the action.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: langchain/agents/mrkl/base.py
+Lines: 151-198
+Symbol: MRKLChain.from_chains
+
+    def from_chains(
+        cls, llm: BaseLanguageModel, chains: List[ChainConfig], **kwargs: Any
+    ) -> AgentExecutor:
+        """User friendly way to initialize the MRKL chain.
+
+        This is intended to be an easy way to get up and running with the
+        MRKL chain.
+
+        Args:
+            llm: The LLM to use as the agent LLM.
+            chains: The chains the MRKL system has access to.
+            **kwargs: parameters to be passed to initialization.
+
+        Returns:
+            An initialized MRKL chain.
+
+        Example:
+            .. code-block:: python
+
+                from langchain import LLMMathChain, OpenAI, SerpAPIWrapper, MRKLChain
+                from langchain.chains.mrkl.base import ChainConfig
+                llm = OpenAI(temperature=0)
+                search = SerpAPIWrapper()
+                llm_math_chain = LLMMathChain(llm=llm)
+                chains = [
+                    ChainConfig(
+                        action_name = "Search",
+                        action=search.search,
+                        action_description="useful for searching"
+                    ),
+                    ChainConfig(
+                        action_name="Calculator",
+                        action=llm_math_chain.run,
+                        action_description="useful for doing math"
+                    )
+                ]
+                mrkl = MRKLChain.from_chains(llm, chains)
+        """
+        tools = [
+            Tool(
+                name=c.action_name,
+                func=c.action,
+                description=c.action_description,
+            )
+            for c in chains
+        ]
+        agent = ZeroShotAgent.from_llm_and_tools(llm, tools)
+        return cls(agent=agent, tools=tools, **kwargs)
+
+--- Chunk 2 ---
+File: langchain/agents/mrkl/output_parser.py
+Lines: 15-53
+Symbol: MRKLOutputParser.parse
+
+    def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+        if FINAL_ANSWER_ACTION in text:
+            return AgentFinish(
+                {"output": text.split(FINAL_ANSWER_ACTION)[-1].strip()}, text
+            )
+        # \s matches against tab/newline/whitespace
+        regex = (
+            r"Action\s*\d*\s*:[\s]*(.*?)[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
+        )
+        match = re.search(regex, text, re.DOTALL)
+        if not match:
+            if not re.search(r"Action\s*\d*\s*:[\s]*(.*?)", text, re.DOTALL):
+                raise OutputParserException(
+                    f"Could not parse LLM output: `{text}`",
+                    observation="Invalid Format: Missing 'Action:' after 'Thought:'",
+                    llm_output=text,
+                    send_to_llm=True,
+                )
+            elif not re.search(
+                r"[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)", text, re.DOTALL
+            ):
+                raise OutputParserException(
+                    f"Could not parse LLM output: `{text}`",
+                    observation="Invalid Format:"
+                    " Missing 'Action Input:' after 'Action:'",
+                    llm_output=text,
+                    send_to_llm=True,
+                )
+            else:
+                raise OutputParserException(f"Could not parse LLM output: `{text}`")
+        action = match.group(1).strip()
+        action_input = match.group(2)
+
+        tool_input = action_input.strip(" ")
+        # ensure if its a well formed SQL query we don't remove any trailing " chars
+        if tool_input.startswith("SELECT ") is False:
+            tool_input = tool_input.strip('"')
+
+        return AgentAction(action, tool_input, text)
+
+--- Chunk 3 ---
+File: langchain/agents/agent.py
+Lines: 552-592
+Symbol: Agent.return_stopped_response
+
+    def return_stopped_response(
+        self,
+        early_stopping_method: str,
+        intermediate_steps: List[Tuple[AgentAction, str]],
+        **kwargs: Any,
+    ) -> AgentFinish:
+        """Return response when agent has been stopped due to max iterations."""
+        if early_stopping_method == "force":
+            # `force` just returns a constant string
+            return AgentFinish(
+                {"output": "Agent stopped due to iteration limit or time limit."}, ""
+            )
+        elif early_stopping_method == "generate":
+            # Generate does one final forward pass
+            thoughts = ""
+            for action, observation in intermediate_steps:
+                thoughts += action.log
+                thoughts += (
+                    f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}"
+                )
+            # Adding to the previous steps, we now tell the LLM to make a final pred
+            thoughts += (
+                "\n\nI now need to return a final answer based on the previous steps:"
+            )
+            new_inputs = {"agent_scratchpad": thoughts, "stop": self._stop}
+            full_inputs = {**kwargs, **new_inputs}
+            full_output = self.llm_chain.predict(**full_inputs)
+            # We try to extract a final answer
+            parsed_output = self.output_parser.parse(full_output)
+            if isinstance(parsed_output, AgentFinish):
+                # If we can extract, we send the correct stuff
+                return parsed_output
+            else:
+                # If we can extract, but the tool is not the final tool,
+                # we just return the full output
+                return AgentFinish({"output": full_output}, full_output)
+        else:
+            raise ValueError(
+                "early_stopping_method should be one of `force` or `generate`, "
+                f"got {early_stopping_method}"
+            )
+
+--- Chunk 4 ---
+File: langchain/llms/huggingface_hub.py
+Lines: 89-129
+Symbol: HuggingFaceHub._call
+
+    def _call(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+    ) -> str:
+        """Call out to HuggingFace Hub's inference endpoint.
+
+        Args:
+            prompt: The prompt to pass into the model.
+            stop: Optional list of stop words to use when generating.
+
+        Returns:
+            The string generated by the model.
+
+        Example:
+            .. code-block:: python
+
+                response = hf("Tell me a joke.")
+        """
+        _model_kwargs = self.model_kwargs or {}
+        response = self.client(inputs=prompt, params=_model_kwargs)
+        if "error" in response:
+            raise ValueError(f"Error raised by inference API: {response['error']}")
+        if self.client.task == "text-generation":
+            # Text generation return includes the starter text.
+            text = response[0]["generated_text"][len(prompt) :]
+        elif self.client.task == "text2text-generation":
+            text = response[0]["generated_text"]
+        elif self.client.task == "summarization":
+            text = response[0]["summary_text"]
+        else:
+            raise ValueError(
+                f"Got invalid task {self.client.task}, "
+                f"currently only {VALID_TASKS} are supported"
+            )
+        if stop is not None:
+            # This is a bit hacky, but I can't figure out a better way to enforce
+            # stop tokens when making calls to huggingface_hub.
+            text = enforce_stop_tokens(text, stop)
+        return text
+
+--- Chunk 5 ---
+File: langchain/experimental/autonomous_agents/autogpt/agent.py
+Lines: 79-141
+Symbol: AutoGPT.run
+
+    def run(self, goals: List[str]) -> str:
+        user_input = (
+            "Determine which next command to use, "
+            "and respond using the format specified above:"
+        )
+        # Interaction Loop
+        loop_count = 0
+        while True:
+            # Discontinue if continuous limit is reached
+            loop_count += 1
+
+            # Send message to AI, get response
+            assistant_reply = self.chain.run(
+                goals=goals,
+                messages=self.full_message_history,
+                memory=self.memory,
+                user_input=user_input,
+            )
+
+            # Print Assistant thoughts
+            print(assistant_reply)
+            self.full_message_history.append(HumanMessage(content=user_input))
+            self.full_message_history.append(AIMessage(content=assistant_reply))
+
+            # Get command name and arguments
+            action = self.output_parser.parse(assistant_reply)
+            tools = {t.name: t for t in self.tools}
+            if action.name == FINISH_NAME:
+                return action.args["response"]
+            if action.name in tools:
+                tool = tools[action.name]
+                try:
+                    observation = tool.run(action.args)
+                except ValidationError as e:
+                    observation = (
+                        f"Validation Error in args: {str(e)}, args: {action.args}"
+                    )
+                except Exception as e:
+                    observation = (
+                        f"Error: {str(e)}, {type(e).__name__}, args: {action.args}"
+                    )
+                result = f"Command {tool.name} returned: {observation}"
+            elif action.name == "ERROR":
+                result = f"Error: {action.args}. "
+            else:
+                result = (
+                    f"Unknown command '{action.name}'. "
+                    f"Please refer to the 'COMMANDS' list for available "
+                    f"commands and only respond in the specified JSON format."
+                )
+
+            memory_to_add = (
+                f"Assistant Reply: {assistant_reply} " f"\nResult: {result} "
+            )
+            if self.feedback_tool is not None:
+                feedback = f"\n{self.feedback_tool.run('Input: ')}"
+                if feedback in {"q", "stop"}:
+                    print("EXITING")
+                    return "EXITING"
+                memory_to_add += feedback
+
+            self.memory.add_documents([Document(page_content=memory_to_add)])
+            self.full_message_history.append(SystemMessage(content=result))
+
+--- Chunk 6 ---
+File: langchain/llms/aleph_alpha.py
+Lines: 204-242
+Symbol: AlephAlpha._call
+
+    def _call(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+    ) -> str:
+        """Call out to Aleph Alpha's completion endpoint.
+
+        Args:
+            prompt: The prompt to pass into the model.
+            stop: Optional list of stop words to use when generating.
+
+        Returns:
+            The string generated by the model.
+
+        Example:
+            .. code-block:: python
+
+                response = alpeh_alpha("Tell me a joke.")
+        """
+        from aleph_alpha_client import CompletionRequest, Prompt
+
+        params = self._default_params
+        if self.stop_sequences is not None and stop is not None:
+            raise ValueError(
+                "stop sequences found in both the input and default params."
+            )
+        elif self.stop_sequences is not None:
+            params["stop_sequences"] = self.stop_sequences
+        else:
+            params["stop_sequences"] = stop
+        request = CompletionRequest(prompt=Prompt.from_text(prompt), **params)
+        response = self.client.complete(model=self.model, request=request)
+        text = response.completions[0].completion
+        # If stop tokens are provided, Aleph Alpha's endpoint returns them.
+        # In order to make this consistent with other endpoints, we strip them.
+        if stop is not None or self.stop_sequences is not None:
+            text = enforce_stop_tokens(text, params["stop_sequences"])
+        return text
+
+--- Chunk 7 ---
+File: langchain/llms/anyscale.py
+Lines: 86-120
+Symbol: Anyscale._call
+
+    def _call(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+    ) -> str:
+        """Call out to Anyscale Service endpoint.
+        Args:
+            prompt: The prompt to pass into the model.
+            stop: Optional list of stop words to use when generating.
+        Returns:
+            The string generated by the model.
+        Example:
+            .. code-block:: python
+                response = anyscale("Tell me a joke.")
+        """
+
+        anyscale_service_endpoint = (
+            f"{self.anyscale_service_url}/{self.anyscale_service_route}"
+        )
+        headers = {"Authorization": f"Bearer {self.anyscale_service_token}"}
+        body = {"prompt": prompt}
+        resp = requests.post(anyscale_service_endpoint, headers=headers, json=body)
+
+        if resp.status_code != 200:
+            raise ValueError(
+                f"Error returned by service, status code {resp.status_code}"
+            )
+        text = resp.text
+
+        if stop is not None:
+            # This is a bit hacky, but I can't figure out a better way to enforce
+            # stop tokens when making calls to huggingface_hub.
+            text = enforce_stop_tokens(text, stop)
+        return text
+
+--- Chunk 8 ---
+File: langchain/prompts/prompt.py
+Lines: 79-107
+Symbol: PromptTemplate.from_examples
+
+    def from_examples(
+        cls,
+        examples: List[str],
+        suffix: str,
+        input_variables: List[str],
+        example_separator: str = "\n\n",
+        prefix: str = "",
+        **kwargs: Any,
+    ) -> PromptTemplate:
+        """Take examples in list format with prefix and suffix to create a prompt.
+
+        Intended to be used as a way to dynamically create a prompt from examples.
+
+        Args:
+            examples: List of examples to use in the prompt.
+            suffix: String to go after the list of examples. Should generally
+                set up the user's input.
+            input_variables: A list of variable names the final prompt template
+                will expect.
+            example_separator: The separator to use in between examples. Defaults
+                to two new line characters.
+            prefix: String that should go before any examples. Generally includes
+                examples. Default to an empty string.
+
+        Returns:
+            The final prompt generated.
+        """
+        template = example_separator.join([prefix, *examples, suffix])
+        return cls(input_variables=input_variables, template=template, **kwargs)
+
+--- Chunk 9 ---
+File: langchain/document_loaders/sitemap.py
+Lines: 27-72
+Symbol: SitemapLoader.__init__
+
+    def __init__(
+        self,
+        web_path: str,
+        filter_urls: Optional[List[str]] = None,
+        parsing_function: Optional[Callable] = None,
+        blocksize: Optional[int] = None,
+        blocknum: int = 0,
+        meta_function: Optional[Callable] = None,
+        is_local: bool = False,
+    ):
+        """Initialize with webpage path and optional filter URLs.
+
+        Args:
+            web_path: url of the sitemap. can also be a local path
+            filter_urls: list of strings or regexes that will be applied to filter the
+                urls that are parsed and loaded
+            parsing_function: Function to parse bs4.Soup output
+            blocksize: number of sitemap locations per block
+            blocknum: the number of the block that should be loaded - zero indexed
+            meta_function: Function to parse bs4.Soup output for metadata
+                remember when setting this method to also copy metadata["loc"]
+                to metadata["source"] if you are using this field
+            is_local: whether the sitemap is a local file
+        """
+
+        if blocksize is not None and blocksize < 1:
+            raise ValueError("Sitemap blocksize should be at least 1")
+
+        if blocknum < 0:
+            raise ValueError("Sitemap blocknum can not be lower then 0")
+
+        try:
+            import lxml  # noqa:F401
+        except ImportError:
+            raise ImportError(
+                "lxml package not found, please install it with " "`pip install lxml`"
+            )
+
+        super().__init__(web_path)
+
+        self.filter_urls = filter_urls
+        self.parsing_function = parsing_function or _default_parsing_function
+        self.meta_function = meta_function or _default_meta_function
+        self.blocksize = blocksize
+        self.blocknum = blocknum
+        self.is_local = is_local
+
+--- Chunk 10 ---
+File: langchain/embeddings/elasticsearch.py
+Lines: 117-179
+Symbol: ElasticsearchEmbeddings.from_es_connection
+
+    def from_es_connection(
+        cls,
+        model_id: str,
+        es_connection: Elasticsearch,
+        input_field: str = "text_field",
+    ) -> ElasticsearchEmbeddings:
+        """
+        Instantiate embeddings from an existing Elasticsearch connection.
+
+        This method provides a way to create an instance of the ElasticsearchEmbeddings
+        class using an existing Elasticsearch connection. The connection object is used
+        to create an MlClient, which is then used to initialize the
+        ElasticsearchEmbeddings instance.
+
+        Args:
+        model_id (str): The model_id of the model deployed in the Elasticsearch cluster.
+        es_connection (elasticsearch.Elasticsearch): An existing Elasticsearch
+        connection object. input_field (str, optional): The name of the key for the
+        input text field in the document. Defaults to 'text_field'.
+
+        Returns:
+        ElasticsearchEmbeddings: An instance of the ElasticsearchEmbeddings class.
+
+        Example:
+            .. code-block:: python
+
+                from elasticsearch import Elasticsearch
+
+                from langchain.embeddings import ElasticsearchEmbeddings
+
+                # Define the model ID and input field name (if different from default)
+                model_id = "your_model_id"
+                # Optional, only if different from 'text_field'
+                input_field = "your_input_field"
+
+                # Create Elasticsearch connection
+                es_connection = Elasticsearch(
+                    hosts=["localhost:9200"], http_auth=("user", "password")
+                )
+
+                # Instantiate ElasticsearchEmbeddings using the existing connection
+                embeddings = ElasticsearchEmbeddings.from_es_connection(
+                    model_id,
+                    es_connection,
+                    input_field=input_field,
+                )
+
+                documents = [
+                    "This is an example document.",
+                    "Another example document to generate embeddings for.",
+                ]
+                embeddings_generator.embed_documents(documents)
+        """
+        # Importing MlClient from elasticsearch.client within the method to
+        # avoid unnecessary import if the method is not used
+        from elasticsearch.client import MlClient
+
+        # Create an MlClient from the given Elasticsearch connection
+        client = MlClient(es_connection)
+
+        # Return a new instance of the ElasticsearchEmbeddings class with
+        # the MlClient, model_id, and input_field
+        return cls(client, model_id, input_field=input_field)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

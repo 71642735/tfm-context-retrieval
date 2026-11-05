@@ -1,0 +1,13 @@
+```diff
+--- langchain/document_loaders/web_base.py
++++ langchain/document_loaders/web_base.py
+@@ -53,6 +53,8 @@
+         self.session = requests.Session()
+         if self.headers:
+             self.session.headers.update(self.headers)
++        if self.header_template:
++            self.session.headers.update(self.header_template)
+ 
+     @property
+     def web_path(self) -> str:
+```

@@ -1,0 +1,48 @@
+```diff
+--- keras/src/layers/layer.py
++++ keras/src/layers/layer.py
+@@ -358,7 +358,11 @@
+     def build(self, input_shape):
+         self._check_super_called()
+         if utils.is_default(self.build) and might_have_unbuilt_state(self):
+-            warnings.warn(
++            from keras.src.models.model import Model
++
++            if isinstance(self, Model):
++                pass
++            else:
++                warnings.warn(
+                 f"`build()` was called on layer '{self.name}', however "
+                 "the layer does not have a `build()` method implemented "
+                 "and it looks like it has unbuilt state. This will cause "
+@@ -366,6 +370,7 @@
+                 "actually built, which may cause failures down the line. "
+                 "Make sure to implement a proper `build()` method."
+             )
++
+         self.built = True
+ 
+     def _check_super_called(self):
+--- keras/src/utils/summary_utils.py
++++ keras/src/utils/summary_utils.py
+@@ -194,11 +194,18 @@
+         name = rich.markup.escape(name)
+         name += f" ({highlight_symbol(rich.markup.escape(cls_name))})"
+ 
+-        if not hasattr(layer, "built"):
++        from keras.src.models.model import Model
++
++        if isinstance(layer, Model):
++            if not layer.built:
++                params = highlight_number(0) + " (unbuilt)"
++            else:
++                params = highlight_number(f"{layer.count_params():,}")
++        elif not hasattr(layer, "built"):
+             params = highlight_number(0)
+         elif not layer.built:
+             params = highlight_number(0) + " (unbuilt)"
+         else:
+             params = highlight_number(f"{layer.count_params():,}")
+ 
+         fields = [name, output_shape, params]
+```

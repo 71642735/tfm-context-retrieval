@@ -1,0 +1,46 @@
+diff --git a/keras/backend/jax/distribution_lib.py b/keras/backend/jax/distribution_lib.py
+--- a/keras/backend/jax/distribution_lib.py
++++ b/keras/backend/jax/distribution_lib.py
+@@ -190,17 +190,17 @@
+ def initialize(job_addresses, num_processes, process_id):
+     if job_addresses and "," in job_addresses:
+         # When user provide all the job addresses, we will split and get the
+         # first one, which is the coordinator.
+         job_addresses = job_addresses.split(",")
+         # Do a sanity check to make sure the number of addresses also match
+         # the num_processes.
+         if num_processes is not None and num_processes != len(job_addresses):
+             raise ValueError(
+                 f"The provided job_addresses {job_addresses} has "
+                 f"{len(job_addresses)} jobs, but num_processes is "
+                 f"{num_processes}"
+             )
+-        corrdinator_address = job_addresses[0]
++        coordinator_address = job_addresses[0]
+     else:
+-        corrdinator_address = job_addresses
++        coordinator_address = job_addresses
+ 
+     jax.distributed.initialize(
+-        corrdinator_address=corrdinator_address,
++        coordinator_address=coordinator_address,
+         num_processes=num_processes,
+         process_id=process_id,
+     )
+diff --git a/keras/backend/jax/distribution_lib_test.py b/keras/backend/jax/distribution_lib_test.py
+--- a/keras/backend/jax/distribution_lib_test.py
++++ b/keras/backend/jax/distribution_lib_test.py
+@@ -51,5 +51,5 @@
+     def test_initialize_with_all_job_addresses(self, mock_jax_initialze):
+         backend_dlib.initialize("10.0.0.1:1234,10.0.0.2:2345", 2, 0)
+         mock_jax_initialze.assert_called_once_with(
+-            corrdinator_address="10.0.0.1:1234", num_processes=2, process_id=0
++            coordinator_address="10.0.0.1:1234", num_processes=2, process_id=0
+         )
+@@ -64,5 +64,5 @@
+     def test_initialize_with_coordinater_address(self, mock_jax_initialze):
+         backend_dlib.initialize("10.0.0.1:1234", 2, 0)
+         mock_jax_initialze.assert_called_once_with(
+-            corrdinator_address="10.0.0.1:1234", num_processes=2, process_id=0
++            coordinator_address="10.0.0.1:1234", num_processes=2, process_id=0
+         )

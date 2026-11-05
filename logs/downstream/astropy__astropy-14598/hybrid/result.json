@@ -1,0 +1,14 @@
+{
+  "task_id": "astropy__astropy-14598",
+  "repository": "astropy/astropy",
+  "base_commit": "80c3854a5f4f4a6ab86c03d9db7854767fcd83c1",
+  "retrieval_method": "hybrid",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 6641,
+  "output_tokens": 302,
+  "thinking_tokens": 0,
+  "total_tokens": 6943
+}

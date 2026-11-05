@@ -1,0 +1,12 @@
+```diff
+--- sklearn/linear_model/logistic.py
++++ sklearn/linear_model/logistic.py
+@@ -2191,7 +2191,7 @@
+                                  for i in range(len(folds))], axis=0)
+                 else:
+-                    w = np.mean([coefs_paths[:, i, best_indices[i], :]
++                    w = np.mean([coefs_paths[i, :, best_indices[i], :]
+                                  for i in range(len(folds))], axis=0)
+ 
+                 best_indices_C = best_indices % len(self.Cs_)
+```

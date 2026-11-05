@@ -1,0 +1,13 @@
+```diff
+--- django/db/models/aggregates.py
++++ django/db/models/aggregates.py
+@@ -69,7 +69,7 @@
+ 
+ class Count(Aggregate):
+     function = 'COUNT'
+-    name = 'Count'
++    distinct_prefix = 'DISTINCT '
+ 
+     def __init__(self, expression, distinct=False, **extra):
+         if expression == '*':
+```

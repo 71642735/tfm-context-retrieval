@@ -1,0 +1,14 @@
+```patch
+diff --git a/astropy/io/fits/card.py b/astropy/io/fits/card.py
+--- a/astropy/io/fits/card.py
++++ b/astropy/io/fits/card.py
+@@ -1023,7 +1023,7 @@
+         # replace single quotes with double single quotes, but don't replace
+         # quotes that are already doubled.
+         # The regex negative lookbehind/lookahead ensures we only match single quotes
+-        # that are not preceded or followed by another single quote.
++        # that are not part of an odd-length sequence of single quotes.
+         value = str(value)
+         value = re.sub(
+             r"(?<!')'(?!')",
+```

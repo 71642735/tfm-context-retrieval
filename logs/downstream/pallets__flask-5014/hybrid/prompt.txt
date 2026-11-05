@@ -1,0 +1,469 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Require a non-empty name for Blueprints
+Things do not work correctly if a Blueprint is given an empty name (e.g. #4944).
+It would be helpful if a `ValueError` was raised when trying to do that.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/test_cli.py
+Lines: 672-678
+Symbol: test_cli_empty
+
+def test_cli_empty(app):
+    """If a Blueprint's CLI group is empty, do not register it."""
+    bp = Blueprint("blue", __name__, cli_group="blue")
+    app.register_blueprint(bp)
+
+    result = app.test_cli_runner().invoke(args=["blue", "--help"])
+    assert result.exit_code == 2, f"Unexpected success:\n\n{result.output}"
+
+--- Chunk 2 ---
+File: src/flask/wrappers.py
+Lines: 95-109
+Symbol: Request.blueprints
+
+    def blueprints(self) -> t.List[str]:
+        """The registered names of the current blueprint upwards through
+        parent blueprints.
+
+        This will be an empty list if there is no current blueprint, or
+        if URL matching failed.
+
+        .. versionadded:: 2.0.1
+        """
+        name = self.blueprint
+
+        if name is None:
+            return []
+
+        return _split_blueprint_path(name)
+
+--- Chunk 3 ---
+File: src/flask/blueprints.py
+Lines: 251-266
+Symbol: Blueprint.register_blueprint
+
+    def register_blueprint(self, blueprint: "Blueprint", **options: t.Any) -> None:
+        """Register a :class:`~flask.Blueprint` on this blueprint. Keyword
+        arguments passed to this method will override the defaults set
+        on the blueprint.
+
+        .. versionchanged:: 2.0.1
+            The ``name`` option can be used to change the (pre-dotted)
+            name the blueprint is registered with. This allows the same
+            blueprint to be registered multiple times with unique names
+            for ``url_for``.
+
+        .. versionadded:: 2.0
+        """
+        if blueprint is self:
+            raise ValueError("Cannot register a blueprint on itself")
+        self._blueprints.append((blueprint, options))
+
+--- Chunk 4 ---
+File: src/flask/wrappers.py
+Lines: 76-92
+Symbol: Request.blueprint
+
+    def blueprint(self) -> t.Optional[str]:
+        """The registered name of the current blueprint.
+
+        This will be ``None`` if the endpoint is not part of a
+        blueprint, or if URL matching failed or has not been performed
+        yet.
+
+        This does not necessarily match the name the blueprint was
+        created with. It may have been nested, or registered with a
+        different name.
+        """
+        endpoint = self.endpoint
+
+        if endpoint is not None and "." in endpoint:
+            return endpoint.rpartition(".")[0]
+
+        return None
+
+--- Chunk 5 ---
+File: src/flask/blueprints.py
+Lines: 268-402
+Symbol: Blueprint.register
+
+    def register(self, app: "Flask", options: dict) -> None:
+        """Called by :meth:`Flask.register_blueprint` to register all
+        views and callbacks registered on the blueprint with the
+        application. Creates a :class:`.BlueprintSetupState` and calls
+        each :meth:`record` callback with it.
+
+        :param app: The application this blueprint is being registered
+            with.
+        :param options: Keyword arguments forwarded from
+            :meth:`~Flask.register_blueprint`.
+
+        .. versionchanged:: 2.3
+            Nested blueprints now correctly apply subdomains.
+
+        .. versionchanged:: 2.1
+            Registering the same blueprint with the same name multiple
+            times is an error.
+
+        .. versionchanged:: 2.0.1
+            Nested blueprints are registered with their dotted name.
+            This allows different blueprints with the same name to be
+            nested at different locations.
+
+        .. versionchanged:: 2.0.1
+            The ``name`` option can be used to change the (pre-dotted)
+            name the blueprint is registered with. This allows the same
+            blueprint to be registered multiple times with unique names
+            for ``url_for``.
+        """
+        name_prefix = options.get("name_prefix", "")
+        self_name = options.get("name", self.name)
+        name = f"{name_prefix}.{self_name}".lstrip(".")
+
+        if name in app.blueprints:
+            bp_desc = "this" if app.blueprints[name] is self else "a different"
+            existing_at = f" '{name}'" if self_name != name else ""
+
+            raise ValueError(
+                f"The name '{self_name}' is already registered for"
+                f" {bp_desc} blueprint{existing_at}. Use 'name=' to"
+                f" provide a unique name."
+            )
+
+        first_bp_registration = not any(bp is self for bp in app.blueprints.values())
+        first_name_registration = name not in app.blueprints
+
+        app.blueprints[name] = self
+        self._got_registered_once = True
+        state = self.make_setup_state(app, options, first_bp_registration)
+
+        if self.has_static_folder:
+            state.add_url_rule(
+                f"{self.static_url_path}/<path:filename>",
+                view_func=self.send_static_file,
+                endpoint="static",
+            )
+
+        # Merge blueprint data into parent.
+        if first_bp_registration or first_name_registration:
+
+            def extend(bp_dict, parent_dict):
+                for key, values in bp_dict.items():
+                    key = name if key is None else f"{name}.{key}"
+                    parent_dict[key].extend(values)
+
+            for key, value in self.error_handler_spec.items():
+                key = name if key is None else f"{name}.{key}"
+                value = defaultdict(
+                    dict,
+                    {
+                        code: {
+                            exc_class: func for exc_class, func in code_values.items()
+                        }
+                        for code, code_values in value.items()
+                    },
+                )
+                app.error_handler_spec[key] = value
+
+            for endpoint, func in self.view_functions.items():
+                app.view_functions[endpoint] = func
+
+            extend(self.before_request_funcs, app.before_request_funcs)
+            extend(self.after_request_funcs, app.after_request_funcs)
+            extend(
+                self.teardown_request_funcs,
+                app.teardown_request_funcs,
+            )
+            extend(self.url_default_functions, app.url_default_functions)
+            extend(self.url_value_preprocessors, app.url_value_preprocessors)
+            extend(self.template_context_processors, app.template_context_processors)
+
+        for deferred in self.deferred_functions:
+            deferred(state)
+
+        cli_resolved_group = options.get("cli_group", self.cli_group)
+
+        if self.cli.commands:
+            if cli_resolved_group is None:
+                app.cli.commands.update(self.cli.commands)
+            elif cli_resolved_group is _sentinel:
+                self.cli.name = name
+                app.cli.add_command(self.cli)
+            else:
+                self.cli.name = cli_resolved_group
+                app.cli.add_command(self.cli)
+
+        for blueprint, bp_options in self._blueprints:
+            bp_options = bp_options.copy()
+            bp_url_prefix = bp_options.get("url_prefix")
+            bp_subdomain = bp_options.get("subdomain")
+
+            if bp_subdomain is None:
+                bp_subdomain = blueprint.subdomain
+
+            if state.subdomain is not None and bp_subdomain is not None:
+                bp_options["subdomain"] = bp_subdomain + "." + state.subdomain
+            elif bp_subdomain is not None:
+                bp_options["subdomain"] = bp_subdomain
+            elif state.subdomain is not None:
+                bp_options["subdomain"] = state.subdomain
+
+            if bp_url_prefix is None:
+                bp_url_prefix = blueprint.url_prefix
+
+            if state.url_prefix is not None and bp_url_prefix is not None:
+                bp_options["url_prefix"] = (
+                    state.url_prefix.rstrip("/") + "/" + bp_url_prefix.lstrip("/")
+                )
+            elif bp_url_prefix is not None:
+                bp_options["url_prefix"] = bp_url_prefix
+            elif state.url_prefix is not None:
+                bp_options["url_prefix"] = state.url_prefix
+
+            bp_options["name_prefix"] = name
+            blueprint.register(app, bp_options)
+
+--- Chunk 6 ---
+File: src/flask/app.py
+Lines: 1593-1716
+Symbol: Flask.url_for
+
+    def url_for(
+        self,
+        endpoint: str,
+        *,
+        _anchor: t.Optional[str] = None,
+        _method: t.Optional[str] = None,
+        _scheme: t.Optional[str] = None,
+        _external: t.Optional[bool] = None,
+        **values: t.Any,
+    ) -> str:
+        """Generate a URL to the given endpoint with the given values.
+
+        This is called by :func:`flask.url_for`, and can be called
+        directly as well.
+
+        An *endpoint* is the name of a URL rule, usually added with
+        :meth:`@app.route() <route>`, and usually the same name as the
+        view function. A route defined in a :class:`~flask.Blueprint`
+        will prepend the blueprint's name separated by a ``.`` to the
+        endpoint.
+
+        In some cases, such as email messages, you want URLs to include
+        the scheme and domain, like ``https://example.com/hello``. When
+        not in an active request, URLs will be external by default, but
+        this requires setting :data:`SERVER_NAME` so Flask knows what
+        domain to use. :data:`APPLICATION_ROOT` and
+        :data:`PREFERRED_URL_SCHEME` should also be configured as
+        needed. This config is only used when not in an active request.
+
+        Functions can be decorated with :meth:`url_defaults` to modify
+        keyword arguments before the URL is built.
+
+        If building fails for some reason, such as an unknown endpoint
+        or incorrect values, the app's :meth:`handle_url_build_error`
+        method is called. If that returns a string, that is returned,
+        otherwise a :exc:`~werkzeug.routing.BuildError` is raised.
+
+        :param endpoint: The endpoint name associated with the URL to
+            generate. If this starts with a ``.``, the current blueprint
+            name (if any) will be used.
+        :param _anchor: If given, append this as ``#anchor`` to the URL.
+        :param _method: If given, generate the URL associated with this
+            method for the endpoint.
+        :param _scheme: If given, the URL will have this scheme if it
+            is external.
+        :param _external: If given, prefer the URL to be internal
+            (False) or require it to be external (True). External URLs
+            include the scheme and domain. When not in an active
+            request, URLs are external by default.
+        :param values: Values to use for the variable parts of the URL
+            rule. Unknown keys are appended as query string arguments,
+            like ``?a=b&c=d``.
+
+        .. versionadded:: 2.2
+            Moved from ``flask.url_for``, which calls this method.
+        """
+        req_ctx = _cv_request.get(None)
+
+        if req_ctx is not None:
+            url_adapter = req_ctx.url_adapter
+            blueprint_name = req_ctx.request.blueprint
+
+            # If the endpoint starts with "." and the request matches a
+            # blueprint, the endpoint is relative to the blueprint.
+            if endpoint[:1] == ".":
+                if blueprint_name is not None:
+                    endpoint = f"{blueprint_name}{endpoint}"
+                else:
+                    endpoint = endpoint[1:]
+
+            # When in a request, generate a URL without scheme and
+            # domain by default, unless a scheme is given.
+            if _external is None:
+                _external = _scheme is not None
+        else:
+            app_ctx = _cv_app.get(None)
+
+            # If called by helpers.url_for, an app context is active,
+            # use its url_adapter. Otherwise, app.url_for was called
+            # directly, build an adapter.
+            if app_ctx is not None:
+                url_adapter = app_ctx.url_adapter
+            else:
+                url_adapter = self.create_url_adapter(None)
+
+            if url_adapter is None:
+                raise RuntimeError(
+                    "Unable to build URLs outside an active request"
+                    " without 'SERVER_NAME' configured. Also configure"
+                    " 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as"
+                    " needed."
+                )
+
+            # When outside a request, generate a URL with scheme and
+            # domain by default.
+            if _external is None:
+                _external = True
+
+        # It is an error to set _scheme when _external=False, in order
+        # to avoid accidental insecure URLs.
+        if _scheme is not None and not _external:
+            raise ValueError("When specifying '_scheme', '_external' must be True.")
+
+        self.inject_url_defaults(endpoint, values)
+
+        try:
+            rv = url_adapter.build(  # type: ignore[union-attr]
+                endpoint,
+                values,
+                method=_method,
+                url_scheme=_scheme,
+                force_external=_external,
+            )
+        except BuildError as error:
+            values.update(
+                _anchor=_anchor, _method=_method, _scheme=_scheme, _external=_external
+            )
+            return self.handle_url_build_error(error, endpoint, values)
+
+        if _anchor is not None:
+            _anchor = _url_quote(_anchor, safe="%!#$&'()*+,/:;=?@")
+            rv = f"{rv}#{_anchor}"
+
+        return rv
+
+--- Chunk 7 ---
+File: src/flask/scaffold.py
+Lines: 631-653
+Symbol: Scaffold.url_value_preprocessor
+
+    def url_value_preprocessor(
+        self,
+        f: T_url_value_preprocessor,
+    ) -> T_url_value_preprocessor:
+        """Register a URL value preprocessor function for all view
+        functions in the application. These functions will be called before the
+        :meth:`before_request` functions.
+
+        The function can modify the values captured from the matched url before
+        they are passed to the view. For example, this can be used to pop a
+        common language code value and place it in ``g`` rather than pass it to
+        every view.
+
+        The function is passed the endpoint name and values dict. The return
+        value is ignored.
+
+        This is available on both app and blueprint objects. When used on an app, this
+        is called for every request. When used on a blueprint, this is called for
+        requests that the blueprint handles. To register with a blueprint and affect
+        every request, use :meth:`.Blueprint.app_url_value_preprocessor`.
+        """
+        self.url_value_preprocessors[None].append(f)
+        return f
+
+--- Chunk 8 ---
+File: src/flask/scaffold.py
+Lines: 781-803
+Symbol: _matching_loader_thinks_module_is_package
+
+def _matching_loader_thinks_module_is_package(loader, mod_name):
+    """Attempt to figure out if the given name is a package or a module.
+
+    :param: loader: The loader that handled the name.
+    :param mod_name: The name of the package or module.
+    """
+    # Use loader.is_package if it's available.
+    if hasattr(loader, "is_package"):
+        return loader.is_package(mod_name)
+
+    cls = type(loader)
+
+    # NamespaceLoader doesn't implement is_package, but all names it
+    # loads must be packages.
+    if cls.__module__ == "_frozen_importlib" and cls.__name__ == "NamespaceLoader":
+        return True
+
+    # Otherwise we need to fail with an error that explains what went
+    # wrong.
+    raise AttributeError(
+        f"'{cls.__name__}.is_package()' must be implemented for PEP 302"
+        f" import hooks."
+    )
+
+--- Chunk 9 ---
+File: src/flask/blueprints.py
+Lines: 208-216
+Symbol: Blueprint._check_setup_finished
+
+    def _check_setup_finished(self, f_name: str) -> None:
+        if self._got_registered_once:
+            raise AssertionError(
+                f"The setup method '{f_name}' can no longer be called on the blueprint"
+                f" '{self.name}'. It has already been registered at least once, any"
+                " changes will not be applied consistently.\n"
+                "Make sure all imports, decorators, functions, etc. needed to set up"
+                " the blueprint are done before registering it."
+            )
+
+--- Chunk 10 ---
+File: src/flask/cli.py
+Lines: 85-108
+Symbol: _called_with_wrong_args
+
+def _called_with_wrong_args(f):
+    """Check whether calling a function raised a ``TypeError`` because
+    the call failed or because something in the factory raised the
+    error.
+
+    :param f: The function that was called.
+    :return: ``True`` if the call failed.
+    """
+    tb = sys.exc_info()[2]
+
+    try:
+        while tb is not None:
+            if tb.tb_frame.f_code is f.__code__:
+                # In the function, it was called successfully.
+                return False
+
+            tb = tb.tb_next
+
+        # Didn't reach the function.
+        return True
+    finally:
+        # Delete tb to break a circular reference.
+        # https://docs.python.org/2/library/sys.html#sys.exc_info
+        del tb
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

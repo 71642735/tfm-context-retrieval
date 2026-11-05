@@ -1,0 +1,13 @@
+```diff
+--- src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
++++ src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
+@@ -621,6 +621,8 @@
+             decoder_input_ids = shift_tokens_right(
+                 labels, self.config.pad_token_id, self.config.decoder_start_token_id
+             )
++            if decoder_attention_mask is None:
++                decoder_attention_mask = decoder_input_ids.ne(self.config.pad_token_id).long()
+ 
+         # Decode
+         decoder_outputs = self.decoder(
+```

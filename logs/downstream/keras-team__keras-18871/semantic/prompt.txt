@@ -1,0 +1,524 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Feature duplication on model.save() and keras.saving.save_model()
+When I was reading the code of model saving, I got strange feeling.
+
+https://github.com/keras-team/keras/blob/724321c7b39a90f6125b79931284aa9932c673a0/keras/models/model.py#L294-L297
+It says `model.save()` is an alias for `keras.saving.save_model()`. But each of these method are implemented same feature.
+
+https://github.com/keras-team/keras/blob/f0b7062e4c6a62c521af491b09d97f009b1add0b/keras/models/model.py#L268
+https://github.com/keras-team/keras/blob/f0b7062e4c6a62c521af491b09d97f009b1add0b/keras/saving/saving_api.py#L19
+
+these method's code are almost same. this duplicated feature will cause increase management point of code and It seems already started version fragmentation.
+
+I think `model.save()` method can be removed and be modified to just calling `keras.saving.save_model()`.
+
+Can I refactor this code?
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: keras/callbacks/tensorboard_test.py
+Lines: 723-736
+Symbol: TestTensorBoardV2.test_TensorBoard_write_model
+
+    def test_TensorBoard_write_model(self):
+        # TODO: Requires to_json implementation in trainer
+        # See https://github.com/keras-team/keras/blob/ \
+        # a8d4a7f1ffc9de3c5932828a107e4e95e8803fb4/ \
+        # keras/engine/training.py#L3313
+        # inputs = Input([10, 10, 1])
+        # x = Conv2D(8, (3, 3), activation="relu")(inputs)
+        # x = Flatten()(x)
+        # x = Dense(1)(x)
+        # model = models.Model(inputs=inputs, outputs=[x])
+        # model.compile("sgd", "mse")
+        # breakpoint()
+        # self.fitModelAndAssertKerasModelWritten(model)
+        pass
+
+--- Chunk 2 ---
+File: keras/saving/saving_api.py
+Lines: 19-110
+Symbol: save_model
+
+def save_model(model, filepath, overwrite=True, **kwargs):
+    """Saves a model as a `.keras` file.
+
+    Args:
+        model: Keras model instance to be saved.
+        filepath: `str` or `pathlib.Path` object. Path where to save the model.
+        overwrite: Whether we should overwrite any existing model at the target
+            location, or instead ask the user via an interactive prompt.
+
+    Example:
+
+    ```python
+    model = keras.Sequential(
+        [
+            keras.layers.Dense(5, input_shape=(3,)),
+            keras.layers.Softmax(),
+        ],
+    )
+    model.save("model.keras")
+    loaded_model = keras.saving.load_model("model.keras")
+    x = keras.random.uniform((10, 3))
+    assert np.allclose(model.predict(x), loaded_model.predict(x))
+    ```
+
+    Note that `model.save()` is an alias for `keras.saving.save_model()`.
+
+    The saved `.keras` file contains:
+
+    - The model's configuration (architecture)
+    - The model's weights
+    - The model's optimizer's state (if any)
+
+    Thus models can be reinstantiated in the exact same state.
+    """
+    include_optimizer = kwargs.pop("include_optimizer", True)
+    save_format = kwargs.pop("save_format", False)
+    if save_format:
+        if str(filepath).endswith((".h5", ".hdf5")) or str(filepath).endswith(
+            ".keras"
+        ):
+            logging.warning(
+                "The `save_format` argument is deprecated in Keras 3. "
+                "We recommend removing this argument as it can be inferred "
+                "from the file path. "
+                f"Received: save_format={save_format}"
+            )
+        else:
+            raise ValueError(
+                "The `save_format` argument is deprecated in Keras 3. "
+                "Please remove this argument and pass a file path with "
+                "either `.keras` or `.h5` extension."
+                f"Received: save_format={save_format}"
+            )
+    if kwargs:
+        raise ValueError(
+            "The following argument(s) are not supported: "
+            f"{list(kwargs.keys())}"
+        )
+
+    # Deprecation warnings
+    if str(filepath).endswith((".h5", ".hdf5")):
+        logging.warning(
+            "You are saving your model as an HDF5 file via `model.save()`. "
+            "This file format is considered legacy. "
+            "We recommend using instead the native Keras format, "
+            "e.g. `model.save('my_model.keras')`."
+        )
+
+    if str(filepath).endswith(".keras"):
+        # If file exists and should not be overwritten.
+        try:
+            exists = os.path.exists(filepath)
+        except TypeError:
+            exists = False
+        if exists and not overwrite:
+            proceed = io_utils.ask_to_proceed_with_overwrite(filepath)
+            if not proceed:
+                return
+        saving_lib.save_model(model, filepath)
+    elif str(filepath).endswith((".h5", ".hdf5")):
+        legacy_h5_format.save_model_to_hdf5(
+            model, filepath, overwrite, include_optimizer
+        )
+    else:
+        raise ValueError(
+            "Invalid filepath extension for saving. "
+            "Please add either a `.keras` extension for the native Keras "
+            f"format (recommended) or a `.h5` extension. "
+            "Use `tf.saved_model.save()` if you want to export a SavedModel "
+            "for use with TFLite/TFServing/etc. "
+            f"Received: filepath={filepath}."
+        )
+
+--- Chunk 3 ---
+File: keras/saving/saving_lib_test.py
+Lines: 526-553
+Symbol: SavingAPITest.test_saving_api_errors
+
+    def test_saving_api_errors(self):
+        from keras.saving import saving_api
+
+        model = _get_basic_functional_model()
+
+        # Saving API errors
+        temp_filepath = os.path.join(self.get_temp_dir(), "mymodel")
+        with self.assertRaisesRegex(ValueError, "argument is deprecated"):
+            saving_api.save_model(model, temp_filepath, save_format="keras")
+
+        temp_filepath = os.path.join(self.get_temp_dir(), "mymodel.notkeras")
+        with self.assertRaisesRegex(ValueError, "Invalid filepath extension"):
+            saving_api.save_model(model, temp_filepath)
+
+        temp_filepath = os.path.join(self.get_temp_dir(), "mymodel.keras")
+        with self.assertRaisesRegex(ValueError, "are not supported"):
+            saving_api.save_model(model, temp_filepath, invalid_arg="hello")
+
+        # Loading API errors
+        temp_filepath = os.path.join(self.get_temp_dir(), "non_existent.keras")
+        with self.assertRaisesRegex(
+            ValueError, "Please ensure the file is an accessible"
+        ):
+            _ = saving_api.load_model(temp_filepath)
+
+        temp_filepath = os.path.join(self.get_temp_dir(), "my_saved_model")
+        with self.assertRaisesRegex(ValueError, "File format not supported"):
+            _ = saving_api.load_model(temp_filepath)
+
+--- Chunk 4 ---
+File: keras/legacy/saving/legacy_h5_format_test.py
+Lines: 325-343
+Symbol: LegacyH5BackwardsCompatTest.DISABLED_test_saving_include_optimizer_false
+
+    def DISABLED_test_saving_include_optimizer_false(self):
+        tf_keras_model = tf_keras.Sequential()
+        tf_keras_model.add(tf_keras.layers.Dense(1))
+        tf_keras_model.compile("adam", loss="mse")
+        x, y = np.ones((10, 10)), np.ones((10, 1))
+        tf_keras_model.fit(x, y)
+        ref_output = tf_keras_model(x)
+
+        temp_filepath = os.path.join(self.get_temp_dir(), "model.h5")
+        tf_keras_model.save(temp_filepath, include_optimizer=False)
+        loaded = legacy_h5_format.load_model_from_hdf5(temp_filepath)
+        output = loaded(x)
+
+        # Assert that optimizer does not exist in loaded model
+        with self.assertRaises(AttributeError):
+            _ = loaded.optimizer
+
+        # Compare output
+        self.assertAllClose(ref_output, output, atol=1e-5)
+
+--- Chunk 5 ---
+File: keras/layers/preprocessing/hashing_test.py
+Lines: 345-365
+Symbol: HashingTest.test_saving
+
+    def test_saving(self):
+        input_data = np.array(
+            ["omar", "stringer", "marlo", "wire", "skywalker"]
+        )
+        inputs = layers.Input(shape=(), dtype="string")
+        outputs = layers.Hashing(num_bins=100)(inputs)
+        model = models.Model(inputs=inputs, outputs=outputs)
+
+        original_output_data = model(input_data)
+
+        # Save the model to disk.
+        output_path = os.path.join(self.get_temp_dir(), "keras_model.keras")
+        model.save(output_path)
+        loaded_model = load_model(output_path)
+
+        # Ensure that the loaded model is unique (so that the save/load is real)
+        self.assertIsNot(model, loaded_model)
+
+        # Validate correctness of the new model.
+        new_output_data = loaded_model(input_data)
+        self.assertAllClose(new_output_data, original_output_data)
+
+--- Chunk 6 ---
+File: keras/layers/preprocessing/discretization_test.py
+Lines: 93-124
+Symbol: DicretizationTest.test_saving
+
+    def test_saving(self):
+        # With fixed bins
+        layer = layers.Discretization(bin_boundaries=[0.0, 0.35, 0.5, 1.0])
+        model = models.Sequential(
+            [
+                layers.Input((2,)),
+                layer,
+            ]
+        )
+        fpath = os.path.join(self.get_temp_dir(), "model.keras")
+        model.save(fpath)
+        model = saving_api.load_model(fpath)
+        x = np.array([[-1.0, 0.0, 0.1, 0.2, 0.4, 0.5, 1.0, 1.2, 0.98]])
+        self.assertAllClose(layer(x), np.array([[0, 1, 1, 1, 2, 3, 4, 4, 3]]))
+
+        # With adapt flow
+        layer = layers.Discretization(num_bins=4)
+        layer.adapt(
+            np.random.random((32, 3)),
+        )
+        ref_input = np.random.random((1, 2))
+        ref_output = layer(ref_input)
+        model = models.Sequential(
+            [
+                layers.Input((2,)),
+                layer,
+            ]
+        )
+        fpath = os.path.join(self.get_temp_dir(), "model.keras")
+        model.save(fpath)
+        model = saving_api.load_model(fpath)
+        self.assertAllClose(layer(ref_input), ref_output)
+
+--- Chunk 7 ---
+File: keras/models/model.py
+Lines: 268-359
+Symbol: Model.save
+
+    def save(self, filepath, overwrite=True, **kwargs):
+        """Saves a model as a `.keras` file.
+
+        Args:
+            filepath: `str` or `pathlib.Path` object.
+                Path where to save the model. Must end in `.keras`.
+            overwrite: Whether we should overwrite any existing model
+                at the target location, or instead ask the user
+                via an interactive prompt.
+            save_format: Format to use, as a string. Only the `"keras"`
+                format is supported at this time.
+
+        Example:
+
+        ```python
+        model = keras.Sequential(
+            [
+                keras.layers.Dense(5, input_shape=(3,)),
+                keras.layers.Softmax(),
+            ],
+        )
+        model.save("model.keras")
+        loaded_model = keras.saving.load_model("model.keras")
+        x = keras.random.uniform((10, 3))
+        assert np.allclose(model.predict(x), loaded_model.predict(x))
+        ```
+
+        Note that `model.save()` is an alias for
+        `keras.saving.save_model()`.
+
+        The saved `.keras` file contains:
+
+        - The model's configuration (architecture)
+        - The model's weights
+        - The model's optimizer's state (if any)
+
+        Thus models can be reinstantiated in the exact same state.
+        """
+        include_optimizer = kwargs.pop("include_optimizer", True)
+        save_format = kwargs.pop("save_format", None)
+        if kwargs:
+            raise ValueError(
+                "The following argument(s) are not supported: "
+                f"{list(kwargs.keys())}"
+            )
+        if save_format:
+            if str(filepath).endswith((".h5", ".hdf5")) or str(
+                filepath
+            ).endswith(".keras"):
+                warnings.warn(
+                    "The `save_format` argument is deprecated in Keras 3. "
+                    "We recommend removing this argument as it can be inferred "
+                    "from the file path. "
+                    f"Received: save_format={save_format}"
+                )
+            else:
+                raise ValueError(
+                    "The `save_format` argument is deprecated in Keras 3. "
+                    "Please remove this argument and pass a file path with "
+                    "either `.keras` or `.h5` extension."
+                    f"Received: save_format={save_format}"
+                )
+        try:
+            exists = os.path.exists(filepath)
+        except TypeError:
+            exists = False
+        if exists and not overwrite:
+            proceed = io_utils.ask_to_proceed_with_overwrite(filepath)
+            if not proceed:
+                return
+        if str(filepath).endswith(".keras"):
+            saving_lib.save_model(self, filepath)
+        elif str(filepath).endswith((".h5", ".hdf5")):
+            # Deprecation warnings
+            warnings.warn(
+                "You are saving your model as an HDF5 file via `model.save()`. "
+                "This file format is considered legacy. "
+                "We recommend using instead the native Keras format, "
+                "e.g. `model.save('my_model.keras')`."
+            )
+            legacy_h5_format.save_model_to_hdf5(
+                self, filepath, overwrite, include_optimizer
+            )
+        else:
+            raise ValueError(
+                "Invalid filepath extension for saving. "
+                "Please add either a `.keras` extension for the native Keras "
+                f"format (recommended) or a `.h5` extension. "
+                "Use `tf.saved_model.save()` if you want to export a "
+                "SavedModel for use with TFLite/TFServing/etc. "
+                f"Received: filepath={filepath}."
+            )
+
+--- Chunk 8 ---
+File: keras/backend/tensorflow/saved_model_test.py
+Lines: 307-336
+Symbol: SavedModelTest.test_fine_tuning
+
+    def test_fine_tuning(self):
+        model = CustomSignatureModel()
+        model_no_signatures_path = os.path.join(
+            self.get_temp_dir(), "model_no_signatures"
+        )
+        _ = model(tf.constant(0.0))
+
+        tf.saved_model.save(model, model_no_signatures_path)
+        restored_model = tf.saved_model.load(model_no_signatures_path)
+
+        self.assertLen(list(restored_model.signatures.keys()), 0)
+        self.assertEqual(restored_model(tf.constant(3.0)).numpy(), 3)
+        restored_model.mutate(tf.constant(2.0))
+        self.assertEqual(restored_model(tf.constant(3.0)).numpy(), 6)
+        optimizer = optimizers.SGD(0.05)
+
+        def train_step():
+            with tf.GradientTape() as tape:
+                loss = (10.0 - restored_model(tf.constant(2.0))) ** 2
+            variables = tape.watched_variables()
+            grads = tape.gradient(loss, variables)
+            optimizer.apply_gradients(zip(grads, variables))
+            return loss
+
+        for _ in range(10):
+            # "v" approaches 5, "loss" approaches 0
+            loss = train_step()
+
+        self.assertAllClose(loss, 0.0, rtol=1e-2, atol=1e-2)
+        self.assertAllClose(restored_model.v.numpy(), 5.0, rtol=1e-2, atol=1e-2)
+
+--- Chunk 9 ---
+File: keras/legacy/saving/legacy_h5_format_test.py
+Lines: 368-389
+Symbol: LegacyH5BackwardsCompatTest.DISABLED_test_custom_functional_registered_no_scope
+
+    def DISABLED_test_custom_functional_registered_no_scope(self):
+        @tf_keras.saving.register_keras_serializable(package="my_package")
+        class MyDense(tf_keras.layers.Dense):
+            def __init__(self, units, **kwargs):
+                super().__init__(units, **kwargs)
+
+        inputs = tf_keras.layers.Input(shape=[1])
+        outputs = MyDense(1)(inputs)
+        tf_keras_model = tf_keras.Model(inputs, outputs)
+
+        # Re-implement and re-register in Keras 3
+        @object_registration.register_keras_serializable(package="my_package")
+        class MyDense(layers.Dense):
+            def __init__(self, units, **kwargs):
+                super().__init__(units, **kwargs)
+
+        inputs = layers.Input(shape=[1])
+        outputs = MyDense(1)(inputs)
+        model = models.Model(inputs, outputs)
+
+        ref_input = np.array([5])
+        self._check_reloading_model(ref_input, model, tf_keras_model)
+
+--- Chunk 10 ---
+File: keras/saving/saving_api.py
+Lines: 114-200
+Symbol: load_model
+
+def load_model(filepath, custom_objects=None, compile=True, safe_mode=True):
+    """Loads a model saved via `model.save()`.
+
+    Args:
+        filepath: `str` or `pathlib.Path` object, path to the saved model file.
+        custom_objects: Optional dictionary mapping names
+            (strings) to custom classes or functions to be
+            considered during deserialization.
+        compile: Boolean, whether to compile the model after loading.
+        safe_mode: Boolean, whether to disallow unsafe `lambda` deserialization.
+            When `safe_mode=False`, loading an object has the potential to
+            trigger arbitrary code execution. This argument is only
+            applicable to the Keras v3 model format. Defaults to True.
+
+    Returns:
+        A Keras model instance. If the original model was compiled,
+        and the argument `compile=True` is set, then the returned model
+        will be compiled. Otherwise, the model will be left uncompiled.
+
+    Example:
+
+    ```python
+    model = keras.Sequential([
+        keras.layers.Dense(5, input_shape=(3,)),
+        keras.layers.Softmax()])
+    model.save("model.keras")
+    loaded_model = keras.saving.load_model("model.keras")
+    x = np.random.random((10, 3))
+    assert np.allclose(model.predict(x), loaded_model.predict(x))
+    ```
+
+    Note that the model variables may have different name values
+    (`var.name` property, e.g. `"dense_1/kernel:0"`) after being reloaded.
+    It is recommended that you use layer attributes to
+    access specific variables, e.g. `model.get_layer("dense_1").kernel`.
+    """
+    is_keras_zip = str(filepath).endswith(".keras") and zipfile.is_zipfile(
+        filepath
+    )
+
+    # Support for remote zip files
+    if (
+        file_utils.is_remote_path(filepath)
+        and not file_utils.isdir(filepath)
+        and not is_keras_zip
+    ):
+        local_path = os.path.join(
+            saving_lib.get_temp_dir(), os.path.basename(filepath)
+        )
+
+        # Copy from remote to temporary local directory
+        file_utils.copy(filepath, local_path)
+
+        # Switch filepath to local zipfile for loading model
+        if zipfile.is_zipfile(local_path):
+            filepath = local_path
+            is_keras_zip = True
+
+    if is_keras_zip:
+        return saving_lib.load_model(
+            filepath,
+            custom_objects=custom_objects,
+            compile=compile,
+            safe_mode=safe_mode,
+        )
+    if str(filepath).endswith((".h5", ".hdf5")):
+        return legacy_h5_format.load_model_from_hdf5(filepath)
+    elif str(filepath).endswith(".keras"):
+        raise ValueError(
+            f"File not found: filepath={filepath}. "
+            "Please ensure the file is an accessible `.keras` "
+            "zip file."
+        )
+    else:
+        raise ValueError(
+            f"File format not supported: filepath={filepath}. "
+            "Keras 3 only supports V3 `.keras` files and "
+            "legacy H5 format files (`.h5` extension). "
+            "Note that the legacy SavedModel format is not "
+            "supported by `load_model()` in Keras 3. In "
+            "order to reload a TensorFlow SavedModel as an "
+            "inference-only layer in Keras 3, use "
+            "`keras.layers.TFSMLayer("
+            f"{filepath}, call_endpoint='serving_default')` "
+            "(note that your `call_endpoint` "
+            "might have a different name)."
+        )
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

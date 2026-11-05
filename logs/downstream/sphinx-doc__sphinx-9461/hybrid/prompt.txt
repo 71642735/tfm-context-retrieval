@@ -1,0 +1,695 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Methods decorated with @classmethod and @property do not get documented.
+**EDIT:** The problem seems to be that `type(BaseClass.baseclass_property)` returns `property`, thus sphinx can just lookup `BaseClass.baseclass_property.__doc__`. However, `type(BaseClass.baseclass_class_property)` returns the type of the returned object, since essentially, a `@classmethod@property` ends up behaving like a class attribute. So Sphinx doesn't really have a chance to extract the docstring.
+
+**EDIT 2:** Seems like this will get fixed in python 3.10, cf. https://bugs.python.org/issue43682. 
+
+> Static methods (`@staticmethod`) and class methods (`@classmethod`) now inherit the method attributes (`__module__`, `__name__`, `__qualname__`, `__doc__`, `__annotations__`) and have a new __wrapped__ attribute. 
+
+I will try to test this with the beta release.
+
+-----
+
+### Describe the bug
+
+> Changed in version 3.9: Class methods can now wrap other descriptors such as property().
+
+That is, since python version 3.9 we can write code like
+
+```python
+class A:
+    @classmethod
+    @property
+    def f(cls):
+        """Some class property."""
+        return "property"
+```
+
+However, sphinx does not seem to document any such methods (regular `@property` decorated methods get documented just fine.)
+
+### How to Reproduce
+
+
+```bash
+git clone https://github.com/randolf-scholz/sphinx_demo
+cd sphinx_demo/docs
+make html
+# open _build/html/dummy_module.submodule.html
+```
+
+The following methods were erroneously not documented:
+
+- `MetaClass.metaclass_class_property`
+- `MetaClass.metaclass_abstract_class_property`
+- `BaseClass.baseclass_class_property`
+- `BaseClass.baseclass_abstract_class_property`
+- `SubClass.subclass_class_property`
+- `SubClass.subclass_abstract_class_property`
+
+
+### Expected behavior
+
+Methods that are decorated with both `@classmethod` and `@property` should be documented appropriately.
+
+### Your project
+
+https://github.com/randolf-scholz/sphinx_demo
+
+### Screenshots
+
+_No response_
+
+### OS
+
+Ubuntu 20.04.2 LTS
+
+### Python version
+
+3.9.6
+
+### Sphinx version
+
+4.0.3
+
+### Sphinx extensions
+
+sphinx.ext.autodoc, sphinx.ext.autosummary
+
+### Extra tools
+
+_No response_
+
+### Additional context
+
+_No response_
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sphinx/ext/napoleon/__init__.py
+Lines: 403-485
+Symbol: _skip_member
+
+def _skip_member(app: Sphinx, what: str, name: str, obj: Any,
+                 skip: bool, options: Any) -> bool:
+    """Determine if private and special class members are included in docs.
+
+    The following settings in conf.py determine if private and special class
+    members or init methods are included in the generated documentation:
+
+    * ``napoleon_include_init_with_doc`` --
+      include init methods if they have docstrings
+    * ``napoleon_include_private_with_doc`` --
+      include private members if they have docstrings
+    * ``napoleon_include_special_with_doc`` --
+      include special members if they have docstrings
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        Application object representing the Sphinx process
+    what : str
+        A string specifying the type of the object to which the member
+        belongs. Valid values: "module", "class", "exception", "function",
+        "method", "attribute".
+    name : str
+        The name of the member.
+    obj : module, class, exception, function, method, or attribute.
+        For example, if the member is the __init__ method of class A, then
+        `obj` will be `A.__init__`.
+    skip : bool
+        A boolean indicating if autodoc will skip this member if `_skip_member`
+        does not override the decision
+    options : sphinx.ext.autodoc.Options
+        The options given to the directive: an object with attributes
+        inherited_members, undoc_members, show_inheritance and noindex that
+        are True if the flag option of same name was given to the auto
+        directive.
+
+    Returns
+    -------
+    bool
+        True if the member should be skipped during creation of the docs,
+        False if it should be included in the docs.
+
+    """
+    has_doc = getattr(obj, '__doc__', False)
+    is_member = (what == 'class' or what == 'exception' or what == 'module')
+    if name != '__weakref__' and has_doc and is_member:
+        cls_is_owner = False
+        if what == 'class' or what == 'exception':
+            qualname = getattr(obj, '__qualname__', '')
+            cls_path, _, _ = qualname.rpartition('.')
+            if cls_path:
+                try:
+                    if '.' in cls_path:
+                        import functools
+                        import importlib
+
+                        mod = importlib.import_module(obj.__module__)
+                        mod_path = cls_path.split('.')
+                        cls = functools.reduce(getattr, mod_path, mod)
+                    else:
+                        cls = inspect.unwrap(obj).__globals__[cls_path]
+                except Exception:
+                    cls_is_owner = False
+                else:
+                    cls_is_owner = (cls and hasattr(cls, name) and  # type: ignore
+                                    name in cls.__dict__)
+            else:
+                cls_is_owner = False
+
+        if what == 'module' or cls_is_owner:
+            is_init = (name == '__init__')
+            is_special = (not is_init and name.startswith('__') and
+                          name.endswith('__'))
+            is_private = (not is_init and not is_special and
+                          name.startswith('_'))
+            inc_init = app.config.napoleon_include_init_with_doc
+            inc_special = app.config.napoleon_include_special_with_doc
+            inc_private = app.config.napoleon_include_private_with_doc
+            if ((is_special and inc_special) or
+                    (is_private and inc_private) or
+                    (is_init and inc_init)):
+                return False
+    return None
+
+--- Chunk 2 ---
+File: doc/usage/extensions/example_google.py
+Lines: 261-275
+Symbol: ExampleClass.__special__
+
+    def __special__(self):
+        """By default special members with docstrings are not included.
+
+        Special members are any methods or attributes that start with and
+        end with a double underscore. Any special member with a docstring
+        will be included in the output, if
+        ``napoleon_include_special_with_doc`` is set to True.
+
+        This behavior can be enabled by changing the following setting in
+        Sphinx's conf.py::
+
+            napoleon_include_special_with_doc = True
+
+        """
+        pass
+
+--- Chunk 3 ---
+File: sphinx/application.py
+Lines: 629-675
+Symbol: Sphinx.add_directive
+
+    def add_directive(self, name: str, cls: Type[Directive], override: bool = False) -> None:
+        """Register a Docutils directive.
+
+        :param name: The name of directive
+        :param cls: A directive class
+        :param override: If true, install the directive forcedly even if another directive
+                         is already installed as the same name
+
+        For example, a custom directive named ``my-directive`` would be added
+        like this:
+
+        .. code-block:: python
+
+           from docutils.parsers.rst import Directive, directives
+
+           class MyDirective(Directive):
+               has_content = True
+               required_arguments = 1
+               optional_arguments = 0
+               final_argument_whitespace = True
+               option_spec = {
+                   'class': directives.class_option,
+                   'name': directives.unchanged,
+               }
+
+               def run(self):
+                   ...
+
+           def setup(app):
+               app.add_directive('my-directive', MyDirective)
+
+        For more details, see `the Docutils docs
+        <https://docutils.sourceforge.io/docs/howto/rst-directives.html>`__ .
+
+        .. versionchanged:: 0.6
+           Docutils 0.5-style directive classes are now supported.
+        .. deprecated:: 1.8
+           Docutils 0.4-style (function based) directives support is deprecated.
+        .. versionchanged:: 1.8
+           Add *override* keyword.
+        """
+        logger.debug('[app] adding directive: %r', (name, cls))
+        if not override and docutils.is_directive_registered(name):
+            logger.warning(__('directive %r is already registered, it will be overridden'),
+                           name, type='app', subtype='add_directive')
+
+        docutils.register_directive(name, cls)
+
+--- Chunk 4 ---
+File: doc/usage/extensions/example_numpy.py
+Lines: 320-334
+Symbol: ExampleClass.__special__
+
+    def __special__(self):
+        """By default special members with docstrings are not included.
+
+        Special members are any methods or attributes that start with and
+        end with a double underscore. Any special member with a docstring
+        will be included in the output, if
+        ``napoleon_include_special_with_doc`` is set to True.
+
+        This behavior can be enabled by changing the following setting in
+        Sphinx's conf.py::
+
+            napoleon_include_special_with_doc = True
+
+        """
+        pass
+
+--- Chunk 5 ---
+File: tests/test_ext_autosummary.py
+Lines: 123-179
+Symbol: test_get_items_summary
+
+def test_get_items_summary(make_app, app_params):
+    import sphinx.ext.autosummary
+    import sphinx.ext.autosummary.generate
+    args, kwargs = app_params
+    app = make_app(*args, **kwargs)
+    sphinx.ext.autosummary.generate.setup_documenters(app)
+    # monkey-patch Autosummary.get_items so we can easily get access to it's
+    # results..
+    orig_get_items = sphinx.ext.autosummary.Autosummary.get_items
+
+    autosummary_items = {}
+
+    def new_get_items(self, names, *args, **kwargs):
+        results = orig_get_items(self, names, *args, **kwargs)
+        for name, result in zip(names, results):
+            autosummary_items[name] = result
+        return results
+
+    def handler(app, what, name, obj, options, lines):
+        assert isinstance(lines, list)
+
+        # ensure no docstring is processed twice:
+        assert 'THIS HAS BEEN HANDLED' not in lines
+        lines.append('THIS HAS BEEN HANDLED')
+    app.connect('autodoc-process-docstring', handler)
+
+    sphinx.ext.autosummary.Autosummary.get_items = new_get_items
+    try:
+        app.builder.build_all()
+    finally:
+        sphinx.ext.autosummary.Autosummary.get_items = orig_get_items
+
+    html_warnings = app._warning.getvalue()
+    assert html_warnings == ''
+
+    expected_values = {
+        'withSentence': 'I have a sentence which spans multiple lines.',
+        'noSentence': "this doesn't start with a capital.",
+        'emptyLine': "This is the real summary",
+        'module_attr': 'This is a module attribute',
+        'C.class_attr': 'This is a class attribute',
+        'C.instance_attr': 'This is an instance attribute',
+        'C.prop_attr1': 'This is a function docstring',
+        'C.prop_attr2': 'This is a attribute docstring',
+        'C.C2': 'This is a nested inner class docstring',
+    }
+    for key, expected in expected_values.items():
+        assert autosummary_items[key][2] == expected, 'Summary for %s was %r -'\
+            ' expected %r' % (key, autosummary_items[key], expected)
+
+    # check an item in detail
+    assert 'func' in autosummary_items
+    func_attrs = ('func',
+                  '(arg_, *args, **kwargs)',
+                  'Test function take an argument ended with underscore.',
+                  'dummy_module.func')
+    assert autosummary_items['func'] == func_attrs
+
+--- Chunk 6 ---
+File: sphinx/ext/autodoc/__init__.py
+Lines: 669-818
+Symbol: Documenter.filter_members
+
+    def filter_members(self, members: ObjectMembers, want_all: bool
+                       ) -> List[Tuple[str, Any, bool]]:
+        """Filter the given member list.
+
+        Members are skipped if
+
+        - they are private (except if given explicitly or the private-members
+          option is set)
+        - they are special methods (except if given explicitly or the
+          special-members option is set)
+        - they are undocumented (except if the undoc-members option is set)
+
+        The user can override the skipping decision by connecting to the
+        ``autodoc-skip-member`` event.
+        """
+        def is_filtered_inherited_member(name: str, obj: Any) -> bool:
+            if inspect.isclass(self.object):
+                for cls in self.object.__mro__:
+                    if cls.__name__ == self.options.inherited_members and cls != self.object:
+                        # given member is a member of specified *super class*
+                        return True
+                    elif name in cls.__dict__:
+                        return False
+                    elif name in self.get_attr(cls, '__annotations__', {}):
+                        return False
+                    elif isinstance(obj, ObjectMember) and obj.class_ is cls:
+                        return False
+
+            return False
+
+        ret = []
+
+        # search for members in source code too
+        namespace = '.'.join(self.objpath)  # will be empty for modules
+
+        if self.analyzer:
+            attr_docs = self.analyzer.find_attr_docs()
+        else:
+            attr_docs = {}
+
+        # process members and determine which to skip
+        for obj in members:
+            membername, member = obj
+            # if isattr is True, the member is documented as an attribute
+            if member is INSTANCEATTR:
+                isattr = True
+            elif (namespace, membername) in attr_docs:
+                isattr = True
+            else:
+                isattr = False
+
+            doc = getdoc(member, self.get_attr, self.config.autodoc_inherit_docstrings,
+                         self.parent, self.object_name)
+            if not isinstance(doc, str):
+                # Ignore non-string __doc__
+                doc = None
+
+            # if the member __doc__ is the same as self's __doc__, it's just
+            # inherited and therefore not the member's doc
+            cls = self.get_attr(member, '__class__', None)
+            if cls:
+                cls_doc = self.get_attr(cls, '__doc__', None)
+                if cls_doc == doc:
+                    doc = None
+
+            if isinstance(obj, ObjectMember) and obj.docstring:
+                # hack for ClassDocumenter to inject docstring via ObjectMember
+                doc = obj.docstring
+
+            doc, metadata = separate_metadata(doc)
+            has_doc = bool(doc)
+
+            if 'private' in metadata:
+                # consider a member private if docstring has "private" metadata
+                isprivate = True
+            elif 'public' in metadata:
+                # consider a member public if docstring has "public" metadata
+                isprivate = False
+            else:
+                isprivate = membername.startswith('_')
+
+            keep = False
+            if ismock(member):
+                # mocked module or object
+                pass
+            elif self.options.exclude_members and membername in self.options.exclude_members:
+                # remove members given by exclude-members
+                keep = False
+            elif want_all and special_member_re.match(membername):
+                # special __methods__
+                if self.options.special_members and membername in self.options.special_members:
+                    if membername == '__doc__':
+                        keep = False
+                    elif is_filtered_inherited_member(membername, obj):
+                        keep = False
+                    else:
+                        keep = has_doc or self.options.undoc_members
+                else:
+                    keep = False
+            elif (namespace, membername) in attr_docs:
+                if want_all and isprivate:
+                    if self.options.private_members is None:
+                        keep = False
+                    else:
+                        keep = membername in self.options.private_members
+                else:
+                    # keep documented attributes
+                    keep = True
+            elif want_all and isprivate:
+                if has_doc or self.options.undoc_members:
+                    if self.options.private_members is None:
+                        keep = False
+                    elif is_filtered_inherited_member(membername, obj):
+                        keep = False
+                    else:
+                        keep = membername in self.options.private_members
+                else:
+                    keep = False
+            else:
+                if (self.options.members is ALL and
+                        is_filtered_inherited_member(membername, obj)):
+                    keep = False
+                else:
+                    # ignore undocumented members if :undoc-members: is not given
+                    keep = has_doc or self.options.undoc_members
+
+            if isinstance(obj, ObjectMember) and obj.skipped:
+                # forcedly skipped member (ex. a module attribute not defined in __all__)
+                keep = False
+
+            # give the user a chance to decide whether this member
+            # should be skipped
+            if self.env.app:
+                # let extensions preprocess docstrings
+                try:
+                    skip_user = self.env.app.emit_firstresult(
+                        'autodoc-skip-member', self.objtype, membername, member,
+                        not keep, self.options)
+                    if skip_user is not None:
+                        keep = not skip_user
+                except Exception as exc:
+                    logger.warning(__('autodoc: failed to determine %r to be documented, '
+                                      'the following exception was raised:\n%s'),
+                                   member, exc, type='autodoc')
+                    keep = False
+
+            if keep:
+                ret.append((membername, member, isattr))
+
+        return ret
+
+--- Chunk 7 ---
+File: tests/test_ext_autodoc.py
+Lines: 812-896
+Symbol: test_autodoc_special_members
+
+def test_autodoc_special_members(app):
+    # specific special methods
+    options = {"undoc-members": None,
+               "special-members": "__init__,__special1__"}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+    ]
+
+    # combination with specific members
+    options = {"members": "attr,docattr",
+               "undoc-members": None,
+               "special-members": "__init__,__special1__"}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+    ]
+
+    # all special methods
+    options = {"members": None,
+               "undoc-members": None,
+               "special-members": None}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:attribute:: Class.__annotations__',
+        '   .. py:attribute:: Class.__dict__',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:attribute:: Class.__module__',
+        '   .. py:method:: Class.__special1__()',
+        '   .. py:method:: Class.__special2__()',
+        '   .. py:attribute:: Class.__weakref__',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+        '   .. py:method:: Class.excludemeth()',
+        '   .. py:attribute:: Class.inst_attr_comment',
+        '   .. py:attribute:: Class.inst_attr_inline',
+        '   .. py:attribute:: Class.inst_attr_string',
+        '   .. py:attribute:: Class.mdocattr',
+        '   .. py:method:: Class.meth()',
+        '   .. py:method:: Class.moore(a, e, f) -> happiness',
+        '   .. py:method:: Class.roger(a, *, b=2, c=3, d=4, e=5, f=6)',
+        '   .. py:attribute:: Class.skipattr',
+        '   .. py:method:: Class.skipmeth()',
+        '   .. py:attribute:: Class.udocattr',
+        '   .. py:method:: Class.undocmeth()'
+    ]
+
+    # specific special methods from autodoc_default_options
+    options = {"undoc-members": None}
+    app.config.autodoc_default_options["special-members"] = "__special2__"
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__special2__()',
+    ]
+
+    # specific special methods option with autodoc_default_options
+    options = {"undoc-members": None,
+               "special-members": "__init__,__special1__"}
+    app.config.autodoc_default_options["special-members"] = "__special2__"
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+    ]
+
+    # specific special methods merge with autodoc_default_options
+    options = {"undoc-members": None,
+               "special-members": "+__init__,__special1__"}
+    app.config.autodoc_default_options["special-members"] = "__special2__"
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+        '   .. py:method:: Class.__special2__()',
+    ]
+
+--- Chunk 8 ---
+File: tests/test_metadata.py
+Lines: 18-51
+Symbol: test_docinfo
+
+def test_docinfo(app, status, warning):
+    """
+    Inspect the 'docinfo' metadata stored in the first node of the document.
+    Note this doesn't give us access to data stored in subsequence blocks
+    that might be considered document metadata, such as 'abstract' or
+    'dedication' blocks, or the 'meta' role. Doing otherwise is probably more
+    messing with the internals of sphinx than this rare use case merits.
+    """
+    app.build()
+    expecteddocinfo = {
+        'author': 'David Goodger',
+        'authors': ['Me', 'Myself', 'I'],
+        'address': '123 Example Street\nExample, EX  Canada\nA1B 2C3',
+        'field name': 'This is a generic bibliographic field.',
+        'field name 2': ('Generic bibliographic fields may contain multiple '
+                         'body elements.\n\nLike this.'),
+        'status': 'This is a “work in progress”',
+        'version': '1',
+        'copyright': ('This document has been placed in the public domain. '
+                      'You\nmay do with it as you wish. You may copy, modify,'
+                      '\nredistribute, reattribute, sell, buy, rent, lease,\n'
+                      'destroy, or improve it, quote it at length, excerpt,\n'
+                      'incorporate, collate, fold, staple, or mutilate it, or '
+                      'do\nanything else to it that your or anyone else’s '
+                      'heart\ndesires.'),
+        'contact': 'goodger@python.org',
+        'date': '2006-05-21',
+        'organization': 'humankind',
+        'revision': '4564',
+        'tocdepth': 1,
+        'orphan': '',
+        'nocomments': '',
+    }
+    assert app.env.metadata['index'] == expecteddocinfo
+
+--- Chunk 9 ---
+File: tests/test_ext_viewcode.py
+Lines: 17-49
+Symbol: test_viewcode
+
+def test_viewcode(app, status, warning):
+    app.builder.build_all()
+
+    warnings = re.sub(r'\\+', '/', warning.getvalue())
+    assert re.findall(
+        r"index.rst:\d+: WARNING: Object named 'func1' not found in include " +
+        r"file .*/spam/__init__.py'",
+        warnings
+    )
+
+    result = (app.outdir / 'index.html').read_text()
+    assert result.count('href="_modules/spam/mod1.html#func1"') == 2
+    assert result.count('href="_modules/spam/mod2.html#func2"') == 2
+    assert result.count('href="_modules/spam/mod1.html#Class1"') == 2
+    assert result.count('href="_modules/spam/mod2.html#Class2"') == 2
+    assert result.count('@decorator') == 1
+
+    # test that the class attribute is correctly documented
+    assert result.count('this is Class3') == 2
+    assert 'this is the class attribute class_attr' in result
+    # the next assert fails, until the autodoc bug gets fixed
+    assert result.count('this is the class attribute class_attr') == 2
+
+    result = (app.outdir / '_modules/spam/mod1.html').read_text()
+    result = re.sub('<span class=".*?">', '<span>', result)  # filter pygments classes
+    assert ('<div class="viewcode-block" id="Class1"><a class="viewcode-back" '
+            'href="../../index.html#spam.Class1">[docs]</a>'
+            '<span>@decorator</span>\n'
+            '<span>class</span> <span>Class1</span>'
+            '<span>(</span><span>object</span><span>):</span>\n'
+            '    <span>&quot;&quot;&quot;</span>\n'
+            '<span>    this is Class1</span>\n'
+            '<span>    &quot;&quot;&quot;</span></div>\n') in result
+
+--- Chunk 10 ---
+File: sphinx/util/typing.py
+Lines: 76-95
+Symbol: get_type_hints
+
+def get_type_hints(obj: Any, globalns: Dict = None, localns: Dict = None) -> Dict[str, Any]:
+    """Return a dictionary containing type hints for a function, method, module or class object.
+
+    This is a simple wrapper of `typing.get_type_hints()` that does not raise an error on
+    runtime.
+    """
+    from sphinx.util.inspect import safe_getattr  # lazy loading
+
+    try:
+        return typing.get_type_hints(obj, globalns, localns)
+    except NameError:
+        # Failed to evaluate ForwardRef (maybe TYPE_CHECKING)
+        return safe_getattr(obj, '__annotations__', {})
+    except TypeError:
+        # Invalid object is given. But try to get __annotations__ as a fallback for
+        # the code using type union operator (PEP 604) in python 3.9 or below.
+        return safe_getattr(obj, '__annotations__', {})
+    except KeyError:
+        # a broken class found (refs: https://github.com/sphinx-doc/sphinx/issues/8084)
+        return {}
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

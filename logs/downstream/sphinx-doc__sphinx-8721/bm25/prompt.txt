@@ -1,0 +1,347 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+viewcode creates pages for epub even if `viewcode_enable_epub=False` on `make html epub`
+**Describe the bug**
+viewcode creates pages for epub even if `viewcode_enable_epub=False` on `make html epub`
+
+**To Reproduce**
+```
+$ make html epub
+```
+
+**Expected behavior**
+module pages should not be created for epub by default.
+
+**Your project**
+No
+
+**Screenshots**
+No
+
+**Environment info**
+- OS: Mac
+- Python version: 3.9.1
+- Sphinx version: HEAD of 3.x
+- Sphinx extensions:  sphinx.ext.viewcode
+- Extra tools: No
+
+**Additional context**
+No
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sphinx/ext/viewcode.py
+Lines: 279-295
+Symbol: setup
+
+def setup(app: Sphinx) -> Dict[str, Any]:
+    app.add_config_value('viewcode_import', None, False)
+    app.add_config_value('viewcode_enable_epub', False, False)
+    app.add_config_value('viewcode_follow_imported_members', True, False)
+    app.connect('doctree-read', doctree_read)
+    app.connect('env-merge-info', env_merge_info)
+    app.connect('html-collect-pages', collect_pages)
+    app.connect('missing-reference', missing_reference)
+    # app.add_config_value('viewcode_include_modules', [], 'env')
+    # app.add_config_value('viewcode_exclude_modules', [], 'env')
+    app.add_event('viewcode-find-source')
+    app.add_event('viewcode-follow-imported')
+    return {
+        'version': sphinx.__display_version__,
+        'env_version': 1,
+        'parallel_read_safe': True
+    }
+
+--- Chunk 2 ---
+File: sphinx/builders/epub3.py
+Lines: 250-292
+Symbol: setup
+
+def setup(app: Sphinx) -> Dict[str, Any]:
+    app.add_builder(Epub3Builder)
+
+    # config values
+    app.add_config_value('epub_basename', lambda self: make_filename(self.project), None)
+    app.add_config_value('epub_version', 3.0, 'epub')  # experimental
+    app.add_config_value('epub_theme', 'epub', 'epub')
+    app.add_config_value('epub_theme_options', {}, 'epub')
+    app.add_config_value('epub_title', lambda self: self.project, 'epub')
+    app.add_config_value('epub_author', lambda self: self.author, 'epub')
+    app.add_config_value('epub_language', lambda self: self.language or 'en', 'epub')
+    app.add_config_value('epub_publisher', lambda self: self.author, 'epub')
+    app.add_config_value('epub_copyright', lambda self: self.copyright, 'epub')
+    app.add_config_value('epub_identifier', 'unknown', 'epub')
+    app.add_config_value('epub_scheme', 'unknown', 'epub')
+    app.add_config_value('epub_uid', 'unknown', 'env')
+    app.add_config_value('epub_cover', (), 'env')
+    app.add_config_value('epub_guide', (), 'env')
+    app.add_config_value('epub_pre_files', [], 'env')
+    app.add_config_value('epub_post_files', [], 'env')
+    app.add_config_value('epub_css_files', lambda config: config.html_css_files, 'epub')
+    app.add_config_value('epub_exclude_files', [], 'env')
+    app.add_config_value('epub_tocdepth', 3, 'env')
+    app.add_config_value('epub_tocdup', True, 'env')
+    app.add_config_value('epub_tocscope', 'default', 'env')
+    app.add_config_value('epub_fix_images', False, 'env')
+    app.add_config_value('epub_max_image_width', 0, 'env')
+    app.add_config_value('epub_show_urls', 'inline', 'epub')
+    app.add_config_value('epub_use_index', lambda self: self.html_use_index, 'epub')
+    app.add_config_value('epub_description', 'unknown', 'epub')
+    app.add_config_value('epub_contributor', 'unknown', 'epub')
+    app.add_config_value('epub_writing_mode', 'horizontal', 'epub',
+                         ENUM('horizontal', 'vertical'))
+
+    # event handlers
+    app.connect('config-inited', convert_epub_css_files, priority=800)
+    app.connect('builder-inited', validate_config_values)
+
+    return {
+        'version': 'builtin',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }
+
+--- Chunk 3 ---
+File: tests/test_quickstart.py
+Lines: 127-179
+Symbol: test_quickstart_all_answers
+
+def test_quickstart_all_answers(tempdir):
+    answers = {
+        'Root path': tempdir,
+        'Separate source and build': 'y',
+        'Name prefix for templates': '.',
+        'Project name': 'STASI™',
+        'Author name': 'Wolfgang Schäuble & G\'Beckstein',
+        'Project version': '2.0',
+        'Project release': '2.0.1',
+        'Project language': 'de',
+        'Source file suffix': '.txt',
+        'Name of your master document': 'contents',
+        'autodoc': 'y',
+        'doctest': 'yes',
+        'intersphinx': 'no',
+        'todo': 'y',
+        'coverage': 'no',
+        'imgmath': 'N',
+        'mathjax': 'no',
+        'ifconfig': 'no',
+        'viewcode': 'no',
+        'githubpages': 'no',
+        'Create Makefile': 'no',
+        'Create Windows command file': 'no',
+        'Do you want to use the epub builder': 'yes',
+    }
+    qs.term_input = mock_input(answers, needanswer=True)
+    d = {}
+    qs.ask_user(d)
+    qs.generate(d)
+
+    conffile = tempdir / 'source' / 'conf.py'
+    assert conffile.isfile()
+    ns = {}
+    execfile_(conffile, ns)
+    assert ns['extensions'] == [
+        'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo'
+    ]
+    assert ns['templates_path'] == ['.templates']
+    assert ns['source_suffix'] == '.txt'
+    assert ns['master_doc'] == 'contents'
+    assert ns['project'] == 'STASI™'
+    assert ns['copyright'] == '%s, Wolfgang Schäuble & G\'Beckstein' % \
+        time.strftime('%Y')
+    assert ns['version'] == '2.0'
+    assert ns['release'] == '2.0.1'
+    assert ns['todo_include_todos'] is True
+    assert ns['html_static_path'] == ['.static']
+
+    assert (tempdir / 'build').isdir()
+    assert (tempdir / 'source' / '.static').isdir()
+    assert (tempdir / 'source' / '.templates').isdir()
+    assert (tempdir / 'source' / 'contents.txt').isfile()
+
+--- Chunk 4 ---
+File: sphinx/cmd/quickstart.py
+Lines: 467-549
+Symbol: get_parser
+
+def get_parser() -> argparse.ArgumentParser:
+    description = __(
+        "\n"
+        "Generate required files for a Sphinx project.\n"
+        "\n"
+        "sphinx-quickstart is an interactive tool that asks some questions about your\n"
+        "project and then generates a complete documentation directory and sample\n"
+        "Makefile to be used with sphinx-build.\n"
+    )
+    parser = argparse.ArgumentParser(
+        usage='%(prog)s [OPTIONS] <PROJECT_DIR>',
+        epilog=__("For more information, visit <http://sphinx-doc.org/>."),
+        description=description)
+
+    parser.add_argument('-q', '--quiet', action='store_true', dest='quiet',
+                        default=None,
+                        help=__('quiet mode'))
+    parser.add_argument('--version', action='version', dest='show_version',
+                        version='%%(prog)s %s' % __display_version__)
+
+    parser.add_argument('path', metavar='PROJECT_DIR', default='.', nargs='?',
+                        help=__('project root'))
+
+    group = parser.add_argument_group(__('Structure options'))
+    group.add_argument('--sep', action='store_true', dest='sep', default=None,
+                       help=__('if specified, separate source and build dirs'))
+    group.add_argument('--no-sep', action='store_false', dest='sep',
+                       help=__('if specified, create build dir under source dir'))
+    group.add_argument('--dot', metavar='DOT', default='_',
+                       help=__('replacement for dot in _templates etc.'))
+
+    group = parser.add_argument_group(__('Project basic options'))
+    group.add_argument('-p', '--project', metavar='PROJECT', dest='project',
+                       help=__('project name'))
+    group.add_argument('-a', '--author', metavar='AUTHOR', dest='author',
+                       help=__('author names'))
+    group.add_argument('-v', metavar='VERSION', dest='version', default='',
+                       help=__('version of project'))
+    group.add_argument('-r', '--release', metavar='RELEASE', dest='release',
+                       help=__('release of project'))
+    group.add_argument('-l', '--language', metavar='LANGUAGE', dest='language',
+                       help=__('document language'))
+    group.add_argument('--suffix', metavar='SUFFIX', default='.rst',
+                       help=__('source file suffix'))
+    group.add_argument('--master', metavar='MASTER', default='index',
+                       help=__('master document name'))
+    group.add_argument('--epub', action='store_true', default=False,
+                       help=__('use epub'))
+
+    group = parser.add_argument_group(__('Extension options'))
+    for ext in EXTENSIONS:
+        group.add_argument('--ext-%s' % ext, action='append_const',
+                           const='sphinx.ext.%s' % ext, dest='extensions',
+                           help=__('enable %s extension') % ext)
+    group.add_argument('--extensions', metavar='EXTENSIONS', dest='extensions',
+                       action='append', help=__('enable arbitrary extensions'))
+
+    group = parser.add_argument_group(__('Makefile and Batchfile creation'))
+    group.add_argument('--makefile', action='store_true', dest='makefile', default=True,
+                       help=__('create makefile'))
+    group.add_argument('--no-makefile', action='store_false', dest='makefile',
+                       help=__('do not create makefile'))
+    group.add_argument('--batchfile', action='store_true', dest='batchfile', default=True,
+                       help=__('create batchfile'))
+    group.add_argument('--no-batchfile', action='store_false',
+                       dest='batchfile',
+                       help=__('do not create batchfile'))
+    group.add_argument('-m', '--use-make-mode', action='store_true',
+                       dest='make_mode', default=True,
+                       help=__('use make-mode for Makefile/make.bat'))
+    group.add_argument('-M', '--no-use-make-mode', action='store_false',
+                       dest='make_mode',
+                       help=__('do not use make-mode for Makefile/make.bat'))
+
+    group = parser.add_argument_group(__('Project templating'))
+    group.add_argument('-t', '--templatedir', metavar='TEMPLATEDIR',
+                       dest='templatedir',
+                       help=__('template directory for template files'))
+    group.add_argument('-d', metavar='NAME=VALUE', action='append',
+                       dest='variables',
+                       help=__('define a template variable'))
+
+    return parser
+
+--- Chunk 5 ---
+File: sphinx/builders/_epub_base.py
+Lines: 718-738
+Symbol: EpubBuilder.build_epub
+
+    def build_epub(self, outdir: str = None, outname: str = None) -> None:
+        """Write the epub file.
+
+        It is a zip file with the mimetype file stored uncompressed as the first
+        entry.
+        """
+        if outdir:
+            warnings.warn('The arguments of EpubBuilder.build_epub() is deprecated.',
+                          RemovedInSphinx40Warning, stacklevel=2)
+        else:
+            outdir = self.outdir
+            outname = self.config.epub_basename + '.epub'
+
+        logger.info(__('writing %s file...'), outname)
+        epub_filename = path.join(outdir, outname)
+        with ZipFile(epub_filename, 'w', ZIP_DEFLATED) as epub:
+            epub.write(path.join(outdir, 'mimetype'), 'mimetype', ZIP_STORED)
+            for filename in ['META-INF/container.xml', 'content.opf', 'toc.ncx']:
+                epub.write(path.join(outdir, filename), filename, ZIP_DEFLATED)
+            for filename in self.files:
+                epub.write(path.join(outdir, filename), filename, ZIP_DEFLATED)
+
+--- Chunk 6 ---
+File: sphinx/builders/_epub_base.py
+Lines: 144-153
+Symbol: EpubBuilder.init
+
+    def init(self) -> None:
+        super().init()
+        # the output files for epub must be .html only
+        self.out_suffix = '.xhtml'
+        self.link_suffix = '.xhtml'
+        self.playorder = 0
+        self.tocid = 0
+        self.id_cache = {}  # type: Dict[str, str]
+        self.use_index = self.get_builder_config('use_index', 'epub')
+        self.refnodes = []  # type: List[Dict[str, Any]]
+
+--- Chunk 7 ---
+File: sphinx/builders/_epub_base.py
+Lines: 155-156
+Symbol: EpubBuilder.create_build_info
+
+    def create_build_info(self) -> BuildInfo:
+        return BuildInfo(self.config, self.tags, ['html', 'epub'])
+
+--- Chunk 8 ---
+File: sphinx/builders/html/__init__.py
+Lines: 642-646
+Symbol: StandaloneHTMLBuilder.gen_pages_from_extensions
+
+    def gen_pages_from_extensions(self) -> None:
+        # pages from extensions
+        for pagelist in self.events.emit('html-collect-pages'):
+            for pagename, context, template in pagelist:
+                self.handle_page(pagename, context, template)
+
+--- Chunk 9 ---
+File: sphinx/builders/_epub_base.py
+Lines: 162-169
+Symbol: EpubBuilder.make_id
+
+    def make_id(self, name: str) -> str:
+        # id_cache is intentionally mutable
+        """Return a unique id for name."""
+        id = self.id_cache.get(name)
+        if not id:
+            id = 'epub-%d' % self.env.new_serialno('epub')
+            self.id_cache[name] = id
+        return id
+
+--- Chunk 10 ---
+File: sphinx/builders/manpage.py
+Lines: 43-46
+Symbol: ManualPageBuilder.init
+
+    def init(self) -> None:
+        if not self.config.man_pages:
+            logger.warning(__('no "man_pages" config value found; no manual pages '
+                              'will be written'))
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

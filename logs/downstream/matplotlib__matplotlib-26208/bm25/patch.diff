@@ -1,0 +1,13 @@
+```diff
+--- lib/matplotlib/axes/_axes.py
++++ lib/matplotlib/axes/_axes.py
+@@ -7965,7 +7965,7 @@
+         # Stackplot doesn't use the standard collection update_datalim or
+         # similar, but explicitly sets the data limits.
+         # We need to make sure we don't clear sharing relationships.
+-        self.dataLim.set(Bbox.unit())
++        self.dataLim.nullify()
+         for poly, color, hatch in zip(polys, colors, hatches):
+             # PolyCollection expects a list of closed polygons
+             # of shape (N, 2)
+```

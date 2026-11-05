@@ -1,0 +1,15 @@
+```diff
+diff --git a/sklearn/compose/_column_transformer.py b/sklearn/compose/_column_transformer.py
+index a5409cb34..f159a6c71 100644
+--- a/sklearn/compose/_column_transformer.py
++++ b/sklearn/compose/_column_transformer.py
+@@ -274,6 +274,8 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
+                 _set_output_transform(trans, transform=transform)
+         for _, trans, _ in self.transformers:
+             _set_output_transform(trans, transform=transform)
++        if hasattr(self.remainder, "set_output"):
++            _set_output_transform(self.remainder, transform=transform)
+         return self
+ 
+     def get_params(self, deep=True):
+```

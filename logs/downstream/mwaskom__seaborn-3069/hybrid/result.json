@@ -1,0 +1,14 @@
+{
+  "task_id": "mwaskom__seaborn-3069",
+  "repository": "mwaskom/seaborn",
+  "base_commit": "54cab15bdacfaa05a88fbc5502a5b322d99f148e",
+  "retrieval_method": "hybrid",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 7976,
+  "output_tokens": 190,
+  "thinking_tokens": 0,
+  "total_tokens": 8166
+}

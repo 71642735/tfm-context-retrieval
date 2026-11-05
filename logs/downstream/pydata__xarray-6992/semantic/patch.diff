@@ -1,0 +1,23 @@
+```diff
+diff --git a/xarray/core/dataset.py b/xarray/core/dataset.py
+--- a/xarray/core/dataset.py
++++ b/xarray/core/dataset.py
+@@ -365,7 +365,7 @@
+ 
+ class DataVariables(Mapping[Any, "DataArray"]):
+     def __len__(self) -> int:
+-        return len(self._dataset._variables) - len(self._dataset._coord_names)
++        return len(self.keys())
+ 
+     def __iter__(self) -> Iterator[Any]:
+         return (
+@@ -375,7 +375,7 @@
+ 
+     def __getitem__(self, key: Hashable) -> "DataArray":
+         if key not in self._dataset._coord_names and key in self._dataset._variables:
+-            return self._dataset._construct_dataarray(key)
++            return self._dataset._construct_dataarray(key)
+         raise KeyError(key)
+ 
+     def __repr__(self) -> str:
+```

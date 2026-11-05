@@ -1,0 +1,37 @@
+--- lib/matplotlib/artist.py
++++ lib/matplotlib/artist.py
+@@ -213,8 +213,10 @@
+                 self.axes = None  # decouple the artist from the Axes
+                 _ax_flag = True
+ 
+-            if self.figure:
++            if hasattr(self, 'figure') and self.figure:
+                 self.figure = None
+                 if not _ax_flag:
+                     self.figure = True
+ 
++        self.axes = None
++        self.figure = None
+--- lib/matplotlib/axes/_base.py
++++ lib/matplotlib/axes/_base.py
+@@ -1186,6 +1186,8 @@
+         # in self.clear, but subclasses will have overridden clear, so we
+         # need to call the method here.
+         self.cla()
++        for artist in self._children:
++            artist.axes = None
+         self._children = []
+         self._mouseover_set.clear()
+ 
+--- lib/matplotlib/figure.py
++++ lib/matplotlib/figure.py
+@@ -1172,6 +1172,9 @@
+         for ax in tuple(self.axes):
+             ax.remove()
+ 
++        for artist in self._artists:
++            artist.figure = None
++        self._artists = []
+         self.subfigs = []
+         self._axstack.clear()
+         self.stale = True

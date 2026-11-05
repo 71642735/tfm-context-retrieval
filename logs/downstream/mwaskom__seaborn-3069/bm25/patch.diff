@@ -1,0 +1,47 @@
+```diff
+diff --git a/seaborn/_core/plot.py b/seaborn/_core/plot.py
+--- a/seaborn/_core/plot.py
++++ b/seaborn/_core/plot.py
+@@ -1094,6 +1094,30 @@
+                 else:
+                     axis.set_label_text(label)
+ 
++            for axis_name in ["x", "y"]:
++                axis = getattr(ax, f"{axis_name}axis")
++                coord = coord_vars.get(axis_name)
++                if isinstance(coord, Nominal):
++                    # 1. Scale drawn to +/- 0.5 from first/last tick
++                    n = len(coord._units_seed) if hasattr(coord, "_units_seed") else len(axis.get_ticklocs())
++                    if n > 0:
++                        if axis_name == "x":
++                            ax.set_xlim(-0.5, n - 0.5, auto=None)
++                        else:
++                            ax.set_ylim(n - 0.5, -0.5, auto=None)
++
++                    # 2. Grid not shown by default
++                    getattr(axis, "grid")(False)
++
++                    # 3. If on y axis, the axis is inverted (handled by ylim above for y,
++                    # but let's ensure it's inverted if limits were already set or similar)
++                    if axis_name == "y":
++                        try:
++                            ax.yaxis.set_inverted(True)
++                        except AttributeError:
++                            if not ax.yaxis_inverted():
++                                ax.invert_yaxis()
++
+             # TODO implement tick / label configuration
+ 
+         # -----------------------------------------------------------------
+diff --git a/seaborn/_core/scales.py b/seaborn/_core/scales.py
+--- a/seaborn/_core/scales.py
++++ b/seaborn/_core/scales.py
+@@ -160,6 +160,7 @@
+         stringify = np.vectorize(format)
+ 
+         units_seed = categorical_order(data, new.order)
++        new._units_seed = units_seed
+ 
+         # TODO move to Nominal._get_scale?
+         # TODO this needs some more complicated rethinking about how to pass
+```

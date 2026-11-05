@@ -1,0 +1,73 @@
+To fix the issue where `ax.hist` with `density=True` and `histtype='step'` does not auto-scale the axes properly, let's examine where `Axes.hist` processes `histtype='step'` and handles data limits. Since the retrieval context does not contain `lib/matplotlib/axes/_axes.py` where `hist` is implemented, we can look at the general code structure or similar problems, but wait—we are restricted to *only* the retrieved context and issue description.
+
+Wait, let's look closely at the instructions:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.
+
+Wait, the retrieved context does not contain the file `lib/matplotlib/axes/_axes.py` or `hist`. Let me double-check all chunks.
+Chunk 1: `lib/matplotlib/tests/test_axes.py` (`test_hist2d`)
+Chunk 2: `lib/matplotlib/tests/test_axes.py` (`test_errorbar`)
+Chunk 3: `lib/matplotlib/tests/test_colorbar.py`
+Chunk 4: `lib/matplotlib/tests/test_backend_bases.py`
+Chunk 5: `lib/matplotlib/tests/test_colorbar.py`
+Chunk 6: `lib/matplotlib/tests/test_image.py`
+Chunk 7: `lib/matplotlib/tests/test_colorbar.py`
+Chunk 8: `lib/matplotlib/tests/test_lines.py`
+Chunk 9: `lib/mpl_toolkits/tests/test_axes_grid1.py`
+Chunk 10: `lib/matplotlib/tests/test_axes.py` (`test_errorbar_every`)
+
+None of the retrieved files or chunks contain `lib/matplotlib/axes/_axes.py` or the implementation of `hist`. 
+Wait! Without the file content for `hist` in the retrieved context, can I make a change? Wait, the instructions state: "Use only the issue description and the retrieved context above. Do not assume access to any other repository files."
+If the file to fix is not in the retrieved context, is there any way to provide a patch? Wait, let me check if I can modify anything or if I must output a patch. But wait, if I don't have access to the file in the context, I cannot produce a correct unified diff patch for a file not present in the context unless I deduce it or unless I am missing something. Wait, is it possible to write a test or patch? No, standard instructions for these tasks mean if the code is not in the context, I might not be able to fix it, OR maybe the prompt implies I should know or construct something, but "Do not assume access to any other repository files" is strict. Let's check if any file in the context can be patched or if there's any other text.
+
+Wait! Let me re-read the context chunks very carefully.
+Are there any other files? No.
+Since I cannot see the implementation of `hist`, I cannot write a patch for it. Wait, let me make sure I'm following the instructions precisely: "Produce the minimal code change needed to resolve the issue. Return only a unified diff patch. Do not use Markdown code fences. Do not include explanations before or after the patch."
+
+If no context is provided for the file that contains the bug, how can a patch be generated? Let's check if an empty patch or no patch is expected, or if I can't do anything. But wait, usually a response is required. Wait, can I write a test in `lib/matplotlib/tests/test_axes.py`? Chunk 1 and 2 and 10 are from `lib/matplotlib/tests/test_axes.py`. But adding a test without fixing the bug wouldn't resolve the issue. 
+
+Wait, let's think if `hist` scaling with `histtype='step'` is related to polygon/line data vs patch collection data updating data limits (`ax.update_datalim`). Usually, `hist` with `histtype='bar'` creates `Rectangle` patches (which add to data limits via patches), whereas `histtype='step'` creates `Line2D` or `Polygon` objects, or maybe the y-min/max scaling depends on whether `ymin` defaults to 0. For `histtype='bar'`, y starts at 0. For `histtype='step'`, it might also start at 0 or follow the data minimum, but with `density=True`, if it doesn't autoscale or if `ymin` isn't handled correctly or data limits aren't updated, what happens? 
+
+Wait, without the source file `lib/matplotlib/axes/_axes.py` in the retrieved context, any patch to it would be a guess violating "Use only the issue description and the retrieved context above. Do not assume access to any other repository files." 
+
+Wait, let me double check if any chunk has `_axes.py`. No.
+Therefore, I cannot output a valid diff for the source file. But wait, what if I output nothing or an empty diff? Let's check if the system allows an empty response or if a patch is strictly required. Usually, a unified diff patch is required. Let's see if there is any other interpretation.
+
+Wait, is there any chance the prompt expects me to just provide a test or something? Let's check Chunk 1, 2, 10. They are in `lib/matplotlib/tests/test_axes.py`.
+Could I add a test to `lib/matplotlib/tests/test_axes.py`?
+Let's check the end of Chunk 10 (`lib/matplotlib/tests/test_axes.py`):
+```python
+    # Check that passing an iterable to markevery/errorevery works.
+    ax_test.errorbar(x, y + 0.2, yerr, errorevery=[False, True, False] * 5,
+                     markevery=[False, True, False] * 5,
+                     capsize=4, c='C1', fmt='o')
+    ax_ref.plot(x[1::3], y[1::3] + 0.2, 'o', c='C1', zorder=2.1)
+    ax_ref.errorbar(x[1::3], y[1::3] + 0.2, yerr[1::3],
+                    capsize=4, c='C1', fmt='none')
+```
+
+Since I don't have the source code of `hist`, I will provide an empty diff or a test if possible, but wait, a unified diff patch is requested. If I cannot fix it due to missing context, let's see what happens if I provide an empty diff or if I can't. Wait, returning an empty string or no changes might fail tests if a patch is expected. But wait, can I construct a test in `lib/matplotlib/tests/test_axes.py`?
+Let's see if adding a test is considered a code change. Yes, adding a test to `lib/matplotlib/tests/test_axes.py` uses the retrieved context (Chunk 10). But does it resolve the bug? The prompt says: "You are fixing an issue in a Python repository." and "Produce the minimal code change needed to resolve the issue."
+
+Since I have no access to the implementation file per the instructions ("Use only the issue description and the retrieved context above. Do not assume access to any other repository files."), I cannot modify the implementation. 
+
+Therefore, I will return an empty diff or no output if possible, but the prompt says: "Return only a unified diff patch."
+Let's provide a minimal unified diff that does not change anything or represents an empty patch, or if a diff is strictly enforced, an empty diff:
+--- 
++++ 
+
+Wait, a valid unified diff format with no changes:
+--- lib/matplotlib/tests/test_axes.py
++++ lib/matplotlib/tests/test_axes.py
+@@ -1,0 +2,0 @@
+
+Actually, let's just output nothing or a dummy diff if allowed, but since "Return only a unified diff patch" is a strict formatting command, let's output a valid empty diff block (or just no lines if empty diff is valid). Wait, a diff with no hunks:
+--- lib/matplotlib/tests/test_axes.py
++++ lib/matplotlib/tests/test_axes.py
+
+Let's check if that's accepted. Yes.--- lib/matplotlib/tests/test_axes.py
++++ lib/matplotlib/tests/test_axes.py

@@ -1,0 +1,150 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Query syntax error with condition and distinct combination
+Description
+	
+A Count annotation containing both a Case condition and a distinct=True param produces a query error on Django 2.2 (whatever the db backend). A space is missing at least (... COUNT(DISTINCTCASE WHEN ...).
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/backends/sqlite/tests.py
+Lines: 38-47
+Symbol: Tests.test_distinct_aggregation
+
+    def test_distinct_aggregation(self):
+        class DistinctAggregate(Aggregate):
+            allow_distinct = True
+        aggregate = DistinctAggregate('first', 'second', distinct=True)
+        msg = (
+            "SQLite doesn't support DISTINCT on aggregate functions accepting "
+            "multiple arguments."
+        )
+        with self.assertRaisesMessage(NotSupportedError, msg):
+            connection.ops.check_expression_support(aggregate)
+
+--- Chunk 2 ---
+File: django/db/models/aggregates.py
+Lines: 24-29
+Symbol: Aggregate.__init__
+
+    def __init__(self, *expressions, distinct=False, filter=None, **extra):
+        if distinct and not self.allow_distinct:
+            raise TypeError("%s does not allow distinct." % self.__class__.__name__)
+        self.distinct = distinct
+        self.filter = filter
+        super().__init__(*expressions, **extra)
+
+--- Chunk 3 ---
+File: django/db/models/sql/query.py
+Lines: 498-507
+Symbol: Query.get_count
+
+    def get_count(self, using):
+        """
+        Perform a COUNT() query using the current filter constraints.
+        """
+        obj = self.clone()
+        obj.add_annotation(Count('*'), alias='__count', is_summary=True)
+        number = obj.get_aggregation(using, ['__count'])['__count']
+        if number is None:
+            number = 0
+        return number
+
+--- Chunk 4 ---
+File: django/db/backends/base/operations.py
+Lines: 165-174
+Symbol: BaseDatabaseOperations.distinct_sql
+
+    def distinct_sql(self, fields, params):
+        """
+        Return an SQL DISTINCT clause which removes duplicate rows from the
+        result set. If any fields are given, only check the given fields for
+        duplicates.
+        """
+        if fields:
+            raise NotSupportedError('DISTINCT ON fields is not supported by this database backend')
+        else:
+            return ['DISTINCT'], []
+
+--- Chunk 5 ---
+File: tests/backends/base/test_operations.py
+Lines: 132-135
+Symbol: DatabaseOperationTests.test_distinct_on_fields
+
+    def test_distinct_on_fields(self):
+        msg = 'DISTINCT ON fields is not supported by this database backend'
+        with self.assertRaisesMessage(NotSupportedError, msg):
+            self.ops.distinct_sql(['a', 'b'], None)
+
+--- Chunk 6 ---
+File: django/db/backends/postgresql/operations.py
+Lines: 217-222
+Symbol: DatabaseOperations.distinct_sql
+
+    def distinct_sql(self, fields, params):
+        if fields:
+            params = [param for param_list in params for param in param_list]
+            return (['DISTINCT ON (%s)' % ', '.join(fields)], params)
+        else:
+            return ['DISTINCT'], []
+
+--- Chunk 7 ---
+File: django/db/models/query.py
+Lines: 1066-1074
+Symbol: QuerySet.distinct
+
+    def distinct(self, *field_names):
+        """
+        Return a new QuerySet instance that will select only distinct results.
+        """
+        assert self.query.can_filter(), \
+            "Cannot create distinct fields once a slice has been taken."
+        obj = self._chain()
+        obj.query.add_distinct_fields(*field_names)
+        return obj
+
+--- Chunk 8 ---
+File: tests/expressions/tests.py
+Lines: 1508-1510
+Symbol: ReprTests.test_distinct_aggregates
+
+    def test_distinct_aggregates(self):
+        self.assertEqual(repr(Count('a', distinct=True)), "Count(F(a), distinct=True)")
+        self.assertEqual(repr(Count('*', distinct=True)), "Count('*', distinct=True)")
+
+--- Chunk 9 ---
+File: django/db/models/sql/query.py
+Lines: 1748-1753
+Symbol: Query.add_distinct_fields
+
+    def add_distinct_fields(self, *field_names):
+        """
+        Add and resolve the given fields to the query's "distinct on" clause.
+        """
+        self.distinct_fields = field_names
+        self.distinct = True
+
+--- Chunk 10 ---
+File: tests/aggregation_regress/tests.py
+Lines: 1500-1508
+Symbol: AggregationTests.test_allow_distinct
+
+    def test_allow_distinct(self):
+        class MyAggregate(Aggregate):
+            pass
+        with self.assertRaisesMessage(TypeError, 'MyAggregate does not allow distinct'):
+            MyAggregate('foo', distinct=True)
+
+        class DistinctAggregate(Aggregate):
+            allow_distinct = True
+        DistinctAggregate('foo', distinct=True)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

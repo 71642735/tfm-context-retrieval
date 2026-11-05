@@ -1,0 +1,2 @@
+--- langchain/agents/mrkl/output_parser.py
++++ langchain/agents/mrkl/output_parser.py

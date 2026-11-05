@@ -1,0 +1,14 @@
+```diff
+diff --git a/requests/utils.py b/requests/utils.py
+--- a/requests/utils.py
++++ b/requests/utils.py
+@@ -628,7 +628,7 @@
+     if isinstance(string, bytes):
+         return string
+ 
+-    if isinstance(string, str):
++    if isinstance(string, (str, bytes)):
+         out = string
+     else:
+         try:
+```

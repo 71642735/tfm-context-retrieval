@@ -1,0 +1,17 @@
+--- langchain/agents/chat/output_parser.py
++++ langchain/agents/chat/output_parser.py
+@@ -14,6 +14,14 @@
+     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+         if FINAL_ANSWER_ACTION in text:
++            includes_action = False
++            try:
++                action = text.split("```")[1]
++                json.loads(action.strip())
++                includes_action = True
++            except Exception:
++                pass
++            if includes_action:
++                raise OutputParserException(f"Could not parse LLM output: {text}")
+             return AgentFinish(
+                 {"output": text.split(FINAL_ANSWER_ACTION)[-1].strip()}, text
+             )

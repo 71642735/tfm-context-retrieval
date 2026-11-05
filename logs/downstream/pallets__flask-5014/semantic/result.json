@@ -1,0 +1,14 @@
+{
+  "task_id": "pallets__flask-5014",
+  "repository": "pallets/flask",
+  "base_commit": "7ee9ceb71e868944a46e1ff00b506772a53a4f1d",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 3038,
+  "output_tokens": 213,
+  "thinking_tokens": 0,
+  "total_tokens": 3251
+}

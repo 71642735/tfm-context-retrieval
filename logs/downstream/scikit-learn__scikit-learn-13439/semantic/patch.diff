@@ -1,0 +1,14 @@
+```diff
+--- sklearn/pipeline.py
++++ sklearn/pipeline.py
+@@ -190,6 +190,9 @@
+         """
+         return self._len()
+ 
++    def __len__(self):
++        return len(self.steps)
++
+     def _len(self):
+         # TODO: remove in 0.23
+         warnings.warn("The _len method is deprecated and will be "
+```

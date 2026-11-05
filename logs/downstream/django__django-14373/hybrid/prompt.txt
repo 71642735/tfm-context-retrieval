@@ -1,0 +1,120 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+DateFormat.Y() is not zero-padded.
+Description
+	
+The Y specifier for django.utils.dateformat.DateFormat is supposed to always return a four-digit year padded with zeros. This doesn't seem to be the case for year < 1000.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: django/utils/dateformat.py
+Lines: 311-313
+Symbol: DateFormat.y
+
+    def y(self):
+        """Year, 2 digits with leading zeros; e.g. '99'."""
+        return '%02d' % (self.data.year % 100)
+
+--- Chunk 2 ---
+File: django/utils/dateformat.py
+Lines: 315-317
+Symbol: DateFormat.Y
+
+    def Y(self):
+        "Year, 4 digits; e.g. '1999'"
+        return self.data.year
+
+--- Chunk 3 ---
+File: tests/utils_tests/test_dateformat.py
+Lines: 169-180
+Symbol: DateFormatTests.test_year_before_1000
+
+    def test_year_before_1000(self):
+        tests = [
+            (476, '76'),
+            (42, '42'),
+            (4, '04'),
+        ]
+        for year, expected_date in tests:
+            with self.subTest(year=year):
+                self.assertEqual(
+                    dateformat.format(datetime(year, 9, 8, 5, 0), 'y'),
+                    expected_date,
+                )
+
+--- Chunk 4 ---
+File: django/utils/dateformat.py
+Lines: 209-211
+Symbol: DateFormat.d
+
+    def d(self):
+        "Day of the month, 2 digits with leading zeros; i.e. '01' to '31'"
+        return '%02d' % self.data.day
+
+--- Chunk 5 ---
+File: django/utils/dateformat.py
+Lines: 242-244
+Symbol: DateFormat.L
+
+    def L(self):
+        "Boolean for whether it is a leap year; i.e. True or False"
+        return calendar.isleap(self.data.year)
+
+--- Chunk 6 ---
+File: tests/utils_tests/test_datetime_safe.py
+Lines: 58-64
+Symbol: DatetimeTests.test_zero_padding
+
+    def test_zero_padding(self):
+        """
+        Regression for #12524
+
+        Pre-1000AD dates are padded with zeros if necessary
+        """
+        self.assertEqual(date(1, 1, 1).strftime("%Y/%m/%d was a %A"), '0001/01/01 was a Monday')
+
+--- Chunk 7 ---
+File: django/utils/dateformat.py
+Lines: 254-256
+Symbol: DateFormat.n
+
+    def n(self):
+        "Month without leading zeros; i.e. '1' to '12'"
+        return self.data.month
+
+--- Chunk 8 ---
+File: django/utils/dateformat.py
+Lines: 234-236
+Symbol: DateFormat.j
+
+    def j(self):
+        "Day of the month without leading zeros; i.e. '1' to '31'"
+        return self.data.day
+
+--- Chunk 9 ---
+File: django/utils/dateformat.py
+Lines: 106-108
+Symbol: TimeFormat.G
+
+    def G(self):
+        "Hour, 24-hour format without leading zeros; i.e. '0' to '23'"
+        return self.data.hour
+
+--- Chunk 10 ---
+File: django/utils/dateformat.py
+Lines: 319-321
+Symbol: DateFormat.z
+
+    def z(self):
+        """Day of the year, i.e. 1 to 366."""
+        return self.data.timetuple().tm_yday
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

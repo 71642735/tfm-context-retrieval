@@ -1,0 +1,13 @@
+--- langchain/output_parsers/pydantic.py
++++ langchain/output_parsers/pydantic.py
+@@ -10,6 +10,6 @@
+ 
+ PYDANTIC_FORMAT_INSTRUCTIONS = """The output should be a markdown code snippet formatted in the following schema, including the leading and trailing "```json" and "```":
+ 
+-```json
++```json
+ {format}
+-```"""
++```
++
++Ensure any control characters such as newlines are properly escaped in the JSON string (e.g. \\n)."""

@@ -1,0 +1,14 @@
+{
+  "task_id": "pydata__xarray-6992",
+  "repository": "pydata/xarray",
+  "base_commit": "45c0a114e2b7b27b83c9618bc05b36afac82183c",
+  "retrieval_method": "hybrid",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 9897,
+  "output_tokens": 317,
+  "thinking_tokens": 0,
+  "total_tokens": 10214
+}

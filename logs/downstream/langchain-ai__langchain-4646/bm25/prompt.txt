@@ -1,0 +1,320 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+PydanticOutputParser has high chance failing when completion contains new line
+## Context
+When the completion is of a longer format such as an Email, the text will likely contain new line character `\n`.
+If it is not properly escaped like `\\n`, parsing will fail when using PydanticOutputParser as `json.loads` does not allow control characters in strict mode.
+Most of the time, RetryWithErrorOutputParser also fails to correct the format.
+
+## Example
+```python
+from langchain.output_parsers import PydanticOutputParser
+from langchain.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+
+class Email(BaseModel):
+    subject: str = Field(description="main objective of the email")
+    body: str = Field(description="email content")
+
+parser = PydanticOutputParser(pydantic_object=Email)
+
+prompt = PromptTemplate(
+    template="Answer the user query.\n{format_instructions}\n{query}\n",
+    input_variables=["query"],
+    partial_variables={"format_instructions": parser.get_format_instructions()},
+)
+completion = llm(
+    prompt.format(
+        query="Write a long formal email to inform my clients that the company is broke."
+    )
+)
+
+parser.parse(completion)
+```
+```python
+# completion
+
+> Here is the output instance:
+\```
+{"subject": "Company Status Update", "body": "Dear Clients, 
+
+This email is to inform you that our company is currently in a difficult financial situation. We apologize for any inconvenience caused by this and are doing our best to ensure that our services remain of the highest quality for our valued clients.
+
+We want to thank you for your support and understanding during this difficult time.
+
+Sincerely,
+[Company Name]"}
+\```
+```
+```python
+# parser.parse(completion)
+
+> Got: Invalid control character at: line 1 column 61 (char 60)
+```
+
+## Thoughts
+Maybe include instructions on escaping in PYDANTIC_FORMAT_INSTRUCTIONS?
+
+Or could adding an option to allow non-strict mode be considered?
+https://github.com/hwchase17/langchain/blob/32793f94fd6da0bb36311e1af4051f7883dd12c5/langchain/output_parsers/pydantic.py#L25
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/unit_tests/output_parsers/test_pydantic_parser.py
+Lines: 62-75
+Symbol: test_pydantic_output_parser_fail
+
+def test_pydantic_output_parser_fail() -> None:
+    """Test PydanticOutputParser where completion result fails schema validation."""
+
+    pydantic_parser: PydanticOutputParser[TestModel] = PydanticOutputParser(
+        pydantic_object=TestModel
+    )
+
+    try:
+        pydantic_parser.parse(DEF_RESULT_FAIL)
+    except OutputParserException as e:
+        print("parse_result:", e)
+        assert "Failed to parse TestModel from completion" in str(e)
+    else:
+        assert False, "Expected OutputParserException"
+
+--- Chunk 2 ---
+File: langchain/agents/mrkl/base.py
+Lines: 60-86
+Symbol: ZeroShotAgent.create_prompt
+
+    def create_prompt(
+        cls,
+        tools: Sequence[BaseTool],
+        prefix: str = PREFIX,
+        suffix: str = SUFFIX,
+        format_instructions: str = FORMAT_INSTRUCTIONS,
+        input_variables: Optional[List[str]] = None,
+    ) -> PromptTemplate:
+        """Create prompt in the style of the zero shot agent.
+
+        Args:
+            tools: List of tools the agent will have access to, used to format the
+                prompt.
+            prefix: String to put before the list of tools.
+            suffix: String to put after the list of tools.
+            input_variables: List of input variables the final prompt will expect.
+
+        Returns:
+            A PromptTemplate with the template assembled from the pieces here.
+        """
+        tool_strings = "\n".join([f"{tool.name}: {tool.description}" for tool in tools])
+        tool_names = ", ".join([tool.name for tool in tools])
+        format_instructions = format_instructions.format(tool_names=tool_names)
+        template = "\n\n".join([prefix, tool_strings, format_instructions, suffix])
+        if input_variables is None:
+            input_variables = ["input", "agent_scratchpad"]
+        return PromptTemplate(template=template, input_variables=input_variables)
+
+--- Chunk 3 ---
+File: langchain/schema.py
+Lines: 328-342
+Symbol: BaseOutputParser.parse_with_prompt
+
+    def parse_with_prompt(self, completion: str, prompt: PromptValue) -> Any:
+        """Optional method to parse the output of an LLM call with a prompt.
+
+        The prompt is largely provided in the event the OutputParser wants
+        to retry or fix the output in some way, and needs information from
+        the prompt to do so.
+
+        Args:
+            completion: output of language model
+            prompt: prompt value
+
+        Returns:
+            structured output
+        """
+        return self.parse(completion)
+
+--- Chunk 4 ---
+File: langchain/output_parsers/fix.py
+Lines: 30-41
+Symbol: OutputFixingParser.parse
+
+    def parse(self, completion: str) -> T:
+        try:
+            parsed_completion = self.parser.parse(completion)
+        except OutputParserException as e:
+            new_completion = self.retry_chain.run(
+                instructions=self.parser.get_format_instructions(),
+                completion=completion,
+                error=repr(e),
+            )
+            parsed_completion = self.parser.parse(new_completion)
+
+        return parsed_completion
+
+--- Chunk 5 ---
+File: langchain/prompts/prompt.py
+Lines: 79-107
+Symbol: PromptTemplate.from_examples
+
+    def from_examples(
+        cls,
+        examples: List[str],
+        suffix: str,
+        input_variables: List[str],
+        example_separator: str = "\n\n",
+        prefix: str = "",
+        **kwargs: Any,
+    ) -> PromptTemplate:
+        """Take examples in list format with prefix and suffix to create a prompt.
+
+        Intended to be used as a way to dynamically create a prompt from examples.
+
+        Args:
+            examples: List of examples to use in the prompt.
+            suffix: String to go after the list of examples. Should generally
+                set up the user's input.
+            input_variables: A list of variable names the final prompt template
+                will expect.
+            example_separator: The separator to use in between examples. Defaults
+                to two new line characters.
+            prefix: String that should go before any examples. Generally includes
+                examples. Default to an empty string.
+
+        Returns:
+            The final prompt generated.
+        """
+        template = example_separator.join([prefix, *examples, suffix])
+        return cls(input_variables=input_variables, template=template, **kwargs)
+
+--- Chunk 6 ---
+File: langchain/agents/conversational/base.py
+Lines: 48-82
+Symbol: ConversationalAgent.create_prompt
+
+    def create_prompt(
+        cls,
+        tools: Sequence[BaseTool],
+        prefix: str = PREFIX,
+        suffix: str = SUFFIX,
+        format_instructions: str = FORMAT_INSTRUCTIONS,
+        ai_prefix: str = "AI",
+        human_prefix: str = "Human",
+        input_variables: Optional[List[str]] = None,
+    ) -> PromptTemplate:
+        """Create prompt in the style of the zero shot agent.
+
+        Args:
+            tools: List of tools the agent will have access to, used to format the
+                prompt.
+            prefix: String to put before the list of tools.
+            suffix: String to put after the list of tools.
+            ai_prefix: String to use before AI output.
+            human_prefix: String to use before human output.
+            input_variables: List of input variables the final prompt will expect.
+
+        Returns:
+            A PromptTemplate with the template assembled from the pieces here.
+        """
+        tool_strings = "\n".join(
+            [f"> {tool.name}: {tool.description}" for tool in tools]
+        )
+        tool_names = ", ".join([tool.name for tool in tools])
+        format_instructions = format_instructions.format(
+            tool_names=tool_names, ai_prefix=ai_prefix, human_prefix=human_prefix
+        )
+        template = "\n\n".join([prefix, tool_strings, format_instructions, suffix])
+        if input_variables is None:
+            input_variables = ["input", "chat_history", "agent_scratchpad"]
+        return PromptTemplate(template=template, input_variables=input_variables)
+
+--- Chunk 7 ---
+File: langchain/output_parsers/pydantic.py
+Lines: 16-31
+Symbol: PydanticOutputParser.parse
+
+    def parse(self, text: str) -> T:
+        try:
+            # Greedy search for 1st json candidate.
+            match = re.search(
+                r"\{.*\}", text.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
+            )
+            json_str = ""
+            if match:
+                json_str = match.group()
+            json_object = json.loads(json_str)
+            return self.pydantic_object.parse_obj(json_object)
+
+        except (json.JSONDecodeError, ValidationError) as e:
+            name = self.pydantic_object.__name__
+            msg = f"Failed to parse {name} from completion {text}. Got: {e}"
+            raise OutputParserException(msg)
+
+--- Chunk 8 ---
+File: langchain/output_parsers/retry.py
+Lines: 107-116
+Symbol: RetryWithErrorOutputParser.parse_with_prompt
+
+    def parse_with_prompt(self, completion: str, prompt_value: PromptValue) -> T:
+        try:
+            parsed_completion = self.parser.parse(completion)
+        except OutputParserException as e:
+            new_completion = self.retry_chain.run(
+                prompt=prompt_value.to_string(), completion=completion, error=repr(e)
+            )
+            parsed_completion = self.parser.parse(new_completion)
+
+        return parsed_completion
+
+--- Chunk 9 ---
+File: langchain/experimental/autonomous_agents/baby_agi/task_creation.py
+Lines: 9-30
+Symbol: TaskCreationChain.from_llm
+
+    def from_llm(cls, llm: BaseLanguageModel, verbose: bool = True) -> LLMChain:
+        """Get the response parser."""
+        task_creation_template = (
+            "You are an task creation AI that uses the result of an execution agent"
+            " to create new tasks with the following objective: {objective},"
+            " The last completed task has the result: {result}."
+            " This result was based on this task description: {task_description}."
+            " These are incomplete tasks: {incomplete_tasks}."
+            " Based on the result, create new tasks to be completed"
+            " by the AI system that do not overlap with incomplete tasks."
+            " Return the tasks as an array."
+        )
+        prompt = PromptTemplate(
+            template=task_creation_template,
+            input_variables=[
+                "result",
+                "task_description",
+                "incomplete_tasks",
+                "objective",
+            ],
+        )
+        return cls(prompt=prompt, llm=llm, verbose=verbose)
+
+--- Chunk 10 ---
+File: langchain/output_parsers/retry.py
+Lines: 60-69
+Symbol: RetryOutputParser.parse_with_prompt
+
+    def parse_with_prompt(self, completion: str, prompt_value: PromptValue) -> T:
+        try:
+            parsed_completion = self.parser.parse(completion)
+        except OutputParserException:
+            new_completion = self.retry_chain.run(
+                prompt=prompt_value.to_string(), completion=completion
+            )
+            parsed_completion = self.parser.parse(new_completion)
+
+        return parsed_completion
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

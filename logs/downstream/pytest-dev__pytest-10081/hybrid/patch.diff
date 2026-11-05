@@ -1,0 +1,13 @@
+```diff
+--- src/_pytest/unittest.py
++++ src/_pytest/unittest.py
+@@ -142,6 +142,8 @@
+             and not getattr(self, "__unittest_skip__", False)
+             and not any(
+                 getattr(cls, "__unittest_skip__", False) for cls in self.__class__.__mro__
++            )
++            and not getattr(self, "skipped", False)
+         ):
+             self._previous_tearDown()
+             del self._previous_tearDown
+```

@@ -1,0 +1,2 @@
+--- pylint/checkers/similar.py
++++ pylint/checkers/similar.py

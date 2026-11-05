@@ -1,0 +1,290 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Lexer "python3" in --pastebin feature causes HTTP errors
+The `--pastebin` option currently submits the output of `pytest` to `bpaste.net` using `lexer=python3`: https://github.com/pytest-dev/pytest/blob/d47b9d04d4cf824150caef46c9c888779c1b3f58/src/_pytest/pastebin.py#L68-L73
+
+For some `contents`, this will raise a "HTTP Error 400: Bad Request".
+
+As an example:
+~~~
+>>> from urllib.request import urlopen
+>>> with open("data.txt", "rb") as in_fh:
+...     data = in_fh.read()
+>>> url = "https://bpaste.net"
+>>> urlopen(url, data=data)
+HTTPError: Bad Request
+~~~
+with the attached [data.txt](https://github.com/pytest-dev/pytest/files/3561212/data.txt).
+
+This is the underlying cause for the problems mentioned in #5764.
+
+The call goes through fine if `lexer` is changed from `python3` to `text`. This would seem like the right thing to do in any case: the console output of a `pytest` run that is being uploaded is not Python code, but arbitrary text.
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: testing/test_pastebin.py
+Lines: 123-133
+Symbol: TestPaste.test_create_new_paste
+
+    def test_create_new_paste(self, pastebin, mocked_urlopen):
+        result = pastebin.create_new_paste(b"full-paste-contents")
+        assert result == "https://bpaste.net/show/3c0c6750bd"
+        assert len(mocked_urlopen) == 1
+        url, data = mocked_urlopen[0]
+        assert type(data) is bytes
+        lexer = "python3" if sys.version_info[0] >= 3 else "python"
+        assert url == "https://bpaste.net"
+        assert "lexer=%s" % lexer in data.decode()
+        assert "code=full-paste-contents" in data.decode()
+        assert "expiry=1week" in data.decode()
+
+--- Chunk 2 ---
+File: testing/test_pastebin.py
+Lines: 65-87
+Symbol: TestPasteCapture.test_non_ascii_paste_text
+
+    def test_non_ascii_paste_text(self, testdir):
+        """Make sure that text which contains non-ascii characters is pasted
+        correctly. See #1219.
+        """
+        testdir.makepyfile(
+            test_unicode="""
+            # -*- coding: utf-8 -*-
+            def test():
+                assert '☺' == 1
+        """
+        )
+        result = testdir.runpytest("--pastebin=all")
+        if sys.version_info[0] >= 3:
+            expected_msg = "*assert '☺' == 1*"
+        else:
+            expected_msg = "*assert '\\xe2\\x98\\xba' == 1*"
+        result.stdout.fnmatch_lines(
+            [
+                expected_msg,
+                "*== 1 failed in *",
+                "*Sending information to Paste Service*",
+            ]
+        )
+
+--- Chunk 3 ---
+File: src/_pytest/pastebin.py
+Lines: 65-91
+Symbol: create_new_paste
+
+def create_new_paste(contents):
+    """
+    Creates a new paste using bpaste.net service.
+
+    :contents: paste contents as utf-8 encoded bytes
+    :returns: url to the pasted contents
+    """
+    import re
+
+    if sys.version_info < (3, 0):
+        from urllib import urlopen, urlencode
+    else:
+        from urllib.request import urlopen
+        from urllib.parse import urlencode
+
+    params = {
+        "code": contents,
+        "lexer": "python3" if sys.version_info[0] >= 3 else "python",
+        "expiry": "1week",
+    }
+    url = "https://bpaste.net"
+    response = urlopen(url, data=urlencode(params).encode("ascii")).read()
+    m = re.search(r'href="/raw/(\w+)"', response.decode("utf-8"))
+    if m:
+        return "%s/show/%s" % (url, m.group(1))
+    else:
+        return "bad response: " + response
+
+--- Chunk 4 ---
+File: src/_pytest/pastebin.py
+Lines: 49-62
+Symbol: pytest_unconfigure
+
+def pytest_unconfigure(config):
+    if hasattr(config, "_pastebinfile"):
+        # get terminal contents and delete file
+        config._pastebinfile.seek(0)
+        sessionlog = config._pastebinfile.read()
+        config._pastebinfile.close()
+        del config._pastebinfile
+        # undo our patching in the terminal reporter
+        tr = config.pluginmanager.getplugin("terminalreporter")
+        del tr._tw.__dict__["write"]
+        # write summary
+        tr.write_sep("=", "Sending information to Paste Service")
+        pastebinurl = create_new_paste(sessionlog)
+        tr.write_line("pastebin session-log: %s\n" % pastebinurl)
+
+--- Chunk 5 ---
+File: testing/test_pastebin.py
+Lines: 96-121
+Symbol: TestPaste.mocked_urlopen
+
+    def mocked_urlopen(self, monkeypatch):
+        """
+        monkeypatch the actual urlopen calls done by the internal plugin
+        function that connects to bpaste service.
+        """
+        calls = []
+
+        def mocked(url, data):
+            calls.append((url, data))
+
+            class DummyFile(object):
+                def read(self):
+                    # part of html of a normal response
+                    return b'View <a href="/raw/3c0c6750bd">raw</a>.'
+
+            return DummyFile()
+
+        if sys.version_info < (3, 0):
+            import urllib
+
+            monkeypatch.setattr(urllib, "urlopen", mocked)
+        else:
+            import urllib.request
+
+            monkeypatch.setattr(urllib.request, "urlopen", mocked)
+        return calls
+
+--- Chunk 6 ---
+File: testing/test_warnings.py
+Lines: 164-195
+Symbol: test_py2_unicode
+
+def test_py2_unicode(testdir, pyfile_with_warnings):
+    if getattr(sys, "pypy_version_info", ())[:2] == (5, 9) and sys.platform.startswith(
+        "win"
+    ):
+        pytest.xfail("fails with unicode error on PyPy2 5.9 and Windows (#2905)")
+    testdir.makepyfile(
+        """
+        # -*- coding: utf-8 -*-
+        import warnings
+        import pytest
+
+
+        @pytest.fixture
+        def fix():
+            warnings.warn(u"测试")
+            yield
+
+        @pytest.mark.filterwarnings('always')
+        def test_func(fix):
+            pass
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            "*test_py2_unicode.py:8: UserWarning: \\u6d4b\\u8bd5",
+            '*warnings.warn(u"\u6d4b\u8bd5")',
+            "*warnings.py:*: UnicodeWarning: Warning is using unicode non*",
+            "* 1 passed, 2 warnings*",
+        ]
+    )
+
+--- Chunk 7 ---
+File: src/_pytest/pastebin.py
+Lines: 94-114
+Symbol: pytest_terminal_summary
+
+def pytest_terminal_summary(terminalreporter):
+    import _pytest.config
+
+    if terminalreporter.config.option.pastebin != "failed":
+        return
+    tr = terminalreporter
+    if "failed" in tr.stats:
+        terminalreporter.write_sep("=", "Sending information to Paste Service")
+        for rep in terminalreporter.stats.get("failed"):
+            try:
+                msg = rep.longrepr.reprtraceback.reprentries[-1].reprfileloc
+            except AttributeError:
+                msg = tr._getfailureheadline(rep)
+            tw = _pytest.config.create_terminal_writer(
+                terminalreporter.config, stringio=True
+            )
+            rep.toterminal(tw)
+            s = tw.stringio.getvalue()
+            assert len(s)
+            pastebinurl = create_new_paste(s)
+            tr.write_line("%s --> %s" % (msg, pastebinurl))
+
+--- Chunk 8 ---
+File: testing/test_capture.py
+Lines: 100-119
+Symbol: test_capturing_unicode
+
+def test_capturing_unicode(testdir, method):
+    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (2, 2):
+        pytest.xfail("does not work on pypy < 2.2")
+    if sys.version_info >= (3, 0):
+        obj = "'b\u00f6y'"
+    else:
+        obj = "u'\u00f6y'"
+    testdir.makepyfile(
+        """
+        # -*- coding: utf-8 -*-
+        # taken from issue 227 from nosetests
+        def test_unicode():
+            import sys
+            print(sys.stdout)
+            print(%s)
+    """
+        % obj
+    )
+    result = testdir.runpytest("--capture=%s" % method)
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+--- Chunk 9 ---
+File: testing/python/collect.py
+Lines: 1259-1270
+Symbol: test_syntax_error_with_non_ascii_chars
+
+def test_syntax_error_with_non_ascii_chars(testdir):
+    """Fix decoding issue while formatting SyntaxErrors during collection (#578)
+    """
+    testdir.makepyfile(
+        u"""
+    # -*- coding: utf-8 -*-
+
+    ☃
+    """
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*ERROR collecting*", "*SyntaxError*", "*1 error in*"])
+
+--- Chunk 10 ---
+File: src/_pytest/pastebin.py
+Lines: 15-25
+Symbol: pytest_addoption
+
+def pytest_addoption(parser):
+    group = parser.getgroup("terminal reporting")
+    group._addoption(
+        "--pastebin",
+        metavar="mode",
+        action="store",
+        dest="pastebin",
+        default=None,
+        choices=["failed", "all"],
+        help="send failed|all info to bpaste.net pastebin service.",
+    )
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

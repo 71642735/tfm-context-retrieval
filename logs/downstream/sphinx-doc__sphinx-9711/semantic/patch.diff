@@ -1,0 +1,19 @@
+--- sphinx/extension.py
++++ sphinx/extension.py
+@@ -1,6 +1,7 @@
+ """License boilerplate, etc."""
+
+ from typing import TYPE_CHECKING
++from packaging.version import Version
+
+ from sphinx.errors import ExtensionError, VersionRequirementError
+ from sphinx.locale import _, __
+@@ -49,7 +50,7 @@
+                               -  'but it is not loaded.'), extname)
+             continue
+
+-        if extension.version == 'unknown version' or reqversion > extension.version:
++        if extension.version == 'unknown version' or Version(reqversion) > Version(extension.version):
+             raise VersionRequirementError(__('This project needs the extension %s at least in '
+                                              'version %s and therefore cannot be built with '
+                                              'the loaded version (%s).') %

@@ -1,0 +1,326 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Morse encoding for "1" is not correct
+The current Morse mapping in simpy.crypto.crypto contains an incorrect mapping of 
+`"----": "1"`   
+
+The correct mapping is `".----": "1"`.
+
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sympy/crypto/tests/test_crypto.py
+Lines: 241-249
+Symbol: test_encode_morse
+
+def test_encode_morse():
+    assert encode_morse('ABC') == '.-|-...|-.-.'
+    assert encode_morse('SMS ') == '...|--|...||'
+    assert encode_morse('SMS\n') == '...|--|...||'
+    assert encode_morse('') == ''
+    assert encode_morse(' ') == '||'
+    assert encode_morse(' ', sep='`') == '``'
+    assert encode_morse(' ', sep='``') == '````'
+    assert encode_morse('!@#$%^&*()_+') == '-.-.--|.--.-.|...-..-|-.--.|-.--.-|..--.-|.-.-.'
+
+--- Chunk 2 ---
+File: sympy/crypto/crypto.py
+Lines: 1586-1617
+Symbol: decode_morse
+
+def decode_morse(msg, sep='|', mapping=None):
+    """
+    Decodes a Morse Code with letters separated by `sep`
+    (default is '|') and words by `word_sep` (default is '||)
+    into plaintext.
+
+    References
+    ==========
+
+    .. [1] https://en.wikipedia.org/wiki/Morse_code
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import decode_morse
+    >>> mc = '--|---|...-|.||.|.-|...|-'
+    >>> decode_morse(mc)
+    'MOVE EAST'
+
+    """
+
+    mapping = mapping or morse_char
+    word_sep = 2*sep
+    characterstring = []
+    words = msg.strip(word_sep).split(word_sep)
+    for word in words:
+        letters = word.split(sep)
+        chars = [mapping[c] for c in letters]
+        word = ''.join(chars)
+        characterstring.append(word)
+    rv = " ".join(characterstring)
+    return rv
+
+--- Chunk 3 ---
+File: sympy/crypto/tests/test_crypto.py
+Lines: 252-255
+Symbol: test_decode_morse
+
+def test_decode_morse():
+    assert decode_morse('-.-|.|-.--') == 'KEY'
+    assert decode_morse('.-.|..-|-.||') == 'RUN'
+    raises(KeyError, lambda: decode_morse('.....----'))
+
+--- Chunk 4 ---
+File: sympy/crypto/crypto.py
+Lines: 1539-1583
+Symbol: encode_morse
+
+def encode_morse(msg, sep='|', mapping=None):
+    """
+    Encodes a plaintext into popular Morse Code with letters
+    separated by `sep` and words by a double `sep`.
+
+    References
+    ==========
+
+    .. [1] https://en.wikipedia.org/wiki/Morse_code
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encode_morse
+    >>> msg = 'ATTACK RIGHT FLANK'
+    >>> encode_morse(msg)
+    '.-|-|-|.-|-.-.|-.-||.-.|..|--.|....|-||..-.|.-..|.-|-.|-.-'
+
+    """
+
+    mapping = mapping or char_morse
+    assert sep not in mapping
+    word_sep = 2*sep
+    mapping[" "] = word_sep
+    suffix = msg and msg[-1] in whitespace
+
+    # normalize whitespace
+    msg = (' ' if word_sep else '').join(msg.split())
+    # omit unmapped chars
+    chars = set(''.join(msg.split()))
+    ok = set(mapping.keys())
+    msg = translate(msg, None, ''.join(chars - ok))
+
+    morsestring = []
+    words = msg.split()
+    for word in words:
+        morseword = []
+        for letter in word:
+            morseletter = mapping[letter]
+            morseword.append(morseletter)
+
+        word = sep.join(morseword)
+        morsestring.append(word)
+
+    return word_sep.join(morsestring) + (word_sep if suffix else '')
+
+--- Chunk 5 ---
+File: sympy/crypto/crypto.py
+Lines: 283-310
+Symbol: decipher_rot13
+
+def decipher_rot13(msg, symbols=None):
+    """
+    Performs the ROT13 decryption on a given plaintext ``msg``.
+
+    Notes
+    =====
+
+    ``decipher_rot13`` is equivalent to ``encipher_rot13`` as both
+    ``decipher_shift`` with a key of 13 and ``encipher_shift`` key with a
+    key of 13 will return the same results. Nonetheless,
+    ``decipher_rot13`` has nonetheless been explicitly defined here for
+    consistency.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_rot13, decipher_rot13
+    >>> msg = 'GONAVYBEATARMY'
+    >>> ciphertext = encipher_rot13(msg);ciphertext
+    'TBANILORNGNEZL'
+    >>> decipher_rot13(ciphertext)
+    'GONAVYBEATARMY'
+    >>> encipher_rot13(msg) == decipher_rot13(msg)
+    True
+    >>> msg == decipher_rot13(ciphertext)
+    True
+    """
+    return decipher_shift(msg, 13, symbols)
+
+--- Chunk 6 ---
+File: sympy/crypto/tests/test_crypto.py
+Lines: 91-103
+Symbol: test_encipher_hill
+
+def test_encipher_hill():
+    A = Matrix(2, 2, [1, 2, 3, 5])
+    assert encipher_hill("ABCD", A) == "CFIV"
+    A = Matrix(2, 2, [1, 0, 0, 1])
+    assert encipher_hill("ABCD", A) == "ABCD"
+    assert encipher_hill("ABCD", A, symbols="ABCD") == "ABCD"
+    A = Matrix(2, 2, [1, 2, 3, 5])
+    assert encipher_hill("ABCD", A, symbols="ABCD") == "CBAB"
+    assert encipher_hill("AB", A, symbols="ABCD") == "CB"
+    # message length, n, does not need to be a multiple of k;
+    # it is padded
+    assert encipher_hill("ABA", A) == "CFGC"
+    assert encipher_hill("ABA", A, pad="Z") == "CFYV"
+
+--- Chunk 7 ---
+File: sympy/crypto/crypto.py
+Lines: 379-399
+Symbol: decipher_affine
+
+def decipher_affine(msg, key, symbols=None):
+    r"""
+    Return the deciphered text that was made from the mapping,
+    `x \rightarrow ax+b` (mod `N`), where ``N`` is the
+    number of characters in the alphabet. Deciphering is done by
+    reciphering with a new key: `x \rightarrow cx+d` (mod `N`),
+    where `c = a^{-1}` (mod `N`) and `d = -a^{-1}b` (mod `N`).
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_affine, decipher_affine
+    >>> msg = "GO NAVY BEAT ARMY"
+    >>> key = (3, 1)
+    >>> encipher_affine(msg, key)
+    'TROBMVENBGBALV'
+    >>> decipher_affine(_, key)
+    'GONAVYBEATARMY'
+
+    """
+    return encipher_affine(msg, key, symbols, _inverse=True)
+
+--- Chunk 8 ---
+File: sympy/crypto/tests/test_crypto.py
+Lines: 47-54
+Symbol: test_encipher_affine
+
+def test_encipher_affine():
+    assert encipher_affine("ABC", (1, 0)) == "ABC"
+    assert encipher_affine("ABC", (1, 1)) == "BCD"
+    assert encipher_affine("ABC", (-1, 0)) == "AZY"
+    assert encipher_affine("ABC", (-1, 1), symbols="ABCD") == "BAD"
+    assert encipher_affine("123", (-1, 1), symbols="1234") == "214"
+    assert encipher_affine("ABC", (3, 16)) == "QTW"
+    assert decipher_affine("QTW", (3, 16)) == "ABC"
+
+--- Chunk 9 ---
+File: sympy/crypto/crypto.py
+Lines: 788-849
+Symbol: decipher_hill
+
+def decipher_hill(msg, key, symbols=None):
+    """
+    Deciphering is the same as enciphering but using the inverse of the
+    key matrix.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_hill, decipher_hill
+    >>> from sympy import Matrix
+
+    >>> key = Matrix([[1, 2], [3, 5]])
+    >>> encipher_hill("meet me on monday", key)
+    'UEQDUEODOCTCWQ'
+    >>> decipher_hill(_, key)
+    'MEETMEONMONDAY'
+
+    When the length of the plaintext (stripped of invalid characters)
+    is not a multiple of the key dimension, extra characters will
+    appear at the end of the enciphered and deciphered text. In order to
+    decipher the text, those characters must be included in the text to
+    be deciphered. In the following, the key has a dimension of 4 but
+    the text is 2 short of being a multiple of 4 so two characters will
+    be added.
+
+    >>> key = Matrix([[1, 1, 1, 2], [0, 1, 1, 0],
+    ...               [2, 2, 3, 4], [1, 1, 0, 1]])
+    >>> msg = "ST"
+    >>> encipher_hill(msg, key)
+    'HJEB'
+    >>> decipher_hill(_, key)
+    'STQQ'
+    >>> encipher_hill(msg, key, pad="Z")
+    'ISPK'
+    >>> decipher_hill(_, key)
+    'STZZ'
+
+    If the last two characters of the ciphertext were ignored in
+    either case, the wrong plaintext would be recovered:
+
+    >>> decipher_hill("HD", key)
+    'ORMV'
+    >>> decipher_hill("IS", key)
+    'UIKY'
+
+    """
+    assert key.is_square
+    msg, _, A = _prep(msg, '', symbols)
+    map = {c: i for i, c in enumerate(A)}
+    C = [map[c] for c in msg]
+    N = len(A)
+    k = key.cols
+    n = len(C)
+    m, r = divmod(n, k)
+    if r:
+        C = C + [0]*(k - r)
+        m += 1
+    key_inv = key.inv_mod(N)
+    rv = ''.join([A[p % N] for j in range(m) for p in
+        list(key_inv*Matrix(
+        k, 1, [C[i] for i in range(k*j, k*(j + 1))]))])
+    return rv
+
+--- Chunk 10 ---
+File: sympy/crypto/crypto.py
+Lines: 237-260
+Symbol: decipher_shift
+
+def decipher_shift(msg, key, symbols=None):
+    """
+    Return the text by shifting the characters of ``msg`` to the
+    left by the amount given by ``key``.
+
+    Examples
+    ========
+
+    >>> from sympy.crypto.crypto import encipher_shift, decipher_shift
+    >>> msg = "GONAVYBEATARMY"
+    >>> ct = encipher_shift(msg, 1); ct
+    'HPOBWZCFBUBSNZ'
+
+    To decipher the shifted text, change the sign of the key:
+
+    >>> encipher_shift(ct, -1)
+    'GONAVYBEATARMY'
+
+    Or use this function with the original key:
+
+    >>> decipher_shift(ct, 1)
+    'GONAVYBEATARMY'
+    """
+    return encipher_shift(msg, -key, symbols)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

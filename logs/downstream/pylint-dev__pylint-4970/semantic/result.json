@@ -1,0 +1,14 @@
+{
+  "task_id": "pylint-dev__pylint-4970",
+  "repository": "pylint-dev/pylint",
+  "base_commit": "40cc2ffd7887959157aaf469e09585ec2be7f528",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 3843,
+  "output_tokens": 2282,
+  "thinking_tokens": 0,
+  "total_tokens": 6125
+}

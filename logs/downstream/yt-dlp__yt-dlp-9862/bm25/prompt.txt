@@ -1,0 +1,442 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+`--simulate` doesn't accurately simulate downloading under certain conditions
+### DO NOT REMOVE OR SKIP THE ISSUE TEMPLATE
+
+- [X] I understand that I will be **blocked** if I *intentionally* remove or skip any mandatory\* field
+
+### Checklist
+
+- [X] I'm reporting a bug unrelated to a specific site
+- [X] I've verified that I have **updated yt-dlp to nightly or master** ([update instructions](https://github.com/yt-dlp/yt-dlp#update-channels))
+- [X] I've checked that all provided URLs are playable in a browser with the same IP and same login details
+- [X] I've checked that all URLs and arguments with special characters are [properly quoted or escaped](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#video-url-contains-an-ampersand--and-im-getting-some-strange-output-1-2839-or-v-is-not-recognized-as-an-internal-or-external-command)
+- [X] I've searched [known issues](https://github.com/yt-dlp/yt-dlp/issues/3766) and the [bugtracker](https://github.com/yt-dlp/yt-dlp/issues?q=) for similar issues **including closed ones**. DO NOT post duplicates
+- [X] I've read the [guidelines for opening an issue](https://github.com/yt-dlp/yt-dlp/blob/master/CONTRIBUTING.md#opening-an-issue)
+
+### Provide a description that is worded well enough to be understood
+
+When running a yt-dlp command with `--simulate` (and without an `-f` arg), the default format selection differs from an unsimulated run under any of these conditions:
+- ffmpeg is not available
+- the outtmpl is `-`
+- the URL is for a livestream (and `--live-from-start` was not passed)
+
+A dry-run/simulate option should actually simulate the behaviour that will occur when downloading.
+This behaviour is currently undocumented. Either the behaviour should be changed or at the very least be documented.
+
+---
+
+*Copying initial discussion: https://github.com/yt-dlp/yt-dlp/pull/9805#discussion_r1588171627*
+
+It looks like we can trace this logic back to https://github.com/ytdl-org/youtube-dl/commit/0017d9ad6de831384e74db14a821e4c94020c9ac
+
+Back then, upstream's default format spec was only `best` if ffmpeg was not available. So a simulated run would result in a "requested formats not available" error if ffmpeg was not available and there was no combined video+audio format available. This `simulate` check seems to be added so that you could print json without having to manually pass `-f bv+ba` or `-f bv` etc in this scenario -- see the linked upstream PR
+
+
+
+### Provide verbose output that clearly demonstrates the problem
+
+- [X] Run **your** yt-dlp command with **-vU** flag added (`yt-dlp -vU <your command line>`)
+- [ ] If using API, add `'verbose': True` to `YoutubeDL` params instead
+- [X] Copy the WHOLE output (starting with `[debug] Command-line config`) and insert it below
+
+### Complete Verbose Output
+
+```shell
+[debug] Command-line config: ['-vU', '--simulate', 'https://www.youtube.com/watch?v=2yJgwwDcgV8']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out utf-8, error utf-8, screen utf-8
+[debug] yt-dlp version master@2024.04.28.221944 from yt-dlp/yt-dlp-master-builds [ac817bc83] (win_exe)
+[debug] Python 3.8.10 (CPython AMD64 64bit) - Windows-10-10.0.22631-SP0 (OpenSSL 1.1.1k  25 Mar 2021)
+[debug] exe versions: none
+[debug] Optional libraries: Cryptodome-3.20.0, brotli-1.1.0, certifi-2024.02.02, curl_cffi-0.5.10, mutagen-1.47.0, requests-2.31.0, sqlite3-3.35.5, urllib3-2.2.1, websockets-12.0
+[debug] Proxy map: {}
+[debug] Request Handlers: urllib, requests, websockets, curl_cffi
+[debug] Loaded 1810 extractors
+[debug] Fetching release info: https://api.github.com/repos/yt-dlp/yt-dlp-master-builds/releases/latest
+Latest version: master@2024.04.28.221944 from yt-dlp/yt-dlp-master-builds
+yt-dlp is up to date (master@2024.04.28.221944 from yt-dlp/yt-dlp-master-builds)
+[youtube] Extracting URL: https://www.youtube.com/watch?v=2yJgwwDcgV8
+[youtube] 2yJgwwDcgV8: Downloading webpage
+[youtube] 2yJgwwDcgV8: Downloading ios player API JSON
+[youtube] 2yJgwwDcgV8: Downloading android player API JSON
+WARNING: [youtube] Skipping player responses from android clients (got player responses for video "aQvGIIdgFDM" instead of "2yJgwwDcgV8")
+[debug] Loading youtube-nsig.7d1f7724 from cache
+[debug] [youtube] Decrypted nsig ZyUwo2vdMccktm7tN0 => ZvGvrjLHlKzcbw
+[debug] Loading youtube-nsig.7d1f7724 from cache
+[debug] [youtube] Decrypted nsig vYdxycJ0vBBgWEBA_9 => Etq9qDUH370hPg
+[youtube] 2yJgwwDcgV8: Downloading m3u8 information
+[debug] Sort order given by extractor: quality, res, fps, hdr:12, source, vcodec:vp9.2, channels, acodec, lang, proto
+[debug] Formats sorted by: hasvid, ie_pref, quality, res, fps, hdr:12(7), source, vcodec:vp9.2(10), channels, acodec, lang, proto, size, br, asr, vext, aext, hasaud, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] 2yJgwwDcgV8: Downloading 1 format(s): 244+251
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: bundle/py2exe.py
+Lines: 18-55
+Symbol: main
+
+def main():
+    warnings.warn(
+        'py2exe builds do not support pycryptodomex and needs VC++14 to run. '
+        'It is recommended to run "pyinst.py" to build using pyinstaller instead')
+
+    freeze(
+        console=[{
+            'script': './yt_dlp/__main__.py',
+            'dest_base': 'yt-dlp',
+            'icon_resources': [(1, 'devscripts/logo.ico')],
+        }],
+        version_info={
+            'version': VERSION,
+            'description': 'A feature-rich command-line audio/video downloader',
+            'comments': 'Official repository: <https://github.com/yt-dlp/yt-dlp>',
+            'product_name': 'yt-dlp',
+            'product_version': VERSION,
+        },
+        options={
+            'bundle_files': 0,
+            'compressed': 1,
+            'optimize': 2,
+            'dist_dir': './dist',
+            'excludes': [
+                # py2exe cannot import Crypto
+                'Crypto',
+                'Cryptodome',
+                # requests >=2.32.0 breaks py2exe builds due to certifi dependency
+                'requests',
+                'urllib3',
+            ],
+            'dll_excludes': ['w9xpopen.exe', 'crypt32.dll'],
+            # Modules that are only imported dynamically must be added here
+            'includes': ['yt_dlp.compat._legacy', 'yt_dlp.compat._deprecated',
+                         'yt_dlp.utils._legacy', 'yt_dlp.utils._deprecated'],
+        },
+        zipfile=None,
+    )
+
+--- Chunk 2 ---
+File: yt_dlp/networking/_helper.py
+Lines: 114-168
+Symbol: make_ssl_context
+
+def make_ssl_context(
+    verify=True,
+    client_certificate=None,
+    client_certificate_key=None,
+    client_certificate_password=None,
+    legacy_support=False,
+    use_certifi=True,
+):
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = verify
+    context.verify_mode = ssl.CERT_REQUIRED if verify else ssl.CERT_NONE
+    # OpenSSL 1.1.1+ Python 3.8+ keylog file
+    if hasattr(context, 'keylog_filename'):
+        context.keylog_filename = os.environ.get('SSLKEYLOGFILE') or None
+
+    # Some servers may reject requests if ALPN extension is not sent. See:
+    # https://github.com/python/cpython/issues/85140
+    # https://github.com/yt-dlp/yt-dlp/issues/3878
+    with contextlib.suppress(NotImplementedError):
+        context.set_alpn_protocols(['http/1.1'])
+    if verify:
+        ssl_load_certs(context, use_certifi)
+
+    if legacy_support:
+        context.options |= 4  # SSL_OP_LEGACY_SERVER_CONNECT
+        context.set_ciphers('DEFAULT')  # compat
+
+    elif ssl.OPENSSL_VERSION_INFO >= (1, 1, 1) and not ssl.OPENSSL_VERSION.startswith('LibreSSL'):
+        # Use the default SSL ciphers and minimum TLS version settings from Python 3.10 [1].
+        # This is to ensure consistent behavior across Python versions and libraries, and help avoid fingerprinting
+        # in some situations [2][3].
+        # Python 3.10 only supports OpenSSL 1.1.1+ [4]. Because this change is likely
+        # untested on older versions, we only apply this to OpenSSL 1.1.1+ to be safe.
+        # LibreSSL is excluded until further investigation due to cipher support issues [5][6].
+        # 1. https://github.com/python/cpython/commit/e983252b516edb15d4338b0a47631b59ef1e2536
+        # 2. https://github.com/yt-dlp/yt-dlp/issues/4627
+        # 3. https://github.com/yt-dlp/yt-dlp/pull/5294
+        # 4. https://peps.python.org/pep-0644/
+        # 5. https://peps.python.org/pep-0644/#libressl-support
+        # 6. https://github.com/yt-dlp/yt-dlp/commit/5b9f253fa0aee996cf1ed30185d4b502e00609c4#commitcomment-89054368
+        context.set_ciphers(
+            '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM')
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+
+    if client_certificate:
+        try:
+            context.load_cert_chain(
+                client_certificate, keyfile=client_certificate_key,
+                password=client_certificate_password)
+        except ssl.SSLError:
+            raise RequestError('Unable to load client certificate')
+
+        if getattr(context, 'post_handshake_auth', None) is not None:
+            context.post_handshake_auth = True
+    return context
+
+--- Chunk 3 ---
+File: yt_dlp/extractor/commonmistakes.py
+Lines: 17-25
+Symbol: CommonMistakesIE._real_extract
+
+    def _real_extract(self, url):
+        msg = (
+            f'You\'ve asked yt-dlp to download the URL "{url}". '
+            'That doesn\'t make any sense. '
+            'Simply remove the parameter in your command or configuration.'
+        )
+        if not self.get_param('verbose'):
+            msg += ' Add -v to the command line to see what arguments and configuration yt-dlp has'
+        raise ExtractorError(msg, expected=True)
+
+--- Chunk 4 ---
+File: yt_dlp/__init__.py
+Lines: 960-1074
+Symbol: _real_main
+
+def _real_main(argv=None):
+    setproctitle('yt-dlp')
+
+    parser, opts, all_urls, ydl_opts = parse_options(argv)
+
+    # Dump user agent
+    if opts.dump_user_agent:
+        ua = traverse_obj(opts.headers, 'User-Agent', casesense=False, default=std_headers['User-Agent'])
+        write_string(f'{ua}\n', out=sys.stdout)
+        return
+
+    if print_extractor_information(opts, all_urls):
+        return
+
+    # We may need ffmpeg_location without having access to the YoutubeDL instance
+    # See https://github.com/yt-dlp/yt-dlp/issues/2191
+    if opts.ffmpeg_location:
+        FFmpegPostProcessor._ffmpeg_location.set(opts.ffmpeg_location)
+
+    with YoutubeDL(ydl_opts) as ydl:
+        pre_process = opts.update_self or opts.rm_cachedir
+        actual_use = all_urls or opts.load_info_filename
+
+        if opts.rm_cachedir:
+            ydl.cache.remove()
+
+        try:
+            updater = Updater(ydl, opts.update_self)
+            if opts.update_self and updater.update() and actual_use:
+                if updater.cmd:
+                    return updater.restart()
+                # This code is reachable only for zip variant in py < 3.10
+                # It makes sense to exit here, but the old behavior is to continue
+                ydl.report_warning('Restart yt-dlp to use the updated version')
+                # return 100, 'ERROR: The program must exit for the update to complete'
+        except Exception:
+            traceback.print_exc()
+            ydl._download_retcode = 100
+
+        if opts.list_impersonate_targets:
+
+            known_targets = [
+                # List of simplified targets we know are supported,
+                # to help users know what dependencies may be required.
+                (ImpersonateTarget('chrome'), 'curl_cffi'),
+                (ImpersonateTarget('edge'), 'curl_cffi'),
+                (ImpersonateTarget('safari'), 'curl_cffi'),
+            ]
+
+            available_targets = ydl._get_available_impersonate_targets()
+
+            def make_row(target, handler):
+                return [
+                    join_nonempty(target.client.title(), target.version, delim='-') or '-',
+                    join_nonempty((target.os or '').title(), target.os_version, delim='-') or '-',
+                    handler,
+                ]
+
+            rows = [make_row(target, handler) for target, handler in available_targets]
+
+            for known_target, known_handler in known_targets:
+                if not any(
+                    known_target in target and handler == known_handler
+                    for target, handler in available_targets
+                ):
+                    rows.append([
+                        ydl._format_out(text, ydl.Styles.SUPPRESS)
+                        for text in make_row(known_target, f'{known_handler} (not available)')
+                    ])
+
+            ydl.to_screen('[info] Available impersonate targets')
+            ydl.to_stdout(render_table(['Client', 'OS', 'Source'], rows, extra_gap=2, delim='-'))
+            return
+
+        if not actual_use:
+            if pre_process:
+                return ydl._download_retcode
+
+            args = sys.argv[1:] if argv is None else argv
+            ydl.warn_if_short_id(args)
+
+            # Show a useful error message and wait for keypress if not launched from shell on Windows
+            if not args and compat_os_name == 'nt' and getattr(sys, 'frozen', False):
+                import ctypes.wintypes
+                import msvcrt
+
+                kernel32 = ctypes.WinDLL('Kernel32')
+
+                buffer = (1 * ctypes.wintypes.DWORD)()
+                attached_processes = kernel32.GetConsoleProcessList(buffer, 1)
+                # If we only have a single process attached, then the executable was double clicked
+                # When using `pyinstaller` with `--onefile`, two processes get attached
+                is_onefile = hasattr(sys, '_MEIPASS') and os.path.basename(sys._MEIPASS).startswith('_MEI')
+                if attached_processes == 1 or is_onefile and attached_processes == 2:
+                    print(parser._generate_error_message(
+                        'Do not double-click the executable, instead call it from a command line.\n'
+                        'Please read the README for further information on how to use yt-dlp: '
+                        'https://github.com/yt-dlp/yt-dlp#readme'))
+                    msvcrt.getch()
+                    _exit(2)
+            parser.error(
+                'You must provide at least one URL.\n'
+                'Type yt-dlp --help to see a list of all options.')
+
+        parser.destroy()
+        try:
+            if opts.load_info_filename is not None:
+                if all_urls:
+                    ydl.report_warning('URLs are ignored due to --load-info-json')
+                return ydl.download_with_info_file(expand_path(opts.load_info_filename))
+            else:
+                return ydl.download(all_urls)
+        except DownloadCancelled:
+            ydl.to_screen('Aborting remaining downloads')
+            return 101
+
+--- Chunk 5 ---
+File: yt_dlp/extractor/common.py
+Lines: 573-582
+Symbol: InfoExtractor._login_hint
+
+    def _login_hint(self, method=NO_DEFAULT, netrc=None):
+        password_hint = f'--username and --password, --netrc-cmd, or --netrc ({netrc or self._NETRC_MACHINE}) to provide account credentials'
+        return {
+            None: '',
+            'any': f'Use --cookies, --cookies-from-browser, {password_hint}',
+            'password': f'Use {password_hint}',
+            'cookies': (
+                'Use --cookies-from-browser or --cookies for the authentication. '
+                'See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies'),
+        }[method if method is not NO_DEFAULT else 'any' if self.supports_login() else 'cookies']
+
+--- Chunk 6 ---
+File: yt_dlp/networking/_helper.py
+Lines: 24-38
+Symbol: ssl_load_certs
+
+def ssl_load_certs(context: ssl.SSLContext, use_certifi=True):
+    if certifi and use_certifi:
+        context.load_verify_locations(cafile=certifi.where())
+    else:
+        try:
+            context.load_default_certs()
+        # Work around the issue in load_default_certs when there are bad certificates. See:
+        # https://github.com/yt-dlp/yt-dlp/issues/1060,
+        # https://bugs.python.org/issue35665, https://bugs.python.org/issue45312
+        except ssl.SSLError:
+            # enum_certificates is not present in mingw python. See https://github.com/yt-dlp/yt-dlp/issues/1151
+            if sys.platform == 'win32' and hasattr(ssl, 'enum_certificates'):
+                for storename in ('CA', 'ROOT'):
+                    ssl_load_windows_store_certs(context, storename)
+            context.set_default_verify_paths()
+
+--- Chunk 7 ---
+File: yt_dlp/networking/_requests.py
+Lines: 288-292
+Symbol: RequestsRH.close
+
+    def close(self):
+        self._clear_instances()
+        # Remove the logging handler that contains a reference to our logger
+        # See: https://github.com/yt-dlp/yt-dlp/issues/8922
+        logging.getLogger('urllib3').removeHandler(self.__logging_handler)
+
+--- Chunk 8 ---
+File: yt_dlp/YoutubeDL.py
+Lines: 2193-2216
+Symbol: YoutubeDL._default_format_spec
+
+    def _default_format_spec(self, info_dict, download=True):
+        download = download and not self.params.get('simulate')
+        prefer_best = download and (
+            self.params['outtmpl']['default'] == '-'
+            or info_dict.get('is_live') and not self.params.get('live_from_start'))
+
+        def can_merge():
+            merger = FFmpegMergerPP(self)
+            return merger.available and merger.can_merge()
+
+        if not prefer_best and download and not can_merge():
+            prefer_best = True
+            formats = self._get_formats(info_dict)
+            evaluate_formats = lambda spec: self._select_formats(formats, self.build_format_selector(spec))
+            if evaluate_formats('b/bv+ba') != evaluate_formats('bv*+ba/b'):
+                self.report_warning('ffmpeg not found. The downloaded format may not be the best available. '
+                                    'Installing ffmpeg is strongly recommended: https://github.com/yt-dlp/yt-dlp#dependencies')
+
+        compat = (self.params.get('allow_multiple_audio_streams')
+                  or 'format-spec' in self.params['compat_opts'])
+
+        return ('best/bestvideo+bestaudio' if prefer_best
+                else 'bestvideo+bestaudio/best' if compat
+                else 'bestvideo*+bestaudio/best')
+
+--- Chunk 9 ---
+File: yt_dlp/networking/_websockets.py
+Lines: 122-126
+Symbol: WebsocketsRH.close
+
+    def close(self):
+        # Remove the logging handler that contains a reference to our logger
+        # See: https://github.com/yt-dlp/yt-dlp/issues/8922
+        for name, handler in self.__logging_handlers.items():
+            logging.getLogger(name).removeHandler(handler)
+
+--- Chunk 10 ---
+File: yt_dlp/extractor/youtube.py
+Lines: 891-912
+Symbol: YoutubeBaseInfoExtractor._extract_thumbnails
+
+    def _extract_thumbnails(data, *path_list, final_key='thumbnails'):
+        """
+        Extract thumbnails from thumbnails dict
+        @param path_list: path list to level that contains 'thumbnails' key
+        """
+        thumbnails = []
+        for path in path_list or [()]:
+            for thumbnail in traverse_obj(data, (*variadic(path), final_key, ...)):
+                thumbnail_url = url_or_none(thumbnail.get('url'))
+                if not thumbnail_url:
+                    continue
+                # Sometimes youtube gives a wrong thumbnail URL. See:
+                # https://github.com/yt-dlp/yt-dlp/issues/233
+                # https://github.com/ytdl-org/youtube-dl/issues/28023
+                if 'maxresdefault' in thumbnail_url:
+                    thumbnail_url = thumbnail_url.split('?')[0]
+                thumbnails.append({
+                    'url': thumbnail_url,
+                    'height': int_or_none(thumbnail.get('height')),
+                    'width': int_or_none(thumbnail.get('width')),
+                })
+        return thumbnails
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

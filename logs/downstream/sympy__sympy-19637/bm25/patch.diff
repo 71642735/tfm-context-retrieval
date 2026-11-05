@@ -1,0 +1,12 @@
+--- sympy/core/sympify.py
++++ sympy/core/sympify.py
+@@ -484,6 +484,8 @@
+                 if nest == 0:
+                     break
+             s = s[:j] + ")" + s[j:]
+             i = j + 2  # the first char after 2nd )
++        if ' ' in s:
++            # get a unique kern
+             kern = '_'
+             while kern in s:
+                 kern += choice(string.ascii_letters + string.digits)

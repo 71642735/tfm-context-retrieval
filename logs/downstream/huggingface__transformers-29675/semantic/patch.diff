@@ -1,0 +1,13 @@
+```diff
+diff --git a/src/transformers/generation/configuration_utils.py b/src/transformers/generation/configuration_utils.py
+--- a/src/transformers/generation/configuration_utils.py
++++ b/src/transformers/generation/configuration_utils.py
+@@ -370,6 +370,7 @@
+         self._commit_hash = kwargs.pop("_commit_hash", None)
+         self._origin_file_path = kwargs.pop("_origin_file_path", None)
+ 
++        self.validate()
+         # Additional attributes without default values
+         for key, value in kwargs.items():
+             try:
+```

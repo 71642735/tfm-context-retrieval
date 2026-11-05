@@ -1,0 +1,14 @@
+{
+  "task_id": "yt-dlp__yt-dlp-4841",
+  "repository": "yt-dlp/yt-dlp",
+  "base_commit": "07a1250e0e90515ff8142161536f9dafa6eaba1b",
+  "retrieval_method": "hybrid",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 18298,
+  "output_tokens": 112,
+  "thinking_tokens": 0,
+  "total_tokens": 18410
+}

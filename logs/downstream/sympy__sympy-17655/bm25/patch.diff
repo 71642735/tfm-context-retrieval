@@ -1,0 +1,11 @@
+--- sympy/geometry/point.py
+--- sympy/geometry/point.py
+@@ -218,6 +218,8 @@
+         try:
+             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+         except TypeError:
++            if hasattr(other, '__rmul__'):
++                return other.__rmul__(self)
+             raise GeometryError("Don't know how to add {} and a Point object".format(other))
+ 
+         coords = [simplify(a + b) for a, b in zip(s, o)]

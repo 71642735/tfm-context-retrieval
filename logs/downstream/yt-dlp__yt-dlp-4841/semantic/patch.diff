@@ -1,0 +1,10 @@
+```diff
+diff --git a/yt_dlp/extractor/discoveryplus.py b/yt_dlp/extractor/discoveryplus.py
+--- a/yt_dlp/extractor/discoveryplus.py
++++ b/yt_dlp/extractor/discoveryplus.py
+@@ -107,3 +107,3 @@
+ class DiscoveryPlusItalyIE(DiscoveryPlusBaseIE):
+-    _GEO_BYPASS = False
++    _GEO_BYPASS = True
+     _DEFAULT_GEOLOCATION = 'IT'
+```

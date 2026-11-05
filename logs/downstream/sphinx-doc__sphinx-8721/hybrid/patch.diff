@@ -1,0 +1,11 @@
+--- sphinx/ext/viewcode.py
++++ sphinx/ext/viewcode.py
+@@ -171,6 +171,8 @@
+     env = app.builder.env
+     if not hasattr(env, '_viewcode_modules'):
+         return []
++    if app.builder.name.startswith("epub") and not env.config.viewcode_enable_epub:
++        return []
+     git_revision = app.config.viewcode_import
+     if git_revision is None:
+         try:

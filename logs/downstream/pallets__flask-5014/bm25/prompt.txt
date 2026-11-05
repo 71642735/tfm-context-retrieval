@@ -1,0 +1,506 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Require a non-empty name for Blueprints
+Things do not work correctly if a Blueprint is given an empty name (e.g. #4944).
+It would be helpful if a `ValueError` was raised when trying to do that.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/test_cli.py
+Lines: 672-678
+Symbol: test_cli_empty
+
+def test_cli_empty(app):
+    """If a Blueprint's CLI group is empty, do not register it."""
+    bp = Blueprint("blue", __name__, cli_group="blue")
+    app.register_blueprint(bp)
+
+    result = app.test_cli_runner().invoke(args=["blue", "--help"])
+    assert result.exit_code == 2, f"Unexpected success:\n\n{result.output}"
+
+--- Chunk 2 ---
+File: src/flask/wrappers.py
+Lines: 95-109
+Symbol: Request.blueprints
+
+    def blueprints(self) -> t.List[str]:
+        """The registered names of the current blueprint upwards through
+        parent blueprints.
+
+        This will be an empty list if there is no current blueprint, or
+        if URL matching failed.
+
+        .. versionadded:: 2.0.1
+        """
+        name = self.blueprint
+
+        if name is None:
+            return []
+
+        return _split_blueprint_path(name)
+
+--- Chunk 3 ---
+File: src/flask/app.py
+Lines: 1593-1716
+Symbol: Flask.url_for
+
+    def url_for(
+        self,
+        endpoint: str,
+        *,
+        _anchor: t.Optional[str] = None,
+        _method: t.Optional[str] = None,
+        _scheme: t.Optional[str] = None,
+        _external: t.Optional[bool] = None,
+        **values: t.Any,
+    ) -> str:
+        """Generate a URL to the given endpoint with the given values.
+
+        This is called by :func:`flask.url_for`, and can be called
+        directly as well.
+
+        An *endpoint* is the name of a URL rule, usually added with
+        :meth:`@app.route() <route>`, and usually the same name as the
+        view function. A route defined in a :class:`~flask.Blueprint`
+        will prepend the blueprint's name separated by a ``.`` to the
+        endpoint.
+
+        In some cases, such as email messages, you want URLs to include
+        the scheme and domain, like ``https://example.com/hello``. When
+        not in an active request, URLs will be external by default, but
+        this requires setting :data:`SERVER_NAME` so Flask knows what
+        domain to use. :data:`APPLICATION_ROOT` and
+        :data:`PREFERRED_URL_SCHEME` should also be configured as
+        needed. This config is only used when not in an active request.
+
+        Functions can be decorated with :meth:`url_defaults` to modify
+        keyword arguments before the URL is built.
+
+        If building fails for some reason, such as an unknown endpoint
+        or incorrect values, the app's :meth:`handle_url_build_error`
+        method is called. If that returns a string, that is returned,
+        otherwise a :exc:`~werkzeug.routing.BuildError` is raised.
+
+        :param endpoint: The endpoint name associated with the URL to
+            generate. If this starts with a ``.``, the current blueprint
+            name (if any) will be used.
+        :param _anchor: If given, append this as ``#anchor`` to the URL.
+        :param _method: If given, generate the URL associated with this
+            method for the endpoint.
+        :param _scheme: If given, the URL will have this scheme if it
+            is external.
+        :param _external: If given, prefer the URL to be internal
+            (False) or require it to be external (True). External URLs
+            include the scheme and domain. When not in an active
+            request, URLs are external by default.
+        :param values: Values to use for the variable parts of the URL
+            rule. Unknown keys are appended as query string arguments,
+            like ``?a=b&c=d``.
+
+        .. versionadded:: 2.2
+            Moved from ``flask.url_for``, which calls this method.
+        """
+        req_ctx = _cv_request.get(None)
+
+        if req_ctx is not None:
+            url_adapter = req_ctx.url_adapter
+            blueprint_name = req_ctx.request.blueprint
+
+            # If the endpoint starts with "." and the request matches a
+            # blueprint, the endpoint is relative to the blueprint.
+            if endpoint[:1] == ".":
+                if blueprint_name is not None:
+                    endpoint = f"{blueprint_name}{endpoint}"
+                else:
+                    endpoint = endpoint[1:]
+
+            # When in a request, generate a URL without scheme and
+            # domain by default, unless a scheme is given.
+            if _external is None:
+                _external = _scheme is not None
+        else:
+            app_ctx = _cv_app.get(None)
+
+            # If called by helpers.url_for, an app context is active,
+            # use its url_adapter. Otherwise, app.url_for was called
+            # directly, build an adapter.
+            if app_ctx is not None:
+                url_adapter = app_ctx.url_adapter
+            else:
+                url_adapter = self.create_url_adapter(None)
+
+            if url_adapter is None:
+                raise RuntimeError(
+                    "Unable to build URLs outside an active request"
+                    " without 'SERVER_NAME' configured. Also configure"
+                    " 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as"
+                    " needed."
+                )
+
+            # When outside a request, generate a URL with scheme and
+            # domain by default.
+            if _external is None:
+                _external = True
+
+        # It is an error to set _scheme when _external=False, in order
+        # to avoid accidental insecure URLs.
+        if _scheme is not None and not _external:
+            raise ValueError("When specifying '_scheme', '_external' must be True.")
+
+        self.inject_url_defaults(endpoint, values)
+
+        try:
+            rv = url_adapter.build(  # type: ignore[union-attr]
+                endpoint,
+                values,
+                method=_method,
+                url_scheme=_scheme,
+                force_external=_external,
+            )
+        except BuildError as error:
+            values.update(
+                _anchor=_anchor, _method=_method, _scheme=_scheme, _external=_external
+            )
+            return self.handle_url_build_error(error, endpoint, values)
+
+        if _anchor is not None:
+            _anchor = _url_quote(_anchor, safe="%!#$&'()*+,/:;=?@")
+            rv = f"{rv}#{_anchor}"
+
+        return rv
+
+--- Chunk 4 ---
+File: src/flask/scaffold.py
+Lines: 532-556
+Symbol: Scaffold.before_request
+
+    def before_request(self, f: T_before_request) -> T_before_request:
+        """Register a function to run before each request.
+
+        For example, this can be used to open a database connection, or
+        to load the logged in user from the session.
+
+        .. code-block:: python
+
+            @app.before_request
+            def load_user():
+                if "user_id" in session:
+                    g.user = db.session.get(session["user_id"])
+
+        The function will be called without any arguments. If it returns
+        a non-``None`` value, the value is handled as if it was the
+        return value from the view, and further request handling is
+        stopped.
+
+        This is available on both app and blueprint objects. When used on an app, this
+        executes before every request. When used on a blueprint, this executes before
+        every request that the blueprint handles. To register with a blueprint and
+        execute before every request, use :meth:`.Blueprint.before_app_request`.
+        """
+        self.before_request_funcs.setdefault(None, []).append(f)
+        return f
+
+--- Chunk 5 ---
+File: src/flask/blueprints.py
+Lines: 39-83
+Symbol: BlueprintSetupState.__init__
+
+    def __init__(
+        self,
+        blueprint: "Blueprint",
+        app: "Flask",
+        options: t.Any,
+        first_registration: bool,
+    ) -> None:
+        #: a reference to the current application
+        self.app = app
+
+        #: a reference to the blueprint that created this setup state.
+        self.blueprint = blueprint
+
+        #: a dictionary with all options that were passed to the
+        #: :meth:`~flask.Flask.register_blueprint` method.
+        self.options = options
+
+        #: as blueprints can be registered multiple times with the
+        #: application and not everything wants to be registered
+        #: multiple times on it, this attribute can be used to figure
+        #: out if the blueprint was registered in the past already.
+        self.first_registration = first_registration
+
+        subdomain = self.options.get("subdomain")
+        if subdomain is None:
+            subdomain = self.blueprint.subdomain
+
+        #: The subdomain that the blueprint should be active for, ``None``
+        #: otherwise.
+        self.subdomain = subdomain
+
+        url_prefix = self.options.get("url_prefix")
+        if url_prefix is None:
+            url_prefix = self.blueprint.url_prefix
+        #: The prefix that should be used for all URLs defined on the
+        #: blueprint.
+        self.url_prefix = url_prefix
+
+        self.name = self.options.get("name", blueprint.name)
+        self.name_prefix = self.options.get("name_prefix", "")
+
+        #: A dictionary with URL defaults that is added to each and every
+        #: URL that was defined with the blueprint.
+        self.url_defaults = dict(self.blueprint.url_values_defaults)
+        self.url_defaults.update(self.options.get("url_defaults", ()))
+
+--- Chunk 6 ---
+File: src/flask/app.py
+Lines: 1238-1259
+Symbol: Flask._find_error_handler
+
+    def _find_error_handler(self, e: Exception) -> t.Optional[ft.ErrorHandlerCallable]:
+        """Return a registered error handler for an exception in this order:
+        blueprint handler for a specific code, app handler for a specific code,
+        blueprint handler for an exception class, app handler for an exception
+        class, or ``None`` if a suitable handler is not found.
+        """
+        exc_class, code = self._get_exc_class_and_code(type(e))
+        names = (*request.blueprints, None)
+
+        for c in (code, None) if code is not None else (None,):
+            for name in names:
+                handler_map = self.error_handler_spec[name][c]
+
+                if not handler_map:
+                    continue
+
+                for cls in exc_class.__mro__:
+                    handler = handler_map.get(cls)
+
+                    if handler is not None:
+                        return handler
+        return None
+
+--- Chunk 7 ---
+File: src/flask/cli.py
+Lines: 111-184
+Symbol: find_app_by_string
+
+def find_app_by_string(module, app_name):
+    """Check if the given string is a variable name or a function. Call
+    a function to get the app instance, or return the variable directly.
+    """
+    from . import Flask
+
+    # Parse app_name as a single expression to determine if it's a valid
+    # attribute name or function call.
+    try:
+        expr = ast.parse(app_name.strip(), mode="eval").body
+    except SyntaxError:
+        raise NoAppException(
+            f"Failed to parse {app_name!r} as an attribute name or function call."
+        ) from None
+
+    if isinstance(expr, ast.Name):
+        name = expr.id
+        args = []
+        kwargs = {}
+    elif isinstance(expr, ast.Call):
+        # Ensure the function name is an attribute name only.
+        if not isinstance(expr.func, ast.Name):
+            raise NoAppException(
+                f"Function reference must be a simple name: {app_name!r}."
+            )
+
+        name = expr.func.id
+
+        # Parse the positional and keyword arguments as literals.
+        try:
+            args = [ast.literal_eval(arg) for arg in expr.args]
+            kwargs = {kw.arg: ast.literal_eval(kw.value) for kw in expr.keywords}
+        except ValueError:
+            # literal_eval gives cryptic error messages, show a generic
+            # message with the full expression instead.
+            raise NoAppException(
+                f"Failed to parse arguments as literal values: {app_name!r}."
+            ) from None
+    else:
+        raise NoAppException(
+            f"Failed to parse {app_name!r} as an attribute name or function call."
+        )
+
+    try:
+        attr = getattr(module, name)
+    except AttributeError as e:
+        raise NoAppException(
+            f"Failed to find attribute {name!r} in {module.__name__!r}."
+        ) from e
+
+    # If the attribute is a function, call it with any args and kwargs
+    # to get the real application.
+    if inspect.isfunction(attr):
+        try:
+            app = attr(*args, **kwargs)
+        except TypeError as e:
+            if not _called_with_wrong_args(attr):
+                raise
+
+            raise NoAppException(
+                f"The factory {app_name!r} in module"
+                f" {module.__name__!r} could not be called with the"
+                " specified arguments."
+            ) from e
+    else:
+        app = attr
+
+    if isinstance(app, Flask):
+        return app
+
+    raise NoAppException(
+        "A valid Flask application was not obtained from"
+        f" '{module.__name__}:{app_name}'."
+    )
+
+--- Chunk 8 ---
+File: src/flask/app.py
+Lines: 1296-1329
+Symbol: Flask.trap_http_exception
+
+    def trap_http_exception(self, e: Exception) -> bool:
+        """Checks if an HTTP exception should be trapped or not.  By default
+        this will return ``False`` for all exceptions except for a bad request
+        key error if ``TRAP_BAD_REQUEST_ERRORS`` is set to ``True``.  It
+        also returns ``True`` if ``TRAP_HTTP_EXCEPTIONS`` is set to ``True``.
+
+        This is called for all HTTP exceptions raised by a view function.
+        If it returns ``True`` for any exception the error handler for this
+        exception is not called and it shows up as regular exception in the
+        traceback.  This is helpful for debugging implicitly raised HTTP
+        exceptions.
+
+        .. versionchanged:: 1.0
+            Bad request errors are not trapped by default in debug mode.
+
+        .. versionadded:: 0.8
+        """
+        if self.config["TRAP_HTTP_EXCEPTIONS"]:
+            return True
+
+        trap_bad_request = self.config["TRAP_BAD_REQUEST_ERRORS"]
+
+        # if unset, trap key errors in debug mode
+        if (
+            trap_bad_request is None
+            and self.debug
+            and isinstance(e, BadRequestKeyError)
+        ):
+            return True
+
+        if trap_bad_request:
+            return isinstance(e, BadRequest)
+
+        return False
+
+--- Chunk 9 ---
+File: src/flask/helpers.py
+Lines: 179-230
+Symbol: url_for
+
+def url_for(
+    endpoint: str,
+    *,
+    _anchor: t.Optional[str] = None,
+    _method: t.Optional[str] = None,
+    _scheme: t.Optional[str] = None,
+    _external: t.Optional[bool] = None,
+    **values: t.Any,
+) -> str:
+    """Generate a URL to the given endpoint with the given values.
+
+    This requires an active request or application context, and calls
+    :meth:`current_app.url_for() <flask.Flask.url_for>`. See that method
+    for full documentation.
+
+    :param endpoint: The endpoint name associated with the URL to
+        generate. If this starts with a ``.``, the current blueprint
+        name (if any) will be used.
+    :param _anchor: If given, append this as ``#anchor`` to the URL.
+    :param _method: If given, generate the URL associated with this
+        method for the endpoint.
+    :param _scheme: If given, the URL will have this scheme if it is
+        external.
+    :param _external: If given, prefer the URL to be internal (False) or
+        require it to be external (True). External URLs include the
+        scheme and domain. When not in an active request, URLs are
+        external by default.
+    :param values: Values to use for the variable parts of the URL rule.
+        Unknown keys are appended as query string arguments, like
+        ``?a=b&c=d``.
+
+    .. versionchanged:: 2.2
+        Calls ``current_app.url_for``, allowing an app to override the
+        behavior.
+
+    .. versionchanged:: 0.10
+       The ``_scheme`` parameter was added.
+
+    .. versionchanged:: 0.9
+       The ``_anchor`` and ``_method`` parameters were added.
+
+    .. versionchanged:: 0.9
+       Calls ``app.handle_url_build_error`` on build errors.
+    """
+    return current_app.url_for(
+        endpoint,
+        _anchor=_anchor,
+        _method=_method,
+        _scheme=_scheme,
+        _external=_external,
+        **values,
+    )
+
+--- Chunk 10 ---
+File: src/flask/app.py
+Lines: 1194-1225
+Symbol: Flask.teardown_appcontext
+
+    def teardown_appcontext(self, f: T_teardown) -> T_teardown:
+        """Registers a function to be called when the application
+        context is popped. The application context is typically popped
+        after the request context for each request, at the end of CLI
+        commands, or after a manually pushed context ends.
+
+        .. code-block:: python
+
+            with app.app_context():
+                ...
+
+        When the ``with`` block exits (or ``ctx.pop()`` is called), the
+        teardown functions are called just before the app context is
+        made inactive. Since a request context typically also manages an
+        application context it would also be called when you pop a
+        request context.
+
+        When a teardown function was called because of an unhandled
+        exception it will be passed an error object. If an
+        :meth:`errorhandler` is registered, it will handle the exception
+        and the teardown will not receive it.
+
+        Teardown functions must avoid raising exceptions. If they
+        execute code that might fail they must surround that code with a
+        ``try``/``except`` block and log any errors.
+
+        The return values of teardown functions are ignored.
+
+        .. versionadded:: 0.9
+        """
+        self.teardown_appcontext_funcs.append(f)
+        return f
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

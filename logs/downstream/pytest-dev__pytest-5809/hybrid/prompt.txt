@@ -1,0 +1,365 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Lexer "python3" in --pastebin feature causes HTTP errors
+The `--pastebin` option currently submits the output of `pytest` to `bpaste.net` using `lexer=python3`: https://github.com/pytest-dev/pytest/blob/d47b9d04d4cf824150caef46c9c888779c1b3f58/src/_pytest/pastebin.py#L68-L73
+
+For some `contents`, this will raise a "HTTP Error 400: Bad Request".
+
+As an example:
+~~~
+>>> from urllib.request import urlopen
+>>> with open("data.txt", "rb") as in_fh:
+...     data = in_fh.read()
+>>> url = "https://bpaste.net"
+>>> urlopen(url, data=data)
+HTTPError: Bad Request
+~~~
+with the attached [data.txt](https://github.com/pytest-dev/pytest/files/3561212/data.txt).
+
+This is the underlying cause for the problems mentioned in #5764.
+
+The call goes through fine if `lexer` is changed from `python3` to `text`. This would seem like the right thing to do in any case: the console output of a `pytest` run that is being uploaded is not Python code, but arbitrary text.
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: testing/test_pastebin.py
+Lines: 123-133
+Symbol: TestPaste.test_create_new_paste
+
+    def test_create_new_paste(self, pastebin, mocked_urlopen):
+        result = pastebin.create_new_paste(b"full-paste-contents")
+        assert result == "https://bpaste.net/show/3c0c6750bd"
+        assert len(mocked_urlopen) == 1
+        url, data = mocked_urlopen[0]
+        assert type(data) is bytes
+        lexer = "python3" if sys.version_info[0] >= 3 else "python"
+        assert url == "https://bpaste.net"
+        assert "lexer=%s" % lexer in data.decode()
+        assert "code=full-paste-contents" in data.decode()
+        assert "expiry=1week" in data.decode()
+
+--- Chunk 2 ---
+File: src/_pytest/pastebin.py
+Lines: 65-91
+Symbol: create_new_paste
+
+def create_new_paste(contents):
+    """
+    Creates a new paste using bpaste.net service.
+
+    :contents: paste contents as utf-8 encoded bytes
+    :returns: url to the pasted contents
+    """
+    import re
+
+    if sys.version_info < (3, 0):
+        from urllib import urlopen, urlencode
+    else:
+        from urllib.request import urlopen
+        from urllib.parse import urlencode
+
+    params = {
+        "code": contents,
+        "lexer": "python3" if sys.version_info[0] >= 3 else "python",
+        "expiry": "1week",
+    }
+    url = "https://bpaste.net"
+    response = urlopen(url, data=urlencode(params).encode("ascii")).read()
+    m = re.search(r'href="/raw/(\w+)"', response.decode("utf-8"))
+    if m:
+        return "%s/show/%s" % (url, m.group(1))
+    else:
+        return "bad response: " + response
+
+--- Chunk 3 ---
+File: testing/test_pastebin.py
+Lines: 96-121
+Symbol: TestPaste.mocked_urlopen
+
+    def mocked_urlopen(self, monkeypatch):
+        """
+        monkeypatch the actual urlopen calls done by the internal plugin
+        function that connects to bpaste service.
+        """
+        calls = []
+
+        def mocked(url, data):
+            calls.append((url, data))
+
+            class DummyFile(object):
+                def read(self):
+                    # part of html of a normal response
+                    return b'View <a href="/raw/3c0c6750bd">raw</a>.'
+
+            return DummyFile()
+
+        if sys.version_info < (3, 0):
+            import urllib
+
+            monkeypatch.setattr(urllib, "urlopen", mocked)
+        else:
+            import urllib.request
+
+            monkeypatch.setattr(urllib.request, "urlopen", mocked)
+        return calls
+
+--- Chunk 4 ---
+File: src/_pytest/capture.py
+Lines: 763-785
+Symbol: _readline_workaround
+
+def _readline_workaround():
+    """
+    Ensure readline is imported so that it attaches to the correct stdio
+    handles on Windows.
+
+    Pdb uses readline support where available--when not running from the Python
+    prompt, the readline module is not imported until running the pdb REPL.  If
+    running pytest with the --pdb option this means the readline module is not
+    imported until after I/O capture has been started.
+
+    This is a problem for pyreadline, which is often used to implement readline
+    support on Windows, as it does not attach to the correct handles for stdout
+    and/or stdin if they have been redirected by the FDCapture mechanism.  This
+    workaround ensures that readline is imported before I/O capture is setup so
+    that it can attach to the actual stdin/out for the console.
+
+    See https://github.com/pytest-dev/pytest/pull/1281
+    """
+    if sys.platform.startswith("win32"):
+        try:
+            import readline  # noqa: F401
+        except ImportError:
+            pass
+
+--- Chunk 5 ---
+File: src/_pytest/pastebin.py
+Lines: 15-25
+Symbol: pytest_addoption
+
+def pytest_addoption(parser):
+    group = parser.getgroup("terminal reporting")
+    group._addoption(
+        "--pastebin",
+        metavar="mode",
+        action="store",
+        dest="pastebin",
+        default=None,
+        choices=["failed", "all"],
+        help="send failed|all info to bpaste.net pastebin service.",
+    )
+
+--- Chunk 6 ---
+File: testing/python/collect.py
+Lines: 1201-1226
+Symbol: test_dont_collect_non_function_callable
+
+def test_dont_collect_non_function_callable(testdir):
+    """Test for issue https://github.com/pytest-dev/pytest/issues/331
+
+    In this case an INTERNALERROR occurred trying to report the failure of
+    a test like this one because py test failed to get the source lines.
+    """
+    testdir.makepyfile(
+        """
+        class Oh(object):
+            def __call__(self):
+                pass
+
+        test_a = Oh()
+
+        def test_real():
+            pass
+    """
+    )
+    result = testdir.runpytest("-rw")
+    result.stdout.fnmatch_lines(
+        [
+            "*collected 1 item*",
+            "*test_dont_collect_non_function_callable.py:2: *cannot collect 'test_a' because it is not a function*",
+            "*1 passed, 1 warnings in *",
+        ]
+    )
+
+--- Chunk 7 ---
+File: src/_pytest/capture.py
+Lines: 788-839
+Symbol: _py36_windowsconsoleio_workaround
+
+def _py36_windowsconsoleio_workaround(stream):
+    """
+    Python 3.6 implemented unicode console handling for Windows. This works
+    by reading/writing to the raw console handle using
+    ``{Read,Write}ConsoleW``.
+
+    The problem is that we are going to ``dup2`` over the stdio file
+    descriptors when doing ``FDCapture`` and this will ``CloseHandle`` the
+    handles used by Python to write to the console. Though there is still some
+    weirdness and the console handle seems to only be closed randomly and not
+    on the first call to ``CloseHandle``, or maybe it gets reopened with the
+    same handle value when we suspend capturing.
+
+    The workaround in this case will reopen stdio with a different fd which
+    also means a different handle by replicating the logic in
+    "Py_lifecycle.c:initstdio/create_stdio".
+
+    :param stream: in practice ``sys.stdout`` or ``sys.stderr``, but given
+        here as parameter for unittesting purposes.
+
+    See https://github.com/pytest-dev/py/issues/103
+    """
+    if not sys.platform.startswith("win32") or sys.version_info[:2] < (3, 6):
+        return
+
+    # bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666)
+    if not hasattr(stream, "buffer"):
+        return
+
+    buffered = hasattr(stream.buffer, "raw")
+    raw_stdout = stream.buffer.raw if buffered else stream.buffer
+
+    if not isinstance(raw_stdout, io._WindowsConsoleIO):
+        return
+
+    def _reopen_stdio(f, mode):
+        if not buffered and mode[0] == "w":
+            buffering = 0
+        else:
+            buffering = -1
+
+        return io.TextIOWrapper(
+            open(os.dup(f.fileno()), mode, buffering),
+            f.encoding,
+            f.errors,
+            f.newlines,
+            f.line_buffering,
+        )
+
+    sys.stdin = _reopen_stdio(sys.stdin, "rb")
+    sys.stdout = _reopen_stdio(sys.stdout, "wb")
+    sys.stderr = _reopen_stdio(sys.stderr, "wb")
+
+--- Chunk 8 ---
+File: src/_pytest/assertion/rewrite.py
+Lines: 359-412
+Symbol: _rewrite_test
+
+def _rewrite_test(config, fn):
+    """Try to read and rewrite *fn* and return the code object."""
+    state = config._assertstate
+    try:
+        stat = fn.stat()
+        source = fn.read("rb")
+    except EnvironmentError:
+        return None, None
+    if ASCII_IS_DEFAULT_ENCODING:
+        # ASCII is the default encoding in Python 2. Without a coding
+        # declaration, Python 2 will complain about any bytes in the file
+        # outside the ASCII range. Sadly, this behavior does not extend to
+        # compile() or ast.parse(), which prefer to interpret the bytes as
+        # latin-1. (At least they properly handle explicit coding cookies.) To
+        # preserve this error behavior, we could force ast.parse() to use ASCII
+        # as the encoding by inserting a coding cookie. Unfortunately, that
+        # messes up line numbers. Thus, we have to check ourselves if anything
+        # is outside the ASCII range in the case no encoding is explicitly
+        # declared. For more context, see issue #269. Yay for Python 3 which
+        # gets this right.
+        end1 = source.find("\n")
+        end2 = source.find("\n", end1 + 1)
+        if (
+            not source.startswith(BOM_UTF8)
+            and cookie_re.match(source[0:end1]) is None
+            and cookie_re.match(source[end1 + 1 : end2]) is None
+        ):
+            if hasattr(state, "_indecode"):
+                # encodings imported us again, so don't rewrite.
+                return None, None
+            state._indecode = True
+            try:
+                try:
+                    source.decode("ascii")
+                except UnicodeDecodeError:
+                    # Let it fail in real import.
+                    return None, None
+            finally:
+                del state._indecode
+    try:
+        tree = ast.parse(source, filename=fn.strpath)
+    except SyntaxError:
+        # Let this pop up again in the real import.
+        state.trace("failed to parse: %r" % (fn,))
+        return None, None
+    rewrite_asserts(tree, fn, config)
+    try:
+        co = compile(tree, fn.strpath, "exec", dont_inherit=True)
+    except SyntaxError:
+        # It's possible that this error is from some bug in the
+        # assertion rewriting, but I don't know of a fast way to tell.
+        state.trace("failed to compile: %r" % (fn,))
+        return None, None
+    return stat, co
+
+--- Chunk 9 ---
+File: src/_pytest/doctest.py
+Lines: 552-575
+Symbol: _fix_spoof_python2
+
+def _fix_spoof_python2(runner, encoding):
+    """
+    Installs a "SpoofOut" into the given DebugRunner so it properly deals with unicode output. This
+    should patch only doctests for text files because they don't have a way to declare their
+    encoding. Doctests in docstrings from Python modules don't have the same problem given that
+    Python already decoded the strings.
+
+    This fixes the problem related in issue #2434.
+    """
+    from _pytest.compat import _PY2
+
+    if not _PY2:
+        return
+
+    from doctest import _SpoofOut
+
+    class UnicodeSpoof(_SpoofOut):
+        def getvalue(self):
+            result = _SpoofOut.getvalue(self)
+            if encoding and isinstance(result, bytes):
+                result = result.decode(encoding)
+            return result
+
+    runner._fakeout = UnicodeSpoof()
+
+--- Chunk 10 ---
+File: src/_pytest/pastebin.py
+Lines: 29-46
+Symbol: pytest_configure
+
+def pytest_configure(config):
+    if config.option.pastebin == "all":
+        tr = config.pluginmanager.getplugin("terminalreporter")
+        # if no terminal reporter plugin is present, nothing we can do here;
+        # this can happen when this function executes in a slave node
+        # when using pytest-xdist, for example
+        if tr is not None:
+            # pastebin file will be utf-8 encoded binary file
+            config._pastebinfile = tempfile.TemporaryFile("w+b")
+            oldwrite = tr._tw.write
+
+            def tee_write(s, **kwargs):
+                oldwrite(s, **kwargs)
+                if isinstance(s, six.text_type):
+                    s = s.encode("utf-8")
+                config._pastebinfile.write(s)
+
+            tr._tw.write = tee_write
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

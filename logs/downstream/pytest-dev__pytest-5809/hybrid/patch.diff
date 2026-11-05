@@ -1,0 +1,19 @@
+--- src/_pytest/pastebin.py
++++ src/_pytest/pastebin.py
+@@ -21,5 +21,5 @@
+     params = {
+         "code": contents,
+-        "lexer": "python3" if sys.version_info[0] >= 3 else "python",
++        "lexer": "text",
+         "expiry": "1week",
+     }
+
+--- testing/test_pastebin.py
++++ testing/test_pastebin.py
+@@ -128,3 +128,3 @@
+         url, data = mocked_urlopen[0]
+         assert type(data) is bytes
+-        lexer = "python3" if sys.version_info[0] >= 3 else "python"
+         assert url == "https://bpaste.net"
+-        assert "lexer=%s" % lexer in data.decode()
++        assert "lexer=text" in data.decode()

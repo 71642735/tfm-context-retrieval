@@ -1,0 +1,454 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+viewcode creates pages for epub even if `viewcode_enable_epub=False` on `make html epub`
+**Describe the bug**
+viewcode creates pages for epub even if `viewcode_enable_epub=False` on `make html epub`
+
+**To Reproduce**
+```
+$ make html epub
+```
+
+**Expected behavior**
+module pages should not be created for epub by default.
+
+**Your project**
+No
+
+**Screenshots**
+No
+
+**Environment info**
+- OS: Mac
+- Python version: 3.9.1
+- Sphinx version: HEAD of 3.x
+- Sphinx extensions:  sphinx.ext.viewcode
+- Extra tools: No
+
+**Additional context**
+No
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/test_quickstart.py
+Lines: 127-179
+Symbol: test_quickstart_all_answers
+
+def test_quickstart_all_answers(tempdir):
+    answers = {
+        'Root path': tempdir,
+        'Separate source and build': 'y',
+        'Name prefix for templates': '.',
+        'Project name': 'STASI™',
+        'Author name': 'Wolfgang Schäuble & G\'Beckstein',
+        'Project version': '2.0',
+        'Project release': '2.0.1',
+        'Project language': 'de',
+        'Source file suffix': '.txt',
+        'Name of your master document': 'contents',
+        'autodoc': 'y',
+        'doctest': 'yes',
+        'intersphinx': 'no',
+        'todo': 'y',
+        'coverage': 'no',
+        'imgmath': 'N',
+        'mathjax': 'no',
+        'ifconfig': 'no',
+        'viewcode': 'no',
+        'githubpages': 'no',
+        'Create Makefile': 'no',
+        'Create Windows command file': 'no',
+        'Do you want to use the epub builder': 'yes',
+    }
+    qs.term_input = mock_input(answers, needanswer=True)
+    d = {}
+    qs.ask_user(d)
+    qs.generate(d)
+
+    conffile = tempdir / 'source' / 'conf.py'
+    assert conffile.isfile()
+    ns = {}
+    execfile_(conffile, ns)
+    assert ns['extensions'] == [
+        'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo'
+    ]
+    assert ns['templates_path'] == ['.templates']
+    assert ns['source_suffix'] == '.txt'
+    assert ns['master_doc'] == 'contents'
+    assert ns['project'] == 'STASI™'
+    assert ns['copyright'] == '%s, Wolfgang Schäuble & G\'Beckstein' % \
+        time.strftime('%Y')
+    assert ns['version'] == '2.0'
+    assert ns['release'] == '2.0.1'
+    assert ns['todo_include_todos'] is True
+    assert ns['html_static_path'] == ['.static']
+
+    assert (tempdir / 'build').isdir()
+    assert (tempdir / 'source' / '.static').isdir()
+    assert (tempdir / 'source' / '.templates').isdir()
+    assert (tempdir / 'source' / 'contents.txt').isfile()
+
+--- Chunk 2 ---
+File: sphinx/ext/viewcode.py
+Lines: 279-295
+Symbol: setup
+
+def setup(app: Sphinx) -> Dict[str, Any]:
+    app.add_config_value('viewcode_import', None, False)
+    app.add_config_value('viewcode_enable_epub', False, False)
+    app.add_config_value('viewcode_follow_imported_members', True, False)
+    app.connect('doctree-read', doctree_read)
+    app.connect('env-merge-info', env_merge_info)
+    app.connect('html-collect-pages', collect_pages)
+    app.connect('missing-reference', missing_reference)
+    # app.add_config_value('viewcode_include_modules', [], 'env')
+    # app.add_config_value('viewcode_exclude_modules', [], 'env')
+    app.add_event('viewcode-find-source')
+    app.add_event('viewcode-follow-imported')
+    return {
+        'version': sphinx.__display_version__,
+        'env_version': 1,
+        'parallel_read_safe': True
+    }
+
+--- Chunk 3 ---
+File: sphinx/builders/epub3.py
+Lines: 250-292
+Symbol: setup
+
+def setup(app: Sphinx) -> Dict[str, Any]:
+    app.add_builder(Epub3Builder)
+
+    # config values
+    app.add_config_value('epub_basename', lambda self: make_filename(self.project), None)
+    app.add_config_value('epub_version', 3.0, 'epub')  # experimental
+    app.add_config_value('epub_theme', 'epub', 'epub')
+    app.add_config_value('epub_theme_options', {}, 'epub')
+    app.add_config_value('epub_title', lambda self: self.project, 'epub')
+    app.add_config_value('epub_author', lambda self: self.author, 'epub')
+    app.add_config_value('epub_language', lambda self: self.language or 'en', 'epub')
+    app.add_config_value('epub_publisher', lambda self: self.author, 'epub')
+    app.add_config_value('epub_copyright', lambda self: self.copyright, 'epub')
+    app.add_config_value('epub_identifier', 'unknown', 'epub')
+    app.add_config_value('epub_scheme', 'unknown', 'epub')
+    app.add_config_value('epub_uid', 'unknown', 'env')
+    app.add_config_value('epub_cover', (), 'env')
+    app.add_config_value('epub_guide', (), 'env')
+    app.add_config_value('epub_pre_files', [], 'env')
+    app.add_config_value('epub_post_files', [], 'env')
+    app.add_config_value('epub_css_files', lambda config: config.html_css_files, 'epub')
+    app.add_config_value('epub_exclude_files', [], 'env')
+    app.add_config_value('epub_tocdepth', 3, 'env')
+    app.add_config_value('epub_tocdup', True, 'env')
+    app.add_config_value('epub_tocscope', 'default', 'env')
+    app.add_config_value('epub_fix_images', False, 'env')
+    app.add_config_value('epub_max_image_width', 0, 'env')
+    app.add_config_value('epub_show_urls', 'inline', 'epub')
+    app.add_config_value('epub_use_index', lambda self: self.html_use_index, 'epub')
+    app.add_config_value('epub_description', 'unknown', 'epub')
+    app.add_config_value('epub_contributor', 'unknown', 'epub')
+    app.add_config_value('epub_writing_mode', 'horizontal', 'epub',
+                         ENUM('horizontal', 'vertical'))
+
+    # event handlers
+    app.connect('config-inited', convert_epub_css_files, priority=800)
+    app.connect('builder-inited', validate_config_values)
+
+    return {
+        'version': 'builtin',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }
+
+--- Chunk 4 ---
+File: sphinx/builders/_epub_base.py
+Lines: 155-156
+Symbol: EpubBuilder.create_build_info
+
+    def create_build_info(self) -> BuildInfo:
+        return BuildInfo(self.config, self.tags, ['html', 'epub'])
+
+--- Chunk 5 ---
+File: sphinx/ext/napoleon/__init__.py
+Lines: 297-331
+Symbol: setup
+
+def setup(app: Sphinx) -> Dict[str, Any]:
+    """Sphinx extension setup function.
+
+    When the extension is loaded, Sphinx imports this module and executes
+    the ``setup()`` function, which in turn notifies Sphinx of everything
+    the extension offers.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        Application object representing the Sphinx process
+
+    See Also
+    --------
+    `The Sphinx documentation on Extensions
+    <http://sphinx-doc.org/extensions.html>`_
+
+    `The Extension Tutorial <http://sphinx-doc.org/extdev/tutorial.html>`_
+
+    `The Extension API <http://sphinx-doc.org/extdev/appapi.html>`_
+
+    """
+    if not isinstance(app, Sphinx):
+        # probably called by tests
+        return {'version': __version__, 'parallel_read_safe': True}
+
+    _patch_python_domain()
+
+    app.setup_extension('sphinx.ext.autodoc')
+    app.connect('autodoc-process-docstring', _process_docstring)
+    app.connect('autodoc-skip-member', _skip_member)
+
+    for name, (default, rebuild) in Config._config_values.items():
+        app.add_config_value(name, default, rebuild)
+    return {'version': __version__, 'parallel_read_safe': True}
+
+--- Chunk 6 ---
+File: sphinx/ext/apidoc.py
+Lines: 444-516
+Symbol: main
+
+def main(argv: List[str] = sys.argv[1:]) -> int:
+    """Parse and check the command line arguments."""
+    sphinx.locale.setlocale(locale.LC_ALL, '')
+    sphinx.locale.init_console(os.path.join(package_dir, 'locale'), 'sphinx')
+
+    parser = get_parser()
+    args = parser.parse_args(argv)
+
+    rootpath = path.abspath(args.module_path)
+
+    # normalize opts
+
+    if args.header is None:
+        args.header = rootpath.split(path.sep)[-1]
+    if args.suffix.startswith('.'):
+        args.suffix = args.suffix[1:]
+    if not path.isdir(rootpath):
+        print(__('%s is not a directory.') % rootpath, file=sys.stderr)
+        sys.exit(1)
+    if not args.dryrun:
+        ensuredir(args.destdir)
+    excludes = [path.abspath(exclude) for exclude in args.exclude_pattern]
+    modules = recurse_tree(rootpath, excludes, args, args.templatedir)
+
+    if args.full:
+        from sphinx.cmd import quickstart as qs
+        modules.sort()
+        prev_module = ''
+        text = ''
+        for module in modules:
+            if module.startswith(prev_module + '.'):
+                continue
+            prev_module = module
+            text += '   %s\n' % module
+        d = {
+            'path': args.destdir,
+            'sep': False,
+            'dot': '_',
+            'project': args.header,
+            'author': args.author or 'Author',
+            'version': args.version or '',
+            'release': args.release or args.version or '',
+            'suffix': '.' + args.suffix,
+            'master': 'index',
+            'epub': True,
+            'extensions': ['sphinx.ext.autodoc', 'sphinx.ext.viewcode',
+                           'sphinx.ext.todo'],
+            'makefile': True,
+            'batchfile': True,
+            'make_mode': True,
+            'mastertocmaxdepth': args.maxdepth,
+            'mastertoctree': text,
+            'language': 'en',
+            'module_path': rootpath,
+            'append_syspath': args.append_syspath,
+        }
+        if args.extensions:
+            d['extensions'].extend(args.extensions)
+        if args.quiet:
+            d['quiet'] = True
+
+        for ext in d['extensions'][:]:
+            if ',' in ext:
+                d['extensions'].remove(ext)
+                d['extensions'].extend(ext.split(','))
+
+        if not args.dryrun:
+            qs.generate(d, silent=True, overwrite=args.force,
+                        templatedir=args.templatedir)
+    elif args.tocfile:
+        create_modules_toc_file(modules, args, args.tocfile, args.templatedir)
+
+    return 0
+
+--- Chunk 7 ---
+File: tests/test_build_epub.py
+Lines: 385-396
+Symbol: test_run_epubcheck
+
+def test_run_epubcheck(app):
+    app.build()
+
+    epubcheck = os.environ.get('EPUBCHECK_PATH', '/usr/share/java/epubcheck.jar')
+    if runnable(['java', '-version']) and os.path.exists(epubcheck):
+        try:
+            subprocess.run(['java', '-jar', epubcheck, app.outdir / 'SphinxTests.epub'],
+                           stdout=PIPE, stderr=PIPE, check=True)
+        except CalledProcessError as exc:
+            print(exc.stdout.decode('utf-8'))
+            print(exc.stderr.decode('utf-8'))
+            assert False, 'epubcheck exited with return code %s' % exc.returncode
+
+--- Chunk 8 ---
+File: sphinx/ext/viewcode.py
+Lines: 53-123
+Symbol: doctree_read
+
+def doctree_read(app: Sphinx, doctree: Node) -> None:
+    env = app.builder.env
+    if not hasattr(env, '_viewcode_modules'):
+        env._viewcode_modules = {}  # type: ignore
+    if app.builder.name == "singlehtml":
+        return
+    if app.builder.name.startswith("epub") and not env.config.viewcode_enable_epub:
+        return
+
+    def has_tag(modname: str, fullname: str, docname: str, refname: str) -> bool:
+        entry = env._viewcode_modules.get(modname, None)  # type: ignore
+        if entry is False:
+            return False
+
+        code_tags = app.emit_firstresult('viewcode-find-source', modname)
+        if code_tags is None:
+            try:
+                analyzer = ModuleAnalyzer.for_module(modname)
+                analyzer.find_tags()
+            except Exception:
+                env._viewcode_modules[modname] = False  # type: ignore
+                return False
+
+            code = analyzer.code
+            tags = analyzer.tags
+        else:
+            code, tags = code_tags
+
+        if entry is None or entry[0] != code:
+            entry = code, tags, {}, refname
+            env._viewcode_modules[modname] = entry  # type: ignore
+        _, tags, used, _ = entry
+        if fullname in tags:
+            used[fullname] = docname
+            return True
+
+        return False
+
+    for objnode in doctree.traverse(addnodes.desc):
+        if objnode.get('domain') != 'py':
+            continue
+        names = set()  # type: Set[str]
+        for signode in objnode:
+            if not isinstance(signode, addnodes.desc_signature):
+                continue
+            modname = signode.get('module')
+            fullname = signode.get('fullname')
+            refname = modname
+            if env.config.viewcode_follow_imported_members:
+                new_modname = app.emit_firstresult(
+                    'viewcode-follow-imported', modname, fullname,
+                )
+                if not new_modname:
+                    new_modname = _get_full_modname(app, modname, fullname)
+                modname = new_modname
+            if not modname:
+                continue
+            fullname = signode.get('fullname')
+            if not has_tag(modname, fullname, env.docname, refname):
+                continue
+            if fullname in names:
+                # only one link per name, please
+                continue
+            names.add(fullname)
+            pagename = posixpath.join(OUTPUT_DIRNAME, modname.replace('.', '/'))
+            inline = nodes.inline('', _('[source]'), classes=['viewcode-link'])
+            onlynode = addnodes.only(expr='html')
+            onlynode += addnodes.pending_xref('', inline, reftype='viewcode', refdomain='std',
+                                              refexplicit=False, reftarget=pagename,
+                                              refid=fullname, refdoc=env.docname)
+            signode += onlynode
+
+--- Chunk 9 ---
+File: sphinx/builders/_epub_base.py
+Lines: 144-153
+Symbol: EpubBuilder.init
+
+    def init(self) -> None:
+        super().init()
+        # the output files for epub must be .html only
+        self.out_suffix = '.xhtml'
+        self.link_suffix = '.xhtml'
+        self.playorder = 0
+        self.tocid = 0
+        self.id_cache = {}  # type: Dict[str, str]
+        self.use_index = self.get_builder_config('use_index', 'epub')
+        self.refnodes = []  # type: List[Dict[str, Any]]
+
+--- Chunk 10 ---
+File: sphinx/builders/epub3.py
+Lines: 194-230
+Symbol: validate_config_values
+
+def validate_config_values(app: Sphinx) -> None:
+    if app.builder.name != 'epub':
+        return
+
+    # <package> lang attribute, dc:language
+    if not app.config.epub_language:
+        logger.warning(__('conf value "epub_language" (or "language") '
+                          'should not be empty for EPUB3'))
+    # <package> unique-identifier attribute
+    if not xmlname_checker().match(app.config.epub_uid):
+        logger.warning(__('conf value "epub_uid" should be XML NAME for EPUB3'))
+    # dc:title
+    if not app.config.epub_title:
+        logger.warning(__('conf value "epub_title" (or "html_title") '
+                          'should not be empty for EPUB3'))
+    # dc:creator
+    if not app.config.epub_author:
+        logger.warning(__('conf value "epub_author" should not be empty for EPUB3'))
+    # dc:contributor
+    if not app.config.epub_contributor:
+        logger.warning(__('conf value "epub_contributor" should not be empty for EPUB3'))
+    # dc:description
+    if not app.config.epub_description:
+        logger.warning(__('conf value "epub_description" should not be empty for EPUB3'))
+    # dc:publisher
+    if not app.config.epub_publisher:
+        logger.warning(__('conf value "epub_publisher" should not be empty for EPUB3'))
+    # dc:rights
+    if not app.config.epub_copyright:
+        logger.warning(__('conf value "epub_copyright" (or "copyright")'
+                          'should not be empty for EPUB3'))
+    # dc:identifier
+    if not app.config.epub_identifier:
+        logger.warning(__('conf value "epub_identifier" should not be empty for EPUB3'))
+    # meta ibooks:version
+    if not app.config.version:
+        logger.warning(__('conf value "version" should not be empty for EPUB3'))
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

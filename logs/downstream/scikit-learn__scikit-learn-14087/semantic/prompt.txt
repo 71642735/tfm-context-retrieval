@@ -1,0 +1,490 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+IndexError thrown with LogisticRegressionCV and refit=False
+#### Description
+The following error is thrown when trying to estimate a regularization parameter via cross-validation, *without* refitting.
+
+#### Steps/Code to Reproduce
+```python
+import sys
+import sklearn
+from sklearn.linear_model import LogisticRegressionCV
+import numpy as np
+
+np.random.seed(29)
+X = np.random.normal(size=(1000, 3))
+beta = np.random.normal(size=3)
+intercept = np.random.normal(size=None)
+y = np.sign(intercept + X @ beta)
+
+LogisticRegressionCV(
+cv=5,
+solver='saga', # same error with 'liblinear'
+tol=1e-2,
+refit=False).fit(X, y)
+```
+
+
+#### Expected Results
+No error is thrown. 
+
+#### Actual Results
+```
+---------------------------------------------------------------------------
+IndexError                                Traceback (most recent call last)
+<ipython-input-3-81609fd8d2ca> in <module>
+----> 1 LogisticRegressionCV(refit=False).fit(X, y)
+
+~/.pyenv/versions/3.6.7/envs/jupyter/lib/python3.6/site-packages/sklearn/linear_model/logistic.py in fit(self, X, y, sample_weight)
+   2192                 else:
+   2193                     w = np.mean([coefs_paths[:, i, best_indices[i], :]
+-> 2194                                  for i in range(len(folds))], axis=0)
+   2195 
+   2196                 best_indices_C = best_indices % len(self.Cs_)
+
+~/.pyenv/versions/3.6.7/envs/jupyter/lib/python3.6/site-packages/sklearn/linear_model/logistic.py in <listcomp>(.0)
+   2192                 else:
+   2193                     w = np.mean([coefs_paths[:, i, best_indices[i], :]
+-> 2194                                  for i in range(len(folds))], axis=0)
+   2195 
+   2196                 best_indices_C = best_indices % len(self.Cs_)
+
+IndexError: too many indices for array
+```
+
+#### Versions
+```
+System:
+    python: 3.6.7 (default, May 13 2019, 16:14:45)  [GCC 4.2.1 Compatible Apple LLVM 10.0.1 (clang-1001.0.46.4)]
+executable: /Users/tsweetser/.pyenv/versions/3.6.7/envs/jupyter/bin/python
+   machine: Darwin-18.6.0-x86_64-i386-64bit
+
+BLAS:
+    macros: NO_ATLAS_INFO=3, HAVE_CBLAS=None
+  lib_dirs: 
+cblas_libs: cblas
+
+Python deps:
+       pip: 19.1.1
+setuptools: 39.0.1
+   sklearn: 0.21.2
+     numpy: 1.15.1
+     scipy: 1.1.0
+    Cython: 0.29.6
+    pandas: 0.24.2
+```
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 1080-1114
+Symbol: test_logreg_l1_sparse_data
+
+def test_logreg_l1_sparse_data():
+    # Because liblinear penalizes the intercept and saga does not, we do not
+    # fit the intercept to make it possible to compare the coefficients of
+    # the two models at convergence.
+    rng = np.random.RandomState(42)
+    n_samples = 50
+    X, y = make_classification(n_samples=n_samples, n_features=20,
+                               random_state=0)
+    X_noise = rng.normal(scale=0.1, size=(n_samples, 3))
+    X_constant = np.zeros(shape=(n_samples, 2))
+    X = np.concatenate((X, X_noise, X_constant), axis=1)
+    X[X < 1] = 0
+    X = sparse.csr_matrix(X)
+
+    lr_liblinear = LogisticRegression(penalty="l1", C=1.0, solver='liblinear',
+                                      fit_intercept=False, multi_class='ovr',
+                                      tol=1e-10)
+    lr_liblinear.fit(X, y)
+
+    lr_saga = LogisticRegression(penalty="l1", C=1.0, solver='saga',
+                                 fit_intercept=False, multi_class='ovr',
+                                 max_iter=1000, tol=1e-10)
+    lr_saga.fit(X, y)
+    assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
+    # Noise and constant features should be regularized to zero by the l1
+    # penalty
+    assert_array_almost_equal(lr_liblinear.coef_[0, -5:], np.zeros(5))
+    assert_array_almost_equal(lr_saga.coef_[0, -5:], np.zeros(5))
+
+    # Check that solving on the sparse and dense data yield the same results
+    lr_saga_dense = LogisticRegression(penalty="l1", C=1.0, solver='saga',
+                                       fit_intercept=False, multi_class='ovr',
+                                       max_iter=1000, tol=1e-10)
+    lr_saga_dense.fit(X.toarray(), y)
+    assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
+
+--- Chunk 2 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 351-386
+Symbol: test_consistency_path
+
+def test_consistency_path():
+    # Test that the path algorithm is consistent
+    rng = np.random.RandomState(0)
+    X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
+    y = [1] * 100 + [-1] * 100
+    Cs = np.logspace(0, 4, 10)
+
+    f = ignore_warnings
+    # can't test with fit_intercept=True since LIBLINEAR
+    # penalizes the intercept
+    for solver in ['sag', 'saga']:
+        coefs, Cs, _ = f(_logistic_regression_path)(
+            X, y, Cs=Cs, fit_intercept=False, tol=1e-5, solver=solver,
+            max_iter=1000, multi_class='ovr', random_state=0)
+        for i, C in enumerate(Cs):
+            lr = LogisticRegression(C=C, fit_intercept=False, tol=1e-5,
+                                    solver=solver, multi_class='ovr',
+                                    random_state=0, max_iter=1000)
+            lr.fit(X, y)
+            lr_coef = lr.coef_.ravel()
+            assert_array_almost_equal(lr_coef, coefs[i], decimal=4,
+                                      err_msg="with solver = %s" % solver)
+
+    # test for fit_intercept=True
+    for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
+        Cs = [1e3]
+        coefs, Cs, _ = f(_logistic_regression_path)(
+            X, y, Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
+            intercept_scaling=10000., random_state=0, multi_class='ovr')
+        lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
+                                intercept_scaling=10000., random_state=0,
+                                multi_class='ovr', solver=solver)
+        lr.fit(X, y)
+        lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
+        assert_array_almost_equal(lr_coef, coefs[0], decimal=4,
+                                  err_msg="with solver = %s" % solver)
+
+--- Chunk 3 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 1052-1077
+Symbol: test_logreg_l1
+
+def test_logreg_l1():
+    # Because liblinear penalizes the intercept and saga does not, we do not
+    # fit the intercept to make it possible to compare the coefficients of
+    # the two models at convergence.
+    rng = np.random.RandomState(42)
+    n_samples = 50
+    X, y = make_classification(n_samples=n_samples, n_features=20,
+                               random_state=0)
+    X_noise = rng.normal(size=(n_samples, 3))
+    X_constant = np.ones(shape=(n_samples, 2))
+    X = np.concatenate((X, X_noise, X_constant), axis=1)
+    lr_liblinear = LogisticRegression(penalty="l1", C=1.0, solver='liblinear',
+                                      fit_intercept=False, multi_class='ovr',
+                                      tol=1e-10)
+    lr_liblinear.fit(X, y)
+
+    lr_saga = LogisticRegression(penalty="l1", C=1.0, solver='saga',
+                                 fit_intercept=False, multi_class='ovr',
+                                 max_iter=1000, tol=1e-10)
+    lr_saga.fit(X, y)
+    assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
+
+    # Noise and constant features should be regularized to zero by the l1
+    # penalty
+    assert_array_almost_equal(lr_liblinear.coef_[0, -5:], np.zeros(5))
+    assert_array_almost_equal(lr_saga.coef_[0, -5:], np.zeros(5))
+
+--- Chunk 4 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 1119-1141
+Symbol: test_logistic_regression_cv_refit
+
+def test_logistic_regression_cv_refit(random_seed, penalty):
+    # Test that when refit=True, logistic regression cv with the saga solver
+    # converges to the same solution as logistic regression with a fixed
+    # regularization parameter.
+    # Internally the LogisticRegressionCV model uses a warm start to refit on
+    # the full data model with the optimal C found by CV. As the penalized
+    # logistic regression loss is convex, we should still recover exactly
+    # the same solution as long as the stopping criterion is strict enough (and
+    # that there are no exactly duplicated features when penalty='l1').
+    X, y = make_classification(n_samples=50, n_features=20,
+                               random_state=random_seed)
+    common_params = dict(
+        solver='saga',
+        penalty=penalty,
+        random_state=random_seed,
+        max_iter=10000,
+        tol=1e-12,
+    )
+    lr_cv = LogisticRegressionCV(Cs=[1.0], refit=True, **common_params)
+    lr_cv.fit(X, y)
+    lr = LogisticRegression(C=1.0, **common_params)
+    lr.fit(X, y)
+    assert_array_almost_equal(lr_cv.coef_, lr.coef_)
+
+--- Chunk 5 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 1503-1532
+Symbol: test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr
+
+def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elasticnet and multiclass is ovr. We can't
+    # compare best_params like in the previous test because
+    # LogisticRegressionCV with multi_class='ovr' will have one C and one
+    # l1_param for each class, while LogisticRegression will share the
+    # parameters over the *n_classes* classifiers.
+
+    X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
+                               random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    cv = StratifiedKFold(5, random_state=0)
+
+    l1_ratios = np.linspace(0, 1, 5)
+    Cs = np.logspace(-4, 4, 5)
+
+    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                multi_class='ovr')
+    lrcv.fit(X_train, y_train)
+
+    param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
+    lr = LogisticRegression(penalty='elasticnet', solver='saga',
+                            random_state=0, multi_class='ovr')
+    gs = GridSearchCV(lr, param_grid, cv=cv)
+    gs.fit(X_train, y_train)
+
+    # Check that predictions are 80% the same
+    assert (lrcv.predict(X_train) == gs.predict(X_train)).mean() >= .8
+    assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= .8
+
+--- Chunk 6 ---
+File: sklearn/svm/tests/test_svm.py
+Lines: 734-764
+Symbol: test_dense_liblinear_intercept_handling
+
+def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
+    # Test that dense liblinear honours intercept_scaling param
+    X = [[2, 1],
+         [3, 1],
+         [1, 3],
+         [2, 3]]
+    y = [0, 0, 1, 1]
+    clf = classifier(fit_intercept=True, penalty='l1', loss='squared_hinge',
+                     dual=False, C=4, tol=1e-7, random_state=0)
+    assert clf.intercept_scaling == 1, clf.intercept_scaling
+    assert clf.fit_intercept
+
+    # when intercept_scaling is low the intercept value is highly "penalized"
+    # by regularization
+    clf.intercept_scaling = 1
+    clf.fit(X, y)
+    assert_almost_equal(clf.intercept_, 0, decimal=5)
+
+    # when intercept_scaling is sufficiently high, the intercept value
+    # is not affected by regularization
+    clf.intercept_scaling = 100
+    clf.fit(X, y)
+    intercept1 = clf.intercept_
+    assert_less(intercept1, -1)
+
+    # when intercept_scaling is sufficiently high, the intercept value
+    # doesn't depend on intercept_scaling value
+    clf.intercept_scaling = 1000
+    clf.fit(X, y)
+    intercept2 = clf.intercept_
+    assert_array_almost_equal(intercept1, intercept2, decimal=2)
+
+--- Chunk 7 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 1471-1500
+Symbol: test_LogisticRegressionCV_GridSearchCV_elastic_net
+
+def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elasticnet
+
+    if multi_class == 'ovr':
+        # This is actually binary classification, ovr multiclass is treated in
+        # test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr
+        X, y = make_classification(random_state=0)
+    else:
+        X, y = make_classification(n_samples=200, n_classes=3, n_informative=3,
+                                   random_state=0)
+
+    cv = StratifiedKFold(5, random_state=0)
+
+    l1_ratios = np.linspace(0, 1, 5)
+    Cs = np.logspace(-4, 4, 5)
+
+    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
+                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+                                multi_class=multi_class)
+    lrcv.fit(X, y)
+
+    param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
+    lr = LogisticRegression(penalty='elasticnet', solver='saga',
+                            random_state=0, multi_class=multi_class)
+    gs = GridSearchCV(lr, param_grid, cv=cv)
+    gs.fit(X, y)
+
+    assert gs.best_params_['l1_ratio'] == lrcv.l1_ratio_[0]
+    assert gs.best_params_['C'] == lrcv.C_[0]
+
+--- Chunk 8 ---
+File: sklearn/linear_model/tests/test_sag.py
+Lines: 827-844
+Symbol: test_sag_classifier_raises_error
+
+def test_sag_classifier_raises_error(solver):
+    # Following #13316, the error handling behavior changed in cython sag. This
+    # is simply a non-regression test to make sure numerical errors are
+    # properly raised.
+
+    # Train a classifier on a simple problem
+    rng = np.random.RandomState(42)
+    X, y = make_classification(random_state=rng)
+    clf = LogisticRegression(solver=solver, random_state=rng, warm_start=True)
+    clf.fit(X, y)
+
+    # Trigger a numerical error by:
+    # - corrupting the fitted coefficients of the classifier
+    # - fit it again starting from its current state thanks to warm_start
+    clf.coef_[:] = np.nan
+
+    with pytest.raises(ValueError, match="Floating-point under-/overflow"):
+        clf.fit(X, y)
+
+--- Chunk 9 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 1264-1301
+Symbol: test_saga_vs_liblinear
+
+def test_saga_vs_liblinear():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X = np.concatenate([X] * 10)
+    y = np.concatenate([y] * 10)
+
+    X_bin = X[y <= 1]
+    y_bin = y[y <= 1] * 2 - 1
+
+    X_sparse, y_sparse = make_classification(n_samples=50, n_features=20,
+                                             random_state=0)
+    X_sparse = sparse.csr_matrix(X_sparse)
+
+    for (X, y) in ((X_bin, y_bin), (X_sparse, y_sparse)):
+        for penalty in ['l1', 'l2']:
+            n_samples = X.shape[0]
+            # alpha=1e-3 is time consuming
+            for alpha in np.logspace(-1, 1, 3):
+                saga = LogisticRegression(
+                    C=1. / (n_samples * alpha),
+                    solver='saga',
+                    multi_class='ovr',
+                    max_iter=200,
+                    fit_intercept=False,
+                    penalty=penalty, random_state=0, tol=1e-24)
+
+                liblinear = LogisticRegression(
+                    C=1. / (n_samples * alpha),
+                    solver='liblinear',
+                    multi_class='ovr',
+                    max_iter=200,
+                    fit_intercept=False,
+                    penalty=penalty, random_state=0, tol=1e-24)
+
+                saga.fit(X, y)
+                liblinear.fit(X, y)
+                # Convergence for alpha=1e-3 is very slow
+                assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
+
+--- Chunk 10 ---
+File: sklearn/linear_model/tests/test_logistic.py
+Lines: 803-879
+Symbol: test_logistic_regression_sample_weights
+
+def test_logistic_regression_sample_weights():
+    X, y = make_classification(n_samples=20, n_features=5, n_informative=3,
+                               n_classes=2, random_state=0)
+    sample_weight = y + 1
+
+    for LR in [LogisticRegression, LogisticRegressionCV]:
+
+        # Test that passing sample_weight as ones is the same as
+        # not passing them at all (default None)
+        for solver in ['lbfgs', 'liblinear']:
+            clf_sw_none = LR(solver=solver, fit_intercept=False,
+                             random_state=42, multi_class='ovr')
+            clf_sw_none.fit(X, y)
+            clf_sw_ones = LR(solver=solver, fit_intercept=False,
+                             random_state=42, multi_class='ovr')
+            clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
+            assert_array_almost_equal(
+                clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
+
+        # Test that sample weights work the same with the lbfgs,
+        # newton-cg, and 'sag' solvers
+        clf_sw_lbfgs = LR(fit_intercept=False, random_state=42,
+                          multi_class='ovr')
+        clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
+        clf_sw_n = LR(solver='newton-cg', fit_intercept=False, random_state=42,
+                      multi_class='ovr')
+        clf_sw_n.fit(X, y, sample_weight=sample_weight)
+        clf_sw_sag = LR(solver='sag', fit_intercept=False, tol=1e-10,
+                        random_state=42, multi_class='ovr')
+        # ignore convergence warning due to small dataset
+        with ignore_warnings():
+            clf_sw_sag.fit(X, y, sample_weight=sample_weight)
+        clf_sw_liblinear = LR(solver='liblinear', fit_intercept=False,
+                              random_state=42, multi_class='ovr')
+        clf_sw_liblinear.fit(X, y, sample_weight=sample_weight)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_liblinear.coef_, decimal=4)
+
+        # Test that passing class_weight as [1,2] is the same as
+        # passing class weight = [1,1] but adjusting sample weights
+        # to be 2 for all instances of class 2
+        for solver in ['lbfgs', 'liblinear']:
+            clf_cw_12 = LR(solver=solver, fit_intercept=False,
+                           class_weight={0: 1, 1: 2}, random_state=42,
+                           multi_class='ovr')
+            clf_cw_12.fit(X, y)
+            clf_sw_12 = LR(solver=solver, fit_intercept=False, random_state=42,
+                           multi_class='ovr')
+            clf_sw_12.fit(X, y, sample_weight=sample_weight)
+            assert_array_almost_equal(
+                clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
+
+    # Test the above for l1 penalty and l2 penalty with dual=True.
+    # since the patched liblinear code is different.
+    clf_cw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
+        penalty="l1", tol=1e-5, random_state=42, multi_class='ovr')
+    clf_cw.fit(X, y)
+    clf_sw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, penalty="l1", tol=1e-5,
+        random_state=42, multi_class='ovr')
+    clf_sw.fit(X, y, sample_weight)
+    assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
+
+    clf_cw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
+        penalty="l2", dual=True, random_state=42, multi_class='ovr')
+    clf_cw.fit(X, y)
+    clf_sw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, penalty="l2", dual=True,
+        random_state=42, multi_class='ovr')
+    clf_sw.fit(X, y, sample_weight)
+    assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

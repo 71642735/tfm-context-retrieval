@@ -1,0 +1,13 @@
+```diff
+--- src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
++++ src/transformers/models/encoder_decoder/modeling_encoder_decoder.py
+@@ -628,6 +628,8 @@
+             decoder_input_ids = shift_tokens_right(
+                 labels, self.config.pad_token_id, self.config.decoder_start_token_id
+             )
++            if decoder_attention_mask is None:
++                decoder_attention_mask = torch.where(decoder_input_ids == self.config.pad_token_id, 0, 1)
+ 
+         # Set device for decoder inputs
+         if decoder_input_ids is not None and decoder_input_ids.device != self.device:
+```

@@ -1,0 +1,14 @@
+{
+  "task_id": "pytest-dev__pytest-5809",
+  "repository": "pytest-dev/pytest",
+  "base_commit": "8aba863a634f40560e25055d179220f0eefabe9a",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 2741,
+  "output_tokens": 185,
+  "thinking_tokens": 0,
+  "total_tokens": 2926
+}

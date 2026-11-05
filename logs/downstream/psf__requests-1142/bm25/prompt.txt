@@ -1,0 +1,439 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+requests.get is ALWAYS sending content length
+Hi,
+
+It seems like that request.get always adds 'content-length' header to the request.
+I think that the right behavior is not to add this header automatically in GET requests or add the possibility to not send it.
+
+For example http://amazon.com returns 503 for every get request that contains 'content-length' header.
+
+Thanks,
+
+Oren
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: requests/adapters.py
+Lines: 149-221
+Symbol: HTTPAdapter.send
+
+    def send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None):
+        """Sends PreparedRequest object. Returns Response object."""
+
+        conn = self.get_connection(request.url, proxies)
+
+        self.cert_verify(conn, request.url, verify, cert)
+        url = self.request_url(request, proxies)
+
+        chunked = not (request.body is None or 'Content-Length' in request.headers)
+
+        try:
+            if not chunked:
+                resp = conn.urlopen(
+                    method=request.method,
+                    url=url,
+                    body=request.body,
+                    headers=request.headers,
+                    redirect=False,
+                    assert_same_host=False,
+                    preload_content=False,
+                    decode_content=False,
+                    retries=self.max_retries,
+                    timeout=timeout
+                )
+
+            # Send the request.
+            else:
+                if hasattr(conn, 'proxy_pool'):
+                    conn = conn.proxy_pool
+
+                low_conn = conn._get_conn(timeout=timeout)
+                low_conn.putrequest(request.method, url, skip_accept_encoding=True)
+
+                for header, value in request.headers.items():
+                    low_conn.putheader(header, value)
+
+                low_conn.endheaders()
+
+                for i in request.body:
+                    low_conn.send(hex(len(i))[2:].encode('utf-8'))
+                    low_conn.send(b'\r\n')
+                    low_conn.send(i)
+                    low_conn.send(b'\r\n')
+                low_conn.send(b'0\r\n\r\n')
+
+                r = low_conn.getresponse()
+                resp = HTTPResponse.from_httplib(r,
+                    pool=conn,
+                    connection=low_conn,
+                    preload_content=False,
+                    decode_content=False
+                )
+
+        except socket.error as sockerr:
+            raise ConnectionError(sockerr)
+
+        except MaxRetryError as e:
+            raise ConnectionError(e)
+
+        except (_SSLError, _HTTPError) as e:
+            if isinstance(e, _SSLError):
+                raise SSLError(e)
+            elif isinstance(e, TimeoutError):
+                raise Timeout(e)
+            else:
+                raise Timeout('Request timed out.')
+
+        r = self.build_response(request, resp)
+
+        if not stream:
+            r.content
+
+        return r
+
+--- Chunk 2 ---
+File: requests/models.py
+Lines: 437-470
+Symbol: Response.__init__
+
+    def __init__(self):
+        super(Response, self).__init__()
+
+        self._content = False
+        self._content_consumed = False
+
+        #: Integer Code of responded HTTP Status.
+        self.status_code = None
+
+        #: Case-insensitive Dictionary of Response Headers.
+        #: For example, ``headers['content-encoding']`` will return the
+        #: value of a ``'Content-Encoding'`` response header.
+        self.headers = CaseInsensitiveDict()
+
+        #: File-like object representation of response (for advanced usage).
+        #: Requires that ``stream=True` on the request.
+        # This requirement does not apply for use internally to Requests.
+        self.raw = None
+
+        #: Final URL location of Response.
+        self.url = None
+
+        #: Encoding to decode with when accessing r.text.
+        self.encoding = None
+
+        #: A list of :class:`Response <Response>` objects from
+        #: the history of the Request. Any redirect responses will end
+        #: up here. The list is sorted from the oldest to the most recent request.
+        self.history = []
+
+        self.reason = None
+
+        #: A CookieJar of Cookies the server sent back.
+        self.cookies = cookiejar_from_dict({})
+
+--- Chunk 3 ---
+File: requests/packages/urllib3/request.py
+Lines: 90-142
+Symbol: RequestMethods.request_encode_body
+
+    def request_encode_body(self, method, url, fields=None, headers=None,
+                            encode_multipart=True, multipart_boundary=None,
+                            **urlopen_kw):
+        """
+        Make a request using :meth:`urlopen` with the ``fields`` encoded in
+        the body. This is useful for request methods like POST, PUT, PATCH, etc.
+
+        When ``encode_multipart=True`` (default), then
+        :meth:`urllib3.filepost.encode_multipart_formdata` is used to encode the
+        payload with the appropriate content type. Otherwise
+        :meth:`urllib.urlencode` is used with the
+        'application/x-www-form-urlencoded' content type.
+
+        Multipart encoding must be used when posting files, and it's reasonably
+        safe to use it in other times too. However, it may break request signing,
+        such as with OAuth.
+
+        Supports an optional ``fields`` parameter of key/value strings AND
+        key/filetuple. A filetuple is a (filename, data, MIME type) tuple where
+        the MIME type is optional. For example: ::
+
+            fields = {
+                'foo': 'bar',
+                'fakefile': ('foofile.txt', 'contents of foofile'),
+                'realfile': ('barfile.txt', open('realfile').read()),
+                'typedfile': ('bazfile.bin', open('bazfile').read(),
+                              'image/jpeg'),
+                'nonamefile': 'contents of nonamefile field',
+            }
+
+        When uploading a file, providing a filename (the first parameter of the
+        tuple) is optional but recommended to best mimick behavior of browsers.
+
+        Note that if ``headers`` are supplied, the 'Content-Type' header will be
+        overwritten because it depends on the dynamic random boundary string
+        which is used to compose the body of the request. The random boundary
+        string can be explicitly set with the ``multipart_boundary`` parameter.
+        """
+        if encode_multipart:
+            body, content_type = encode_multipart_formdata(fields or {},
+                                    boundary=multipart_boundary)
+        else:
+            body, content_type = (urlencode(fields or {}),
+                                    'application/x-www-form-urlencoded')
+
+        if headers is None:
+            headers = self.headers
+
+        headers_ = {'Content-Type': content_type}
+        headers_.update(headers)
+
+        return self.urlopen(method, url, body=body, headers=headers_,
+                            **urlopen_kw)
+
+--- Chunk 4 ---
+File: test_requests.py
+Lines: 66-74
+Symbol: RequestsTestCase.test_params_are_added_before_fragment
+
+    def test_params_are_added_before_fragment(self):
+        request = requests.Request('GET',
+            "http://example.com/path#fragment", params={"a": "b"}).prepare()
+        self.assertEqual(request.url,
+            "http://example.com/path?a=b#fragment")
+        request = requests.Request('GET',
+            "http://example.com/path?key=value#fragment", params={"a": "b"}).prepare()
+        self.assertEqual(request.url,
+            "http://example.com/path?key=value&a=b#fragment")
+
+--- Chunk 5 ---
+File: requests/api.py
+Lines: 17-44
+Symbol: request
+
+def request(method, url, **kwargs):
+    """Constructs and sends a :class:`Request <Request>`.
+    Returns :class:`Response <Response>` object.
+
+    :param method: method for the new :class:`Request` object.
+    :param url: URL for the new :class:`Request` object.
+    :param params: (optional) Dictionary or bytes to be sent in the query string for the :class:`Request`.
+    :param data: (optional) Dictionary, bytes, or file-like object to send in the body of the :class:`Request`.
+    :param headers: (optional) Dictionary of HTTP Headers to send with the :class:`Request`.
+    :param cookies: (optional) Dict or CookieJar object to send with the :class:`Request`.
+    :param files: (optional) Dictionary of 'name': file-like-objects (or {'name': ('filename', fileobj)}) for multipart encoding upload.
+    :param auth: (optional) Auth tuple to enable Basic/Digest/Custom HTTP Auth.
+    :param timeout: (optional) Float describing the timeout of the request.
+    :param allow_redirects: (optional) Boolean. Set to True if POST/PUT/DELETE redirect following is allowed.
+    :param proxies: (optional) Dictionary mapping protocol to the URL of the proxy.
+    :param verify: (optional) if ``True``, the SSL cert will be verified. A CA_BUNDLE path can also be provided.
+    :param stream: (optional) if ``False``, the response content will be immediately downloaded.
+    :param cert: (optional) if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
+
+    Usage::
+
+      >>> import requests
+      >>> req = requests.request('GET', 'http://httpbin.org/get')
+      <Response [200]>
+    """
+
+    session = sessions.Session()
+    return session.request(method=method, url=url, **kwargs)
+
+--- Chunk 6 ---
+File: requests/cookies.py
+Lines: 108-112
+Symbol: get_cookie_header
+
+def get_cookie_header(jar, request):
+    """Produce an appropriate Cookie header string to be sent with `request`, or None."""
+    r = MockRequest(request)
+    jar.add_cookie_header(r)
+    return r.get_new_headers().get('Cookie')
+
+--- Chunk 7 ---
+File: requests/models.py
+Lines: 623-638
+Symbol: Response.links
+
+    def links(self):
+        """Returns the parsed header links of the response, if any."""
+
+        header = self.headers['link']
+
+        # l = MultiDict()
+        l = {}
+
+        if header:
+            links = parse_header_links(header)
+
+            for link in links:
+                key = link.get('rel') or link.get('url')
+                l[key] = link
+
+        return l
+
+--- Chunk 8 ---
+File: requests/models.py
+Lines: 332-386
+Symbol: PreparedRequest.prepare_body
+
+    def prepare_body(self, data, files):
+        """Prepares the given HTTP body data."""
+
+        # Check if file, fo, generator, iterator.
+        # If not, run through normal process.
+
+        # Nottin' on you.
+        body = None
+        content_type = None
+        length = None
+        is_stream = False
+
+        is_stream = all([
+            hasattr(data, '__iter__'),
+            not isinstance(data, basestring),
+            not isinstance(data, dict)
+        ])
+
+        try:
+            length = str(super_len(data))
+        except (TypeError, AttributeError):
+            length = False
+
+        if is_stream:
+            body = data
+
+            if files:
+                raise NotImplementedError('Streamed bodies and files are mutually exclusive.')
+
+            if length:
+                self.headers['Content-Length'] = length
+            else:
+                self.headers['Transfer-Encoding'] = 'chunked'
+        # Check if file, fo, generator, iterator.
+        # If not, run through normal process.
+
+        else:
+            # Multi-part file uploads.
+            if files:
+                (body, content_type) = self._encode_files(files, data)
+            else:
+                if data:
+                    body = self._encode_params(data)
+                    if isinstance(data, str) or isinstance(data, builtin_str) or hasattr(data, 'read'):
+                        content_type = None
+                    else:
+                        content_type = 'application/x-www-form-urlencoded'
+
+            self.prepare_content_length(body)
+
+            # Add content-type if it wasn't explicitly provided.
+            if (content_type) and (not 'content-type' in self.headers):
+                self.headers['Content-Type'] = content_type
+
+        self.body = body
+
+--- Chunk 9 ---
+File: requests/utils.py
+Lines: 268-285
+Symbol: get_encoding_from_headers
+
+def get_encoding_from_headers(headers):
+    """Returns encodings from given HTTP Header Dict.
+
+    :param headers: dictionary to extract encoding from.
+    """
+
+    content_type = headers.get('content-type')
+
+    if not content_type:
+        return None
+
+    content_type, params = cgi.parse_header(content_type)
+
+    if 'charset' in params:
+        return params['charset'].strip("'\"")
+
+    if 'text' in content_type:
+        return 'ISO-8859-1'
+
+--- Chunk 10 ---
+File: requests/packages/urllib3/response.py
+Lines: 112-174
+Symbol: HTTPResponse.read
+
+    def read(self, amt=None, decode_content=None, cache_content=False):
+        """
+        Similar to :meth:`httplib.HTTPResponse.read`, but with two additional
+        parameters: ``decode_content`` and ``cache_content``.
+
+        :param amt:
+            How much of the content to read. If specified, decoding and caching
+            is skipped because we can't decode partial content nor does it make
+            sense to cache partial content as the full response.
+
+        :param decode_content:
+            If True, will attempt to decode the body based on the
+            'content-encoding' header. (Overridden if ``amt`` is set.)
+
+        :param cache_content:
+            If True, will save the returned data such that the same result is
+            returned despite of the state of the underlying file object. This
+            is useful if you want the ``.data`` property to continue working
+            after having ``.read()`` the file object. (Overridden if ``amt`` is
+            set.)
+        """
+        # Note: content-encoding value should be case-insensitive, per RFC 2616
+        # Section 3.5
+        content_encoding = self.headers.get('content-encoding', '').lower()
+        decoder = self.CONTENT_DECODERS.get(content_encoding)
+        if decode_content is None:
+            decode_content = self._decode_content
+
+        if self._fp is None:
+            return
+
+        try:
+            if amt is None:
+                # cStringIO doesn't like amt=None
+                data = self._fp.read()
+            else:
+                data = self._fp.read(amt)
+                if amt != 0 and not data:  # Platform-specific: Buggy versions of Python.
+                    # Close the connection when no data is returned
+                    #
+                    # This is redundant to what httplib/http.client _should_
+                    # already do.  However, versions of python released before
+                    # December 15, 2012 (http://bugs.python.org/issue16298) do not
+                    # properly close the connection in all cases. There is no harm
+                    # in redundantly calling close.
+                    self._fp.close()
+                return data
+
+            try:
+                if decode_content and decoder:
+                    data = decoder(data)
+            except (IOError, zlib.error):
+                raise DecodeError("Received response with content-encoding: %s, but "
+                                  "failed to decode it." % content_encoding)
+
+            if cache_content:
+                self._body = data
+
+            return data
+
+        finally:
+            if self._original_response and self._original_response.isclosed():
+                self.release_conn()
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

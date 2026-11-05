@@ -1,0 +1,301 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+OutputParsers currently allows model to hallucinate the output of an action
+### System Info
+
+The MRKL and chat output parsers currently will allow an LLM response to generate a valid action, as well as hallucinate a "final answer" based on that response.
+
+[Logic](https://github.com/hwchase17/langchain/blob/master/langchain/agents/chat/output_parser.py#L15)
+
+This is because the parser is returning an AgentFinish object immediately if `FINAL_ANSWER_ACTION` is in the text, rather than checking if the text also includes a valid action. I had this appear when using the Python agent, where the LLM returned a code block as the action, but simultaneously hallucinated the output and a final answer in one response. (In this case, it was quite obvious because the code block referred to a database which does not exist)
+
+I'm not sure if there are any situations where it is desired that a response should output an action as well as an answer?
+
+If this is not desired behaviour, it can be easily fixable by raising an exception if a response includes both a valid action, and "final answer" rather than returning immedately from either condition.
+
+### Who can help?
+
+@hwchase17 @agola11 
+
+### Information
+
+- [ ] The official example notebooks/scripts
+- [ ] My own modified scripts
+
+### Related Components
+
+- [ ] LLMs/Chat Models
+- [ ] Embedding Models
+- [ ] Prompts / Prompt Templates / Prompt Selectors
+- [X] Output Parsers
+- [ ] Document Loaders
+- [ ] Vector Stores / Retrievers
+- [ ] Memory
+- [ ] Agents / Agent Executors
+- [ ] Tools / Toolkits
+- [ ] Chains
+- [ ] Callbacks/Tracing
+- [ ] Async
+
+### Reproduction
+
+````py
+from langchain.agents.chat.output_parser import ChatOutputParser
+
+parser = ChatOutputParser()
+
+valid_action = """Action:
+```
+{
+"action": "Python REPL",
+"action_input": "print(\'Hello world!\')"
+}
+```
+final_answer = """Final Answer: Goodbye world!"""
+
+print(parser.parse(valid_action))  # outputs an AgentFinish
+print(parser.parse(final_answer))  # outputs an AgentAction
+print(parser.parse(valid_action + final_answer))  # outputs an AgentFinish, should probably raise an Exception
+````
+
+### Expected behavior
+
+An exception should likely be raised if an LLM returns a response that both includes a final answer, and a parse-able action, rather than skipping the action and returning the final answer, since it probably hallucinated an output/observation from the action.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: langchain/agents/conversational_chat/output_parser.py
+Lines: 15-24
+Symbol: ConvoOutputParser.parse
+
+    def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+        try:
+            response = parse_json_markdown(text)
+            action, action_input = response["action"], response["action_input"]
+            if action == "Final Answer":
+                return AgentFinish({"output": action_input}, text)
+            else:
+                return AgentAction(action, action_input, text)
+        except Exception as e:
+            raise OutputParserException(f"Could not parse LLM output: {text}") from e
+
+--- Chunk 2 ---
+File: langchain/agents/structured_chat/output_parser.py
+Lines: 23-41
+Symbol: StructuredChatOutputParser.parse
+
+    def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+        try:
+            action_match = re.search(r"```(.*?)```?", text, re.DOTALL)
+            if action_match is not None:
+                response = json.loads(action_match.group(1).strip(), strict=False)
+                if isinstance(response, list):
+                    # gpt turbo frequently ignores the directive to emit a single action
+                    logger.warning("Got multiple action responses: %s", response)
+                    response = response[0]
+                if response["action"] == "Final Answer":
+                    return AgentFinish({"output": response["action_input"]}, text)
+                else:
+                    return AgentAction(
+                        response["action"], response.get("action_input", {}), text
+                    )
+            else:
+                return AgentFinish({"output": text}, text)
+        except Exception as e:
+            raise OutputParserException(f"Could not parse LLM output: {text}") from e
+
+--- Chunk 3 ---
+File: langchain/agents/chat/output_parser.py
+Lines: 15-26
+Symbol: ChatOutputParser.parse
+
+    def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+        if FINAL_ANSWER_ACTION in text:
+            return AgentFinish(
+                {"output": text.split(FINAL_ANSWER_ACTION)[-1].strip()}, text
+            )
+        try:
+            action = text.split("```")[1]
+            response = json.loads(action.strip())
+            return AgentAction(response["action"], response["action_input"], text)
+
+        except Exception:
+            raise OutputParserException(f"Could not parse LLM output: {text}")
+
+--- Chunk 4 ---
+File: langchain/agents/agent.py
+Lines: 552-592
+Symbol: Agent.return_stopped_response
+
+    def return_stopped_response(
+        self,
+        early_stopping_method: str,
+        intermediate_steps: List[Tuple[AgentAction, str]],
+        **kwargs: Any,
+    ) -> AgentFinish:
+        """Return response when agent has been stopped due to max iterations."""
+        if early_stopping_method == "force":
+            # `force` just returns a constant string
+            return AgentFinish(
+                {"output": "Agent stopped due to iteration limit or time limit."}, ""
+            )
+        elif early_stopping_method == "generate":
+            # Generate does one final forward pass
+            thoughts = ""
+            for action, observation in intermediate_steps:
+                thoughts += action.log
+                thoughts += (
+                    f"\n{self.observation_prefix}{observation}\n{self.llm_prefix}"
+                )
+            # Adding to the previous steps, we now tell the LLM to make a final pred
+            thoughts += (
+                "\n\nI now need to return a final answer based on the previous steps:"
+            )
+            new_inputs = {"agent_scratchpad": thoughts, "stop": self._stop}
+            full_inputs = {**kwargs, **new_inputs}
+            full_output = self.llm_chain.predict(**full_inputs)
+            # We try to extract a final answer
+            parsed_output = self.output_parser.parse(full_output)
+            if isinstance(parsed_output, AgentFinish):
+                # If we can extract, we send the correct stuff
+                return parsed_output
+            else:
+                # If we can extract, but the tool is not the final tool,
+                # we just return the full output
+                return AgentFinish({"output": full_output}, full_output)
+        else:
+            raise ValueError(
+                "early_stopping_method should be one of `force` or `generate`, "
+                f"got {early_stopping_method}"
+            )
+
+--- Chunk 5 ---
+File: tests/unit_tests/agents/test_mrkl.py
+Lines: 121-133
+Symbol: test_get_final_answer_multiline
+
+def test_get_final_answer_multiline() -> None:
+    """Test getting final answer that is multiline."""
+    llm_output = (
+        "Thought: I need to search for NBA\n"
+        "Action: Search\n"
+        "Action Input: NBA\n"
+        "Observation: founded in 1994 and 1993\n"
+        "Thought: I can now answer the question\n"
+        "Final Answer: 1994\n1993"
+    )
+    action, action_input = get_action_and_input(llm_output)
+    assert action == "Final Answer"
+    assert action_input == "1994\n1993"
+
+--- Chunk 6 ---
+File: tests/unit_tests/agents/test_mrkl.py
+Lines: 91-103
+Symbol: test_get_final_answer
+
+def test_get_final_answer() -> None:
+    """Test getting final answer."""
+    llm_output = (
+        "Thought: I need to search for NBA\n"
+        "Action: Search\n"
+        "Action Input: NBA\n"
+        "Observation: founded in 1994\n"
+        "Thought: I can now answer the question\n"
+        "Final Answer: 1994"
+    )
+    action, action_input = get_action_and_input(llm_output)
+    assert action == "Final Answer"
+    assert action_input == "1994"
+
+--- Chunk 7 ---
+File: tests/unit_tests/agents/test_mrkl.py
+Lines: 106-118
+Symbol: test_get_final_answer_new_line
+
+def test_get_final_answer_new_line() -> None:
+    """Test getting final answer."""
+    llm_output = (
+        "Thought: I need to search for NBA\n"
+        "Action: Search\n"
+        "Action Input: NBA\n"
+        "Observation: founded in 1994\n"
+        "Thought: I can now answer the question\n"
+        "Final Answer:\n1994"
+    )
+    action, action_input = get_action_and_input(llm_output)
+    assert action == "Final Answer"
+    assert action_input == "1994"
+
+--- Chunk 8 ---
+File: langchain/agents/react/output_parser.py
+Lines: 9-26
+Symbol: ReActOutputParser.parse
+
+    def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
+        action_prefix = "Action: "
+        if not text.strip().split("\n")[-1].startswith(action_prefix):
+            raise OutputParserException(f"Could not parse LLM Output: {text}")
+        action_block = text.strip().split("\n")[-1]
+
+        action_str = action_block[len(action_prefix) :]
+        # Parse out the action and the directive.
+        re_matches = re.search(r"(.*?)\[(.*?)\]", action_str)
+        if re_matches is None:
+            raise OutputParserException(
+                f"Could not parse action directive: {action_str}"
+            )
+        action, action_input = re_matches.group(1), re_matches.group(2)
+        if action == "Finish":
+            return AgentFinish({"output": action_input}, text)
+        else:
+            return AgentAction(action, action_input, text)
+
+--- Chunk 9 ---
+File: tests/unit_tests/agents/test_mrkl.py
+Lines: 53-71
+Symbol: test_get_action_and_input_newline_after_keyword
+
+def test_get_action_and_input_newline_after_keyword() -> None:
+    """Test getting an action and action input from the text
+    when there is a new line before the action
+    (after the keywords "Action:" and "Action Input:")
+    """
+    llm_output = """
+    I can use the `ls` command to list the contents of the directory \
+    and `grep` to search for the specific file.
+
+    Action:
+    Terminal
+
+    Action Input:
+    ls -l ~/.bashrc.d/
+    """
+
+    action, action_input = get_action_and_input(llm_output)
+    assert action == "Terminal"
+    assert action_input == "ls -l ~/.bashrc.d/\n"
+
+--- Chunk 10 ---
+File: tests/unit_tests/agents/test_mrkl.py
+Lines: 42-50
+Symbol: test_get_action_and_input_newline
+
+def test_get_action_and_input_newline() -> None:
+    """Test getting an action from text where Action Input is a code snippet."""
+    llm_output = (
+        "Now I need to write a unittest for the function.\n\n"
+        "Action: Python\nAction Input:\n```\nimport unittest\n\nunittest.main()\n```"
+    )
+    action, action_input = get_action_and_input(llm_output)
+    assert action == "Python"
+    assert action_input == "```\nimport unittest\n\nunittest.main()\n```"
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

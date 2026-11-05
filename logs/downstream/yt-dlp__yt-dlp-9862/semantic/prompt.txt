@@ -1,0 +1,1375 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+`--simulate` doesn't accurately simulate downloading under certain conditions
+### DO NOT REMOVE OR SKIP THE ISSUE TEMPLATE
+
+- [X] I understand that I will be **blocked** if I *intentionally* remove or skip any mandatory\* field
+
+### Checklist
+
+- [X] I'm reporting a bug unrelated to a specific site
+- [X] I've verified that I have **updated yt-dlp to nightly or master** ([update instructions](https://github.com/yt-dlp/yt-dlp#update-channels))
+- [X] I've checked that all provided URLs are playable in a browser with the same IP and same login details
+- [X] I've checked that all URLs and arguments with special characters are [properly quoted or escaped](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#video-url-contains-an-ampersand--and-im-getting-some-strange-output-1-2839-or-v-is-not-recognized-as-an-internal-or-external-command)
+- [X] I've searched [known issues](https://github.com/yt-dlp/yt-dlp/issues/3766) and the [bugtracker](https://github.com/yt-dlp/yt-dlp/issues?q=) for similar issues **including closed ones**. DO NOT post duplicates
+- [X] I've read the [guidelines for opening an issue](https://github.com/yt-dlp/yt-dlp/blob/master/CONTRIBUTING.md#opening-an-issue)
+
+### Provide a description that is worded well enough to be understood
+
+When running a yt-dlp command with `--simulate` (and without an `-f` arg), the default format selection differs from an unsimulated run under any of these conditions:
+- ffmpeg is not available
+- the outtmpl is `-`
+- the URL is for a livestream (and `--live-from-start` was not passed)
+
+A dry-run/simulate option should actually simulate the behaviour that will occur when downloading.
+This behaviour is currently undocumented. Either the behaviour should be changed or at the very least be documented.
+
+---
+
+*Copying initial discussion: https://github.com/yt-dlp/yt-dlp/pull/9805#discussion_r1588171627*
+
+It looks like we can trace this logic back to https://github.com/ytdl-org/youtube-dl/commit/0017d9ad6de831384e74db14a821e4c94020c9ac
+
+Back then, upstream's default format spec was only `best` if ffmpeg was not available. So a simulated run would result in a "requested formats not available" error if ffmpeg was not available and there was no combined video+audio format available. This `simulate` check seems to be added so that you could print json without having to manually pass `-f bv+ba` or `-f bv` etc in this scenario -- see the linked upstream PR
+
+
+
+### Provide verbose output that clearly demonstrates the problem
+
+- [X] Run **your** yt-dlp command with **-vU** flag added (`yt-dlp -vU <your command line>`)
+- [ ] If using API, add `'verbose': True` to `YoutubeDL` params instead
+- [X] Copy the WHOLE output (starting with `[debug] Command-line config`) and insert it below
+
+### Complete Verbose Output
+
+```shell
+[debug] Command-line config: ['-vU', '--simulate', 'https://www.youtube.com/watch?v=2yJgwwDcgV8']
+[debug] Encodings: locale cp1252, fs utf-8, pref cp1252, out utf-8, error utf-8, screen utf-8
+[debug] yt-dlp version master@2024.04.28.221944 from yt-dlp/yt-dlp-master-builds [ac817bc83] (win_exe)
+[debug] Python 3.8.10 (CPython AMD64 64bit) - Windows-10-10.0.22631-SP0 (OpenSSL 1.1.1k  25 Mar 2021)
+[debug] exe versions: none
+[debug] Optional libraries: Cryptodome-3.20.0, brotli-1.1.0, certifi-2024.02.02, curl_cffi-0.5.10, mutagen-1.47.0, requests-2.31.0, sqlite3-3.35.5, urllib3-2.2.1, websockets-12.0
+[debug] Proxy map: {}
+[debug] Request Handlers: urllib, requests, websockets, curl_cffi
+[debug] Loaded 1810 extractors
+[debug] Fetching release info: https://api.github.com/repos/yt-dlp/yt-dlp-master-builds/releases/latest
+Latest version: master@2024.04.28.221944 from yt-dlp/yt-dlp-master-builds
+yt-dlp is up to date (master@2024.04.28.221944 from yt-dlp/yt-dlp-master-builds)
+[youtube] Extracting URL: https://www.youtube.com/watch?v=2yJgwwDcgV8
+[youtube] 2yJgwwDcgV8: Downloading webpage
+[youtube] 2yJgwwDcgV8: Downloading ios player API JSON
+[youtube] 2yJgwwDcgV8: Downloading android player API JSON
+WARNING: [youtube] Skipping player responses from android clients (got player responses for video "aQvGIIdgFDM" instead of "2yJgwwDcgV8")
+[debug] Loading youtube-nsig.7d1f7724 from cache
+[debug] [youtube] Decrypted nsig ZyUwo2vdMccktm7tN0 => ZvGvrjLHlKzcbw
+[debug] Loading youtube-nsig.7d1f7724 from cache
+[debug] [youtube] Decrypted nsig vYdxycJ0vBBgWEBA_9 => Etq9qDUH370hPg
+[youtube] 2yJgwwDcgV8: Downloading m3u8 information
+[debug] Sort order given by extractor: quality, res, fps, hdr:12, source, vcodec:vp9.2, channels, acodec, lang, proto
+[debug] Formats sorted by: hasvid, ie_pref, quality, res, fps, hdr:12(7), source, vcodec:vp9.2(10), channels, acodec, lang, proto, size, br, asr, vext, aext, hasaud, id
+[debug] Default format spec: bestvideo*+bestaudio/best
+[info] 2yJgwwDcgV8: Downloading 1 format(s): 244+251
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: yt_dlp/downloader/hls.py
+Lines: 40-71
+Symbol: HlsFD.can_download
+
+    def can_download(cls, manifest, info_dict, allow_unplayable_formats=False):
+        UNSUPPORTED_FEATURES = [
+            # r'#EXT-X-BYTERANGE',  # playlists composed of byte ranges of media files [2]
+
+            # Live streams heuristic does not always work (e.g. geo restricted to Germany
+            # http://hls-geo.daserste.de/i/videoportal/Film/c_620000/622873/format,716451,716457,716450,716458,716459,.mp4.csmil/index_4_av.m3u8?null=0)
+            # r'#EXT-X-MEDIA-SEQUENCE:(?!0$)',  # live streams [3]
+
+            # This heuristic also is not correct since segments may not be appended as well.
+            # Twitch vods of finished streams have EXT-X-PLAYLIST-TYPE:EVENT despite
+            # no segments will definitely be appended to the end of the playlist.
+            # r'#EXT-X-PLAYLIST-TYPE:EVENT',  # media segments may be appended to the end of
+            #                                 # event media playlists [4]
+            # r'#EXT-X-MAP:',  # media initialization [5]
+            # 1. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.4
+            # 2. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.2
+            # 3. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.2
+            # 4. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.3.5
+            # 5. https://tools.ietf.org/html/draft-pantos-http-live-streaming-17#section-4.3.2.5
+        ]
+        if not allow_unplayable_formats:
+            UNSUPPORTED_FEATURES += [
+                r'#EXT-X-KEY:METHOD=(?!NONE|AES-128)',  # encrypted streams [1], but not necessarily DRM
+            ]
+
+        def check_results():
+            yield not info_dict.get('is_live')
+            for feature in UNSUPPORTED_FEATURES:
+                yield not re.search(feature, manifest)
+            if not allow_unplayable_formats:
+                yield not cls._has_drm(manifest)
+        return all(check_results())
+
+--- Chunk 2 ---
+File: yt_dlp/__init__.py
+Lines: 960-1074
+Symbol: _real_main
+
+def _real_main(argv=None):
+    setproctitle('yt-dlp')
+
+    parser, opts, all_urls, ydl_opts = parse_options(argv)
+
+    # Dump user agent
+    if opts.dump_user_agent:
+        ua = traverse_obj(opts.headers, 'User-Agent', casesense=False, default=std_headers['User-Agent'])
+        write_string(f'{ua}\n', out=sys.stdout)
+        return
+
+    if print_extractor_information(opts, all_urls):
+        return
+
+    # We may need ffmpeg_location without having access to the YoutubeDL instance
+    # See https://github.com/yt-dlp/yt-dlp/issues/2191
+    if opts.ffmpeg_location:
+        FFmpegPostProcessor._ffmpeg_location.set(opts.ffmpeg_location)
+
+    with YoutubeDL(ydl_opts) as ydl:
+        pre_process = opts.update_self or opts.rm_cachedir
+        actual_use = all_urls or opts.load_info_filename
+
+        if opts.rm_cachedir:
+            ydl.cache.remove()
+
+        try:
+            updater = Updater(ydl, opts.update_self)
+            if opts.update_self and updater.update() and actual_use:
+                if updater.cmd:
+                    return updater.restart()
+                # This code is reachable only for zip variant in py < 3.10
+                # It makes sense to exit here, but the old behavior is to continue
+                ydl.report_warning('Restart yt-dlp to use the updated version')
+                # return 100, 'ERROR: The program must exit for the update to complete'
+        except Exception:
+            traceback.print_exc()
+            ydl._download_retcode = 100
+
+        if opts.list_impersonate_targets:
+
+            known_targets = [
+                # List of simplified targets we know are supported,
+                # to help users know what dependencies may be required.
+                (ImpersonateTarget('chrome'), 'curl_cffi'),
+                (ImpersonateTarget('edge'), 'curl_cffi'),
+                (ImpersonateTarget('safari'), 'curl_cffi'),
+            ]
+
+            available_targets = ydl._get_available_impersonate_targets()
+
+            def make_row(target, handler):
+                return [
+                    join_nonempty(target.client.title(), target.version, delim='-') or '-',
+                    join_nonempty((target.os or '').title(), target.os_version, delim='-') or '-',
+                    handler,
+                ]
+
+            rows = [make_row(target, handler) for target, handler in available_targets]
+
+            for known_target, known_handler in known_targets:
+                if not any(
+                    known_target in target and handler == known_handler
+                    for target, handler in available_targets
+                ):
+                    rows.append([
+                        ydl._format_out(text, ydl.Styles.SUPPRESS)
+                        for text in make_row(known_target, f'{known_handler} (not available)')
+                    ])
+
+            ydl.to_screen('[info] Available impersonate targets')
+            ydl.to_stdout(render_table(['Client', 'OS', 'Source'], rows, extra_gap=2, delim='-'))
+            return
+
+        if not actual_use:
+            if pre_process:
+                return ydl._download_retcode
+
+            args = sys.argv[1:] if argv is None else argv
+            ydl.warn_if_short_id(args)
+
+            # Show a useful error message and wait for keypress if not launched from shell on Windows
+            if not args and compat_os_name == 'nt' and getattr(sys, 'frozen', False):
+                import ctypes.wintypes
+                import msvcrt
+
+                kernel32 = ctypes.WinDLL('Kernel32')
+
+                buffer = (1 * ctypes.wintypes.DWORD)()
+                attached_processes = kernel32.GetConsoleProcessList(buffer, 1)
+                # If we only have a single process attached, then the executable was double clicked
+                # When using `pyinstaller` with `--onefile`, two processes get attached
+                is_onefile = hasattr(sys, '_MEIPASS') and os.path.basename(sys._MEIPASS).startswith('_MEI')
+                if attached_processes == 1 or is_onefile and attached_processes == 2:
+                    print(parser._generate_error_message(
+                        'Do not double-click the executable, instead call it from a command line.\n'
+                        'Please read the README for further information on how to use yt-dlp: '
+                        'https://github.com/yt-dlp/yt-dlp#readme'))
+                    msvcrt.getch()
+                    _exit(2)
+            parser.error(
+                'You must provide at least one URL.\n'
+                'Type yt-dlp --help to see a list of all options.')
+
+        parser.destroy()
+        try:
+            if opts.load_info_filename is not None:
+                if all_urls:
+                    ydl.report_warning('URLs are ignored due to --load-info-json')
+                return ydl.download_with_info_file(expand_path(opts.load_info_filename))
+            else:
+                return ydl.download(all_urls)
+        except DownloadCancelled:
+            ydl.to_screen('Aborting remaining downloads')
+            return 101
+
+--- Chunk 3 ---
+File: yt_dlp/extractor/bilibili.py
+Lines: 1181-1233
+Symbol: BilibiliSpaceVideoIE._real_extract
+
+    def _real_extract(self, url):
+        playlist_id, is_video_url = self._match_valid_url(url).group('id', 'video')
+        if not is_video_url:
+            self.to_screen('A channel URL was given. Only the channel\'s videos will be downloaded. '
+                           'To download audios, add a "/audio" to the URL')
+
+        def fetch_page(page_idx):
+            query = {
+                'keyword': '',
+                'mid': playlist_id,
+                'order': traverse_obj(parse_qs(url), ('order', 0)) or 'pubdate',
+                'order_avoided': 'true',
+                'platform': 'web',
+                'pn': page_idx + 1,
+                'ps': 30,
+                'tid': 0,
+                'web_location': 1550101,
+            }
+
+            try:
+                response = self._download_json(
+                    'https://api.bilibili.com/x/space/wbi/arc/search', playlist_id,
+                    query=self._sign_wbi(query, playlist_id),
+                    note=f'Downloading space page {page_idx}', headers={'Referer': url})
+            except ExtractorError as e:
+                if isinstance(e.cause, HTTPError) and e.cause.status == 412:
+                    raise ExtractorError(
+                        'Request is blocked by server (412), please add cookies, wait and try later.', expected=True)
+                raise
+            status_code = response['code']
+            if status_code == -401:
+                raise ExtractorError(
+                    'Request is blocked by server (401), please add cookies, wait and try later.', expected=True)
+            elif status_code == -352 and not self.is_logged_in:
+                self.raise_login_required('Request is rejected, you need to login to access playlist')
+            elif status_code != 0:
+                raise ExtractorError(f'Request failed ({status_code}): {response.get("message") or "Unknown error"}')
+            return response['data']
+
+        def get_metadata(page_data):
+            page_size = page_data['page']['ps']
+            entry_count = page_data['page']['count']
+            return {
+                'page_count': math.ceil(entry_count / page_size),
+                'page_size': page_size,
+            }
+
+        def get_entries(page_data):
+            for entry in traverse_obj(page_data, ('list', 'vlist')) or []:
+                yield self.url_result(f'https://www.bilibili.com/video/{entry["bvid"]}', BiliBiliIE, entry['bvid'])
+
+        metadata, paged_list = self._extract_playlist(fetch_page, get_metadata, get_entries)
+        return self.playlist_result(paged_list, playlist_id)
+
+--- Chunk 4 ---
+File: yt_dlp/downloader/hls.py
+Lines: 73-381
+Symbol: HlsFD.real_download
+
+    def real_download(self, filename, info_dict):
+        man_url = info_dict['url']
+        self.to_screen(f'[{self.FD_NAME}] Downloading m3u8 manifest')
+
+        urlh = self.ydl.urlopen(self._prepare_url(info_dict, man_url))
+        man_url = urlh.url
+        s = urlh.read().decode('utf-8', 'ignore')
+
+        can_download, message = self.can_download(s, info_dict, self.params.get('allow_unplayable_formats')), None
+        if can_download:
+            has_ffmpeg = FFmpegFD.available()
+            no_crypto = not Cryptodome.AES and '#EXT-X-KEY:METHOD=AES-128' in s
+            if no_crypto and has_ffmpeg:
+                can_download, message = False, 'The stream has AES-128 encryption and pycryptodomex is not available'
+            elif no_crypto:
+                message = ('The stream has AES-128 encryption and neither ffmpeg nor pycryptodomex are available; '
+                           'Decryption will be performed natively, but will be extremely slow')
+            elif info_dict.get('extractor_key') == 'Generic' and re.search(r'(?m)#EXT-X-MEDIA-SEQUENCE:(?!0$)', s):
+                install_ffmpeg = '' if has_ffmpeg else 'install ffmpeg and '
+                message = ('Live HLS streams are not supported by the native downloader. If this is a livestream, '
+                           f'please {install_ffmpeg}add "--downloader ffmpeg --hls-use-mpegts" to your command')
+        if not can_download:
+            if self._has_drm(s) and not self.params.get('allow_unplayable_formats'):
+                if info_dict.get('has_drm') and self.params.get('test'):
+                    self.to_screen(f'[{self.FD_NAME}] This format is DRM protected', skip_eol=True)
+                else:
+                    self.report_error(
+                        'This format is DRM protected; Try selecting another format with --format or '
+                        'add --check-formats to automatically fallback to the next best format', tb=False)
+                return False
+            message = message or 'Unsupported features have been detected'
+            fd = FFmpegFD(self.ydl, self.params)
+            self.report_warning(f'{message}; extraction will be delegated to {fd.get_basename()}')
+            return fd.real_download(filename, info_dict)
+        elif message:
+            self.report_warning(message)
+
+        is_webvtt = info_dict['ext'] == 'vtt'
+        if is_webvtt:
+            real_downloader = None  # Packing the fragments is not currently supported for external downloader
+        else:
+            real_downloader = get_suitable_downloader(
+                info_dict, self.params, None, protocol='m3u8_frag_urls', to_stdout=(filename == '-'))
+        if real_downloader and not real_downloader.supports_manifest(s):
+            real_downloader = None
+        if real_downloader:
+            self.to_screen(f'[{self.FD_NAME}] Fragment downloads will be delegated to {real_downloader.get_basename()}')
+
+        def is_ad_fragment_start(s):
+            return (s.startswith('#ANVATO-SEGMENT-INFO') and 'type=ad' in s
+                    or s.startswith('#UPLYNK-SEGMENT') and s.endswith(',ad'))
+
+        def is_ad_fragment_end(s):
+            return (s.startswith('#ANVATO-SEGMENT-INFO') and 'type=master' in s
+                    or s.startswith('#UPLYNK-SEGMENT') and s.endswith(',segment'))
+
+        fragments = []
+
+        media_frags = 0
+        ad_frags = 0
+        ad_frag_next = False
+        for line in s.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith('#'):
+                if is_ad_fragment_start(line):
+                    ad_frag_next = True
+                elif is_ad_fragment_end(line):
+                    ad_frag_next = False
+                continue
+            if ad_frag_next:
+                ad_frags += 1
+                continue
+            media_frags += 1
+
+        ctx = {
+            'filename': filename,
+            'total_frags': media_frags,
+            'ad_frags': ad_frags,
+        }
+
+        if real_downloader:
+            self._prepare_external_frag_download(ctx)
+        else:
+            self._prepare_and_start_frag_download(ctx, info_dict)
+
+        extra_state = ctx.setdefault('extra_state', {})
+
+        format_index = info_dict.get('format_index')
+        extra_segment_query = None
+        if extra_param_to_segment_url := info_dict.get('extra_param_to_segment_url'):
+            extra_segment_query = urllib.parse.parse_qs(extra_param_to_segment_url)
+        extra_key_query = None
+        if extra_param_to_key_url := info_dict.get('extra_param_to_key_url'):
+            extra_key_query = urllib.parse.parse_qs(extra_param_to_key_url)
+        i = 0
+        media_sequence = 0
+        decrypt_info = {'METHOD': 'NONE'}
+        external_aes_key = traverse_obj(info_dict, ('hls_aes', 'key'))
+        if external_aes_key:
+            external_aes_key = binascii.unhexlify(remove_start(external_aes_key, '0x'))
+            assert len(external_aes_key) in (16, 24, 32), 'Invalid length for HLS AES-128 key'
+        external_aes_iv = traverse_obj(info_dict, ('hls_aes', 'iv'))
+        if external_aes_iv:
+            external_aes_iv = binascii.unhexlify(remove_start(external_aes_iv, '0x').zfill(32))
+        byte_range = {}
+        discontinuity_count = 0
+        frag_index = 0
+        ad_frag_next = False
+        for line in s.splitlines():
+            line = line.strip()
+            if line:
+                if not line.startswith('#'):
+                    if format_index and discontinuity_count != format_index:
+                        continue
+                    if ad_frag_next:
+                        continue
+                    frag_index += 1
+                    if frag_index <= ctx['fragment_index']:
+                        continue
+                    frag_url = urljoin(man_url, line)
+                    if extra_segment_query:
+                        frag_url = update_url_query(frag_url, extra_segment_query)
+
+                    fragments.append({
+                        'frag_index': frag_index,
+                        'url': frag_url,
+                        'decrypt_info': decrypt_info,
+                        'byte_range': byte_range,
+                        'media_sequence': media_sequence,
+                    })
+                    media_sequence += 1
+
+                elif line.startswith('#EXT-X-MAP'):
+                    if format_index and discontinuity_count != format_index:
+                        continue
+                    if frag_index > 0:
+                        self.report_error(
+                            'Initialization fragment found after media fragments, unable to download')
+                        return False
+                    frag_index += 1
+                    map_info = parse_m3u8_attributes(line[11:])
+                    frag_url = urljoin(man_url, map_info.get('URI'))
+                    if extra_segment_query:
+                        frag_url = update_url_query(frag_url, extra_segment_query)
+
+                    if map_info.get('BYTERANGE'):
+                        splitted_byte_range = map_info.get('BYTERANGE').split('@')
+                        sub_range_start = int(splitted_byte_range[1]) if len(splitted_byte_range) == 2 else byte_range['end']
+                        byte_range = {
+                            'start': sub_range_start,
+                            'end': sub_range_start + int(splitted_byte_range[0]),
+                        }
+
+                    fragments.append({
+                        'frag_index': frag_index,
+                        'url': frag_url,
+                        'decrypt_info': decrypt_info,
+                        'byte_range': byte_range,
+                        'media_sequence': media_sequence,
+                    })
+                    media_sequence += 1
+
+                elif line.startswith('#EXT-X-KEY'):
+                    decrypt_url = decrypt_info.get('URI')
+                    decrypt_info = parse_m3u8_attributes(line[11:])
+                    if decrypt_info['METHOD'] == 'AES-128':
+                        if external_aes_iv:
+                            decrypt_info['IV'] = external_aes_iv
+                        elif 'IV' in decrypt_info:
+                            decrypt_info['IV'] = binascii.unhexlify(decrypt_info['IV'][2:].zfill(32))
+                        if external_aes_key:
+                            decrypt_info['KEY'] = external_aes_key
+                        else:
+                            decrypt_info['URI'] = urljoin(man_url, decrypt_info['URI'])
+                            if extra_key_query or extra_segment_query:
+                                # Fall back to extra_segment_query to key for backwards compat
+                                decrypt_info['URI'] = update_url_query(
+                                    decrypt_info['URI'], extra_key_query or extra_segment_query)
+                            if decrypt_url != decrypt_info['URI']:
+                                decrypt_info['KEY'] = None
+
+                elif line.startswith('#EXT-X-MEDIA-SEQUENCE'):
+                    media_sequence = int(line[22:])
+                elif line.startswith('#EXT-X-BYTERANGE'):
+                    splitted_byte_range = line[17:].split('@')
+                    sub_range_start = int(splitted_byte_range[1]) if len(splitted_byte_range) == 2 else byte_range['end']
+                    byte_range = {
+                        'start': sub_range_start,
+                        'end': sub_range_start + int(splitted_byte_range[0]),
+                    }
+                elif is_ad_fragment_start(line):
+                    ad_frag_next = True
+                elif is_ad_fragment_end(line):
+                    ad_frag_next = False
+                elif line.startswith('#EXT-X-DISCONTINUITY'):
+                    discontinuity_count += 1
+                i += 1
+
+        # We only download the first fragment during the test
+        if self.params.get('test', False):
+            fragments = [fragments[0] if fragments else None]
+
+        if real_downloader:
+            info_dict['fragments'] = fragments
+            fd = real_downloader(self.ydl, self.params)
+            # TODO: Make progress updates work without hooking twice
+            # for ph in self._progress_hooks:
+            #     fd.add_progress_hook(ph)
+            return fd.real_download(filename, info_dict)
+
+        if is_webvtt:
+            def pack_fragment(frag_content, frag_index):
+                output = io.StringIO()
+                adjust = 0
+                overflow = False
+                mpegts_last = None
+                for block in webvtt.parse_fragment(frag_content):
+                    if isinstance(block, webvtt.CueBlock):
+                        extra_state['webvtt_mpegts_last'] = mpegts_last
+                        if overflow:
+                            extra_state['webvtt_mpegts_adjust'] += 1
+                            overflow = False
+                        block.start += adjust
+                        block.end += adjust
+
+                        dedup_window = extra_state.setdefault('webvtt_dedup_window', [])
+
+                        ready = []
+
+                        i = 0
+                        is_new = True
+                        while i < len(dedup_window):
+                            wcue = dedup_window[i]
+                            wblock = webvtt.CueBlock.from_json(wcue)
+                            i += 1
+                            if wblock.hinges(block):
+                                wcue['end'] = block.end
+                                is_new = False
+                                continue
+                            if wblock == block:
+                                is_new = False
+                                continue
+                            if wblock.end > block.start:
+                                continue
+                            ready.append(wblock)
+                            i -= 1
+                            del dedup_window[i]
+
+                        if is_new:
+                            dedup_window.append(block.as_json)
+                        for block in ready:
+                            block.write_into(output)
+
+                        # we only emit cues once they fall out of the duplicate window
+                        continue
+                    elif isinstance(block, webvtt.Magic):
+                        # take care of MPEG PES timestamp overflow
+                        if block.mpegts is None:
+                            block.mpegts = 0
+                        extra_state.setdefault('webvtt_mpegts_adjust', 0)
+                        block.mpegts += extra_state['webvtt_mpegts_adjust'] << 33
+                        if block.mpegts < extra_state.get('webvtt_mpegts_last', 0):
+                            overflow = True
+                            block.mpegts += 1 << 33
+                        mpegts_last = block.mpegts
+
+                        if frag_index == 1:
+                            extra_state['webvtt_mpegts'] = block.mpegts or 0
+                            extra_state['webvtt_local'] = block.local or 0
+                            # XXX: block.local = block.mpegts = None ?
+                        else:
+                            if block.mpegts is not None and block.local is not None:
+                                adjust = (
+                                    (block.mpegts - extra_state.get('webvtt_mpegts', 0))
+                                    - (block.local - extra_state.get('webvtt_local', 0))
+                                )
+                            continue
+                    elif isinstance(block, webvtt.HeaderBlock):
+                        if frag_index != 1:
+                            # XXX: this should probably be silent as well
+                            # or verify that all segments contain the same data
+                            self.report_warning(bug_reports_message(
+                                f'Discarding a {type(block).__name__} block found in the middle of the stream; '
+                                'if the subtitles display incorrectly,'))
+                            continue
+                    block.write_into(output)
+
+                return output.getvalue().encode()
+
+            def fin_fragments():
+                dedup_window = extra_state.get('webvtt_dedup_window')
+                if not dedup_window:
+                    return b''
+
+                output = io.StringIO()
+                for cue in dedup_window:
+                    webvtt.CueBlock.from_json(cue).write_into(output)
+
+                return output.getvalue().encode()
+
+            if len(fragments) == 1:
+                self.download_and_append_fragments(ctx, fragments, info_dict)
+            else:
+                self.download_and_append_fragments(
+                    ctx, fragments, info_dict, pack_func=pack_fragment, finish_func=fin_fragments)
+        else:
+            return self.download_and_append_fragments(ctx, fragments, info_dict)
+
+--- Chunk 5 ---
+File: yt_dlp/downloader/external.py
+Lines: 478-643
+Symbol: FFmpegFD._call_downloader
+
+    def _call_downloader(self, tmpfilename, info_dict):
+        ffpp = FFmpegPostProcessor(downloader=self)
+        if not ffpp.available:
+            self.report_error('m3u8 download detected but ffmpeg could not be found. Please install')
+            return False
+        ffpp.check_version()
+
+        args = [ffpp.executable, '-y']
+
+        for log_level in ('quiet', 'verbose'):
+            if self.params.get(log_level, False):
+                args += ['-loglevel', log_level]
+                break
+        if not self.params.get('verbose'):
+            args += ['-hide_banner']
+
+        args += traverse_obj(info_dict, ('downloader_options', 'ffmpeg_args', ...))
+
+        # These exists only for compatibility. Extractors should use
+        # info_dict['downloader_options']['ffmpeg_args'] instead
+        args += info_dict.get('_ffmpeg_args') or []
+        seekable = info_dict.get('_seekable')
+        if seekable is not None:
+            # setting -seekable prevents ffmpeg from guessing if the server
+            # supports seeking(by adding the header `Range: bytes=0-`), which
+            # can cause problems in some cases
+            # https://github.com/ytdl-org/youtube-dl/issues/11800#issuecomment-275037127
+            # http://trac.ffmpeg.org/ticket/6125#comment:10
+            args += ['-seekable', '1' if seekable else '0']
+
+        env = None
+        proxy = self.params.get('proxy')
+        if proxy:
+            if not re.match(r'^[\da-zA-Z]+://', proxy):
+                proxy = f'http://{proxy}'
+
+            if proxy.startswith('socks'):
+                self.report_warning(
+                    f'{self.get_basename()} does not support SOCKS proxies. Downloading is likely to fail. '
+                    'Consider adding --hls-prefer-native to your command.')
+
+            # Since December 2015 ffmpeg supports -http_proxy option (see
+            # http://git.videolan.org/?p=ffmpeg.git;a=commit;h=b4eb1f29ebddd60c41a2eb39f5af701e38e0d3fd)
+            # We could switch to the following code if we are able to detect version properly
+            # args += ['-http_proxy', proxy]
+            env = os.environ.copy()
+            env['HTTP_PROXY'] = proxy
+            env['http_proxy'] = proxy
+
+        protocol = info_dict.get('protocol')
+
+        if protocol == 'rtmp':
+            player_url = info_dict.get('player_url')
+            page_url = info_dict.get('page_url')
+            app = info_dict.get('app')
+            play_path = info_dict.get('play_path')
+            tc_url = info_dict.get('tc_url')
+            flash_version = info_dict.get('flash_version')
+            live = info_dict.get('rtmp_live', False)
+            conn = info_dict.get('rtmp_conn')
+            if player_url is not None:
+                args += ['-rtmp_swfverify', player_url]
+            if page_url is not None:
+                args += ['-rtmp_pageurl', page_url]
+            if app is not None:
+                args += ['-rtmp_app', app]
+            if play_path is not None:
+                args += ['-rtmp_playpath', play_path]
+            if tc_url is not None:
+                args += ['-rtmp_tcurl', tc_url]
+            if flash_version is not None:
+                args += ['-rtmp_flashver', flash_version]
+            if live:
+                args += ['-rtmp_live', 'live']
+            if isinstance(conn, list):
+                for entry in conn:
+                    args += ['-rtmp_conn', entry]
+            elif isinstance(conn, str):
+                args += ['-rtmp_conn', conn]
+
+        start_time, end_time = info_dict.get('section_start') or 0, info_dict.get('section_end')
+
+        selected_formats = info_dict.get('requested_formats') or [info_dict]
+        for i, fmt in enumerate(selected_formats):
+            is_http = re.match(r'^https?://', fmt['url'])
+            cookies = self.ydl.cookiejar.get_cookies_for_url(fmt['url']) if is_http else []
+            if cookies:
+                args.extend(['-cookies', ''.join(
+                    f'{cookie.name}={cookie.value}; path={cookie.path}; domain={cookie.domain};\r\n'
+                    for cookie in cookies)])
+            if fmt.get('http_headers') and is_http:
+                # Trailing \r\n after each HTTP header is important to prevent warning from ffmpeg/avconv:
+                # [http @ 00000000003d2fa0] No trailing CRLF found in HTTP header.
+                args.extend(['-headers', ''.join(f'{key}: {val}\r\n' for key, val in fmt['http_headers'].items())])
+
+            if start_time:
+                args += ['-ss', str(start_time)]
+            if end_time:
+                args += ['-t', str(end_time - start_time)]
+
+            args += [*self._configuration_args((f'_i{i + 1}', '_i')), '-i', fmt['url']]
+
+        if not (start_time or end_time) or not self.params.get('force_keyframes_at_cuts'):
+            args += ['-c', 'copy']
+
+        if info_dict.get('requested_formats') or protocol == 'http_dash_segments':
+            for i, fmt in enumerate(selected_formats):
+                stream_number = fmt.get('manifest_stream_number', 0)
+                args.extend(['-map', f'{i}:{stream_number}'])
+
+        if self.params.get('test', False):
+            args += ['-fs', str(self._TEST_FILE_SIZE)]
+
+        ext = info_dict['ext']
+        if protocol in ('m3u8', 'm3u8_native'):
+            use_mpegts = (tmpfilename == '-') or self.params.get('hls_use_mpegts')
+            if use_mpegts is None:
+                use_mpegts = info_dict.get('is_live')
+            if use_mpegts:
+                args += ['-f', 'mpegts']
+            else:
+                args += ['-f', 'mp4']
+                if (ffpp.basename == 'ffmpeg' and ffpp._features.get('needs_adtstoasc')) and (not info_dict.get('acodec') or info_dict['acodec'].split('.')[0] in ('aac', 'mp4a')):
+                    args += ['-bsf:a', 'aac_adtstoasc']
+        elif protocol == 'rtmp':
+            args += ['-f', 'flv']
+        elif ext == 'mp4' and tmpfilename == '-':
+            args += ['-f', 'mpegts']
+        elif ext == 'unknown_video':
+            ext = determine_ext(remove_end(tmpfilename, '.part'))
+            if ext == 'unknown_video':
+                self.report_warning(
+                    'The video format is unknown and cannot be downloaded by ffmpeg. '
+                    'Explicitly set the extension in the filename to attempt download in that format')
+            else:
+                self.report_warning(f'The video format is unknown. Trying to download as {ext} according to the filename')
+                args += ['-f', EXT_TO_OUT_FORMATS.get(ext, ext)]
+        else:
+            args += ['-f', EXT_TO_OUT_FORMATS.get(ext, ext)]
+
+        args += traverse_obj(info_dict, ('downloader_options', 'ffmpeg_args_out', ...))
+
+        args += self._configuration_args(('_o1', '_o', ''))
+
+        args = [encodeArgument(opt) for opt in args]
+        args.append(encodeFilename(ffpp._ffmpeg_filename_argument(tmpfilename), True))
+        self._debug_cmd(args)
+
+        piped = any(fmt['url'] in ('-', 'pipe:') for fmt in selected_formats)
+        with Popen(args, stdin=subprocess.PIPE, env=env) as proc:
+            if piped:
+                self.on_process_started(proc, proc.stdin)
+            try:
+                retval = proc.wait()
+            except BaseException as e:
+                # subprocces.run would send the SIGKILL signal to ffmpeg and the
+                # mp4 file couldn't be played, but if we ask ffmpeg to quit it
+                # produces a file that is playable (this is mostly useful for live
+                # streams). Note that Windows is not affected and produces playable
+                # files (see https://github.com/ytdl-org/youtube-dl/issues/8300).
+                if isinstance(e, KeyboardInterrupt) and sys.platform != 'win32' and not piped:
+                    proc.communicate_or_kill(b'q')
+                else:
+                    proc.kill(timeout=None)
+                raise
+            return retval
+
+--- Chunk 6 ---
+File: yt_dlp/extractor/redbee.py
+Lines: 271-380
+Symbol: RTBFIE._real_extract
+
+    def _real_extract(self, url):
+        live, media_id = self._match_valid_url(url).groups()
+        embed_page = self._download_webpage(
+            'https://www.rtbf.be/auvio/embed/' + ('direct' if live else 'media'),
+            media_id, query={'id': media_id})
+
+        media_data = self._html_search_regex(r'data-media="([^"]+)"', embed_page, 'media data', fatal=False)
+        if not media_data:
+            if re.search(r'<div[^>]+id="js-error-expired"[^>]+class="(?![^"]*hidden)', embed_page):
+                raise ExtractorError('Livestream has ended.', expected=True)
+            if re.search(r'<div[^>]+id="js-sso-connect"[^>]+class="(?![^"]*hidden)', embed_page):
+                self.raise_login_required()
+
+            raise ExtractorError('Could not find media data')
+
+        data = self._parse_json(media_data, media_id)
+
+        error = data.get('error')
+        if error:
+            raise ExtractorError(f'{self.IE_NAME} said: {error}', expected=True)
+
+        provider = data.get('provider')
+        if provider in self._PROVIDERS:
+            return self.url_result(data['url'], self._PROVIDERS[provider])
+
+        title = traverse_obj(data, 'subtitle', 'title')
+        is_live = data.get('isLive')
+        height_re = r'-(\d+)p\.'
+        formats, subtitles = [], {}
+
+        # The old api still returns m3u8 and mpd manifest for livestreams, but these are 'fake'
+        # since all they contain is a 20s video that is completely unrelated.
+        # https://github.com/yt-dlp/yt-dlp/issues/4656#issuecomment-1214461092
+        m3u8_url = None if data.get('isLive') else traverse_obj(data, 'urlHlsAes128', 'urlHls')
+        if m3u8_url:
+            fmts, subs = self._extract_m3u8_formats_and_subtitles(
+                m3u8_url, media_id, 'mp4', m3u8_id='hls', fatal=False)
+            formats.extend(fmts)
+            self._merge_subtitles(subs, target=subtitles)
+
+        fix_url = lambda x: x.replace('//rtbf-vod.', '//rtbf.') if '/geo/drm/' in x else x
+        http_url = data.get('url')
+        if formats and http_url and re.search(height_re, http_url):
+            http_url = fix_url(http_url)
+            for m3u8_f in formats[:]:
+                height = m3u8_f.get('height')
+                if not height:
+                    continue
+                f = m3u8_f.copy()
+                del f['protocol']
+                f.update({
+                    'format_id': m3u8_f['format_id'].replace('hls-', 'http-'),
+                    'url': re.sub(height_re, '-%dp.' % height, http_url),
+                })
+                formats.append(f)
+        else:
+            sources = data.get('sources') or {}
+            for key, format_id in self._QUALITIES:
+                format_url = sources.get(key)
+                if not format_url:
+                    continue
+                height = int_or_none(self._search_regex(
+                    height_re, format_url, 'height', default=None))
+                formats.append({
+                    'format_id': format_id,
+                    'url': fix_url(format_url),
+                    'height': height,
+                })
+
+        mpd_url = None if data.get('isLive') else data.get('urlDash')
+        if mpd_url and (self.get_param('allow_unplayable_formats') or not data.get('drm')):
+            fmts, subs = self._extract_mpd_formats_and_subtitles(
+                mpd_url, media_id, mpd_id='dash', fatal=False)
+            formats.extend(fmts)
+            self._merge_subtitles(subs, target=subtitles)
+
+        audio_url = data.get('urlAudio')
+        if audio_url:
+            formats.append({
+                'format_id': 'audio',
+                'url': audio_url,
+                'vcodec': 'none',
+            })
+
+        for track in (data.get('tracks') or {}).values():
+            sub_url = track.get('url')
+            if not sub_url:
+                continue
+            subtitles.setdefault(track.get('lang') or 'fr', []).append({
+                'url': sub_url,
+            })
+
+        if not formats:
+            fmts, subs = self._get_formats_and_subtitles(url, f'live_{media_id}' if is_live else media_id)
+            formats.extend(fmts)
+            self._merge_subtitles(subs, target=subtitles)
+
+        return {
+            'id': media_id,
+            'formats': formats,
+            'title': title,
+            'description': strip_or_none(data.get('description')),
+            'thumbnail': data.get('thumbnail'),
+            'duration': float_or_none(data.get('realDuration')),
+            'timestamp': int_or_none(data.get('liveFrom')),
+            'series': data.get('programLabel'),
+            'subtitles': subtitles,
+            'is_live': is_live,
+            '_format_sort_fields': ('res', 'proto'),
+        }
+
+--- Chunk 7 ---
+File: yt_dlp/extractor/francetv.py
+Lines: 83-240
+Symbol: FranceTVIE._extract_video
+
+    def _extract_video(self, video_id, hostname=None):
+        is_live = None
+        videos = []
+        drm_formats = False
+        title = None
+        subtitle = None
+        episode_number = None
+        season_number = None
+        image = None
+        duration = None
+        timestamp = None
+        spritesheets = None
+
+        # desktop+chrome returns dash; mobile+safari returns hls
+        for device_type, browser in [('desktop', 'chrome'), ('mobile', 'safari')]:
+            dinfo = self._download_json(
+                f'https://k7.ftven.fr/videos/{video_id}', video_id,
+                f'Downloading {device_type} {browser} video JSON', query=filter_dict({
+                    'device_type': device_type,
+                    'browser': browser,
+                    'domain': hostname,
+                }), fatal=False, expected_status=422)  # 422 json gives detailed error code/message
+
+            if not dinfo:
+                continue
+
+            if video := traverse_obj(dinfo, ('video', {dict})):
+                videos.append(video)
+                if duration is None:
+                    duration = video.get('duration')
+                if is_live is None:
+                    is_live = video.get('is_live')
+                if spritesheets is None:
+                    spritesheets = video.get('spritesheets')
+            elif code := traverse_obj(dinfo, ('code', {int})):
+                if code == 2009:
+                    self.raise_geo_restricted(countries=self._GEO_COUNTRIES)
+                elif code in (2015, 2017):
+                    # 2015: L'accès à cette vidéo est impossible. (DRM-only)
+                    # 2017: Cette vidéo n'est pas disponible depuis le site web mobile (b/c DRM)
+                    drm_formats = True
+                    continue
+                self.report_warning(
+                    f'{self.IE_NAME} said: {code} "{clean_html(dinfo.get("message"))}"')
+                continue
+
+            if meta := traverse_obj(dinfo, ('meta', {dict})):
+                if title is None:
+                    title = meta.get('title')
+                # meta['pre_title'] contains season and episode number for series in format "S<ID> E<ID>"
+                season_number, episode_number = self._search_regex(
+                    r'S(\d+)\s*E(\d+)', meta.get('pre_title'), 'episode info', group=(1, 2), default=(None, None))
+                if subtitle is None:
+                    subtitle = meta.get('additional_title')
+                if image is None:
+                    image = meta.get('image_url')
+                if timestamp is None:
+                    timestamp = parse_iso8601(meta.get('broadcasted_at'))
+
+        if not videos and drm_formats:
+            self.report_drm(video_id)
+
+        formats, subtitles, video_url = [], {}, None
+        for video in traverse_obj(videos, lambda _, v: url_or_none(v['url'])):
+            video_url = video['url']
+            format_id = video.get('format')
+
+            if token_url := traverse_obj(video, ('token', (None, 'akamai'), {url_or_none}, any)):
+                tokenized_url = traverse_obj(self._download_json(
+                    token_url, video_id, f'Downloading signed {format_id} manifest URL',
+                    fatal=False, query={
+                        'format': 'json',
+                        'url': video_url,
+                    }), ('url', {url_or_none}))
+                if tokenized_url:
+                    video_url = tokenized_url
+
+            ext = determine_ext(video_url)
+            if ext == 'f4m':
+                formats.extend(self._extract_f4m_formats(
+                    video_url, video_id, f4m_id=format_id or ext, fatal=False))
+            elif ext == 'm3u8':
+                format_id = format_id or 'hls'
+                fmts, subs = self._extract_m3u8_formats_and_subtitles(
+                    video_url, video_id, 'mp4', m3u8_id=format_id, fatal=False)
+                for f in traverse_obj(fmts, lambda _, v: v['vcodec'] == 'none' and v.get('tbr') is None):
+                    if mobj := re.match(rf'{format_id}-[Aa]udio-\w+-(?P<bitrate>\d+)', f['format_id']):
+                        f.update({
+                            'tbr': int_or_none(mobj.group('bitrate')),
+                            'acodec': 'mp4a',
+                        })
+                formats.extend(fmts)
+                self._merge_subtitles(subs, target=subtitles)
+            elif ext == 'mpd':
+                fmts, subs = self._extract_mpd_formats_and_subtitles(
+                    video_url, video_id, mpd_id=format_id or 'dash', fatal=False)
+                formats.extend(fmts)
+                self._merge_subtitles(subs, target=subtitles)
+            elif video_url.startswith('rtmp'):
+                formats.append({
+                    'url': video_url,
+                    'format_id': join_nonempty('rtmp', format_id),
+                    'ext': 'flv',
+                })
+            else:
+                if self._is_valid_url(video_url, video_id, format_id):
+                    formats.append({
+                        'url': video_url,
+                        'format_id': format_id,
+                    })
+
+            # XXX: what is video['captions']?
+
+        if not formats and video_url:
+            urlh = self._request_webpage(
+                HEADRequest(video_url), video_id, 'Checking for geo-restriction',
+                fatal=False, expected_status=403)
+            if urlh and urlh.headers.get('x-errortype') == 'geo':
+                self.raise_geo_restricted(countries=self._GEO_COUNTRIES, metadata_available=True)
+
+        for f in formats:
+            if f.get('acodec') != 'none' and f.get('language') in ('qtz', 'qad'):
+                f['language_preference'] = -10
+                f['format_note'] = 'audio description{}'.format(format_field(f, 'format_note', ', %s'))
+
+        if spritesheets:
+            formats.append({
+                'format_id': 'spritesheets',
+                'format_note': 'storyboard',
+                'acodec': 'none',
+                'vcodec': 'none',
+                'ext': 'mhtml',
+                'protocol': 'mhtml',
+                'url': 'about:invalid',
+                'fragments': [{
+                    'url': sheet,
+                    # XXX: not entirely accurate; each spritesheet seems to be
+                    # a 10x10 grid of thumbnails corresponding to approximately
+                    # 2 seconds of the video; the last spritesheet may be shorter
+                    'duration': 200,
+                } for sheet in traverse_obj(spritesheets, (..., {url_or_none}))],
+            })
+
+        return {
+            'id': video_id,
+            'title': join_nonempty(title, subtitle, delim=' - ').strip(),
+            'thumbnail': image,
+            'duration': duration,
+            'timestamp': timestamp,
+            'is_live': is_live,
+            'formats': formats,
+            'subtitles': subtitles,
+            'episode': subtitle if episode_number else None,
+            'series': title if episode_number else None,
+            'episode_number': int_or_none(episode_number),
+            'season_number': int_or_none(season_number),
+            '_format_sort_fields': ('res', 'tbr', 'proto'),  # prioritize m3u8 over dash
+        }
+
+--- Chunk 8 ---
+File: yt_dlp/extractor/common.py
+Lines: 987-1013
+Symbol: InfoExtractor.__check_blocked
+
+    def __check_blocked(self, content):
+        first_block = content[:512]
+        if ('<title>Access to this site is blocked</title>' in content
+                and 'Websense' in first_block):
+            msg = 'Access to this webpage has been blocked by Websense filtering software in your network.'
+            blocked_iframe = self._html_search_regex(
+                r'<iframe src="([^"]+)"', content,
+                'Websense information URL', default=None)
+            if blocked_iframe:
+                msg += f' Visit {blocked_iframe} for more details'
+            raise ExtractorError(msg, expected=True)
+        if '<title>The URL you requested has been blocked</title>' in first_block:
+            msg = (
+                'Access to this webpage has been blocked by Indian censorship. '
+                'Use a VPN or proxy server (with --proxy) to route around it.')
+            block_msg = self._html_search_regex(
+                r'</h1><p>(.*?)</p>',
+                content, 'block message', default=None)
+            if block_msg:
+                msg += ' (Message: "{}")'.format(block_msg.replace('\n', ' '))
+            raise ExtractorError(msg, expected=True)
+        if ('<title>TTK :: Доступ к ресурсу ограничен</title>' in content
+                and 'blocklist.rkn.gov.ru' in content):
+            raise ExtractorError(
+                'Access to this webpage has been blocked by decision of the Russian government. '
+                'Visit http://blocklist.rkn.gov.ru/ for a block reason.',
+                expected=True)
+
+--- Chunk 9 ---
+File: bundle/py2exe.py
+Lines: 18-55
+Symbol: main
+
+def main():
+    warnings.warn(
+        'py2exe builds do not support pycryptodomex and needs VC++14 to run. '
+        'It is recommended to run "pyinst.py" to build using pyinstaller instead')
+
+    freeze(
+        console=[{
+            'script': './yt_dlp/__main__.py',
+            'dest_base': 'yt-dlp',
+            'icon_resources': [(1, 'devscripts/logo.ico')],
+        }],
+        version_info={
+            'version': VERSION,
+            'description': 'A feature-rich command-line audio/video downloader',
+            'comments': 'Official repository: <https://github.com/yt-dlp/yt-dlp>',
+            'product_name': 'yt-dlp',
+            'product_version': VERSION,
+        },
+        options={
+            'bundle_files': 0,
+            'compressed': 1,
+            'optimize': 2,
+            'dist_dir': './dist',
+            'excludes': [
+                # py2exe cannot import Crypto
+                'Crypto',
+                'Cryptodome',
+                # requests >=2.32.0 breaks py2exe builds due to certifi dependency
+                'requests',
+                'urllib3',
+            ],
+            'dll_excludes': ['w9xpopen.exe', 'crypt32.dll'],
+            # Modules that are only imported dynamically must be added here
+            'includes': ['yt_dlp.compat._legacy', 'yt_dlp.compat._deprecated',
+                         'yt_dlp.utils._legacy', 'yt_dlp.utils._deprecated'],
+        },
+        zipfile=None,
+    )
+
+--- Chunk 10 ---
+File: yt_dlp/extractor/common.py
+Lines: 2059-2281
+Symbol: InfoExtractor._parse_m3u8_formats_and_subtitles
+
+    def _parse_m3u8_formats_and_subtitles(
+            self, m3u8_doc, m3u8_url=None, ext=None, entry_protocol='m3u8_native',
+            preference=None, quality=None, m3u8_id=None, live=False, note=None,
+            errnote=None, fatal=True, data=None, headers={}, query={},
+            video_id=None):
+        formats, subtitles = [], {}
+        has_drm = HlsFD._has_drm(m3u8_doc)
+
+        def format_url(url):
+            return url if re.match(r'^https?://', url) else urllib.parse.urljoin(m3u8_url, url)
+
+        if self.get_param('hls_split_discontinuity', False):
+            def _extract_m3u8_playlist_indices(manifest_url=None, m3u8_doc=None):
+                if not m3u8_doc:
+                    if not manifest_url:
+                        return []
+                    m3u8_doc = self._download_webpage(
+                        manifest_url, video_id, fatal=fatal, data=data, headers=headers,
+                        note=False, errnote='Failed to download m3u8 playlist information')
+                    if m3u8_doc is False:
+                        return []
+                return range(1 + sum(line.startswith('#EXT-X-DISCONTINUITY') for line in m3u8_doc.splitlines()))
+
+        else:
+            def _extract_m3u8_playlist_indices(*args, **kwargs):
+                return [None]
+
+        # References:
+        # 1. https://tools.ietf.org/html/draft-pantos-http-live-streaming-21
+        # 2. https://github.com/ytdl-org/youtube-dl/issues/12211
+        # 3. https://github.com/ytdl-org/youtube-dl/issues/18923
+
+        # We should try extracting formats only from master playlists [1, 4.3.4],
+        # i.e. playlists that describe available qualities. On the other hand
+        # media playlists [1, 4.3.3] should be returned as is since they contain
+        # just the media without qualities renditions.
+        # Fortunately, master playlist can be easily distinguished from media
+        # playlist based on particular tags availability. As of [1, 4.3.3, 4.3.4]
+        # master playlist tags MUST NOT appear in a media playlist and vice versa.
+        # As of [1, 4.3.3.1] #EXT-X-TARGETDURATION tag is REQUIRED for every
+        # media playlist and MUST NOT appear in master playlist thus we can
+        # clearly detect media playlist with this criterion.
+
+        if '#EXT-X-TARGETDURATION' in m3u8_doc:  # media playlist, return as is
+            formats = [{
+                'format_id': join_nonempty(m3u8_id, idx),
+                'format_index': idx,
+                'url': m3u8_url or encode_data_uri(m3u8_doc.encode(), 'application/x-mpegurl'),
+                'ext': ext,
+                'protocol': entry_protocol,
+                'preference': preference,
+                'quality': quality,
+                'has_drm': has_drm,
+            } for idx in _extract_m3u8_playlist_indices(m3u8_doc=m3u8_doc)]
+
+            return formats, subtitles
+
+        groups = {}
+        last_stream_inf = {}
+
+        def extract_media(x_media_line):
+            media = parse_m3u8_attributes(x_media_line)
+            # As per [1, 4.3.4.1] TYPE, GROUP-ID and NAME are REQUIRED
+            media_type, group_id, name = media.get('TYPE'), media.get('GROUP-ID'), media.get('NAME')
+            if not (media_type and group_id and name):
+                return
+            groups.setdefault(group_id, []).append(media)
+            # <https://tools.ietf.org/html/rfc8216#section-4.3.4.1>
+            if media_type == 'SUBTITLES':
+                # According to RFC 8216 §4.3.4.2.1, URI is REQUIRED in the
+                # EXT-X-MEDIA tag if the media type is SUBTITLES.
+                # However, lack of URI has been spotted in the wild.
+                # e.g. NebulaIE; see https://github.com/yt-dlp/yt-dlp/issues/339
+                if not media.get('URI'):
+                    return
+                url = format_url(media['URI'])
+                sub_info = {
+                    'url': url,
+                    'ext': determine_ext(url),
+                }
+                if sub_info['ext'] == 'm3u8':
+                    # Per RFC 8216 §3.1, the only possible subtitle format m3u8
+                    # files may contain is WebVTT:
+                    # <https://tools.ietf.org/html/rfc8216#section-3.1>
+                    sub_info['ext'] = 'vtt'
+                    sub_info['protocol'] = 'm3u8_native'
+                lang = media.get('LANGUAGE') or 'und'
+                subtitles.setdefault(lang, []).append(sub_info)
+            if media_type not in ('VIDEO', 'AUDIO'):
+                return
+            media_url = media.get('URI')
+            if media_url:
+                manifest_url = format_url(media_url)
+                formats.extend({
+                    'format_id': join_nonempty(m3u8_id, group_id, name, idx),
+                    'format_note': name,
+                    'format_index': idx,
+                    'url': manifest_url,
+                    'manifest_url': m3u8_url,
+                    'language': media.get('LANGUAGE'),
+                    'ext': ext,
+                    'protocol': entry_protocol,
+                    'preference': preference,
+                    'quality': quality,
+                    'has_drm': has_drm,
+                    'vcodec': 'none' if media_type == 'AUDIO' else None,
+                } for idx in _extract_m3u8_playlist_indices(manifest_url))
+
+        def build_stream_name():
+            # Despite specification does not mention NAME attribute for
+            # EXT-X-STREAM-INF tag it still sometimes may be present (see [1]
+            # or vidio test in TestInfoExtractor.test_parse_m3u8_formats)
+            # 1. http://www.vidio.com/watch/165683-dj_ambred-booyah-live-2015
+            stream_name = last_stream_inf.get('NAME')
+            if stream_name:
+                return stream_name
+            # If there is no NAME in EXT-X-STREAM-INF it will be obtained
+            # from corresponding rendition group
+            stream_group_id = last_stream_inf.get('VIDEO')
+            if not stream_group_id:
+                return
+            stream_group = groups.get(stream_group_id)
+            if not stream_group:
+                return stream_group_id
+            rendition = stream_group[0]
+            return rendition.get('NAME') or stream_group_id
+
+        # parse EXT-X-MEDIA tags before EXT-X-STREAM-INF in order to have the
+        # chance to detect video only formats when EXT-X-STREAM-INF tags
+        # precede EXT-X-MEDIA tags in HLS manifest such as [3].
+        for line in m3u8_doc.splitlines():
+            if line.startswith('#EXT-X-MEDIA:'):
+                extract_media(line)
+
+        for line in m3u8_doc.splitlines():
+            if line.startswith('#EXT-X-STREAM-INF:'):
+                last_stream_inf = parse_m3u8_attributes(line)
+            elif line.startswith('#') or not line.strip():
+                continue
+            else:
+                tbr = float_or_none(
+                    last_stream_inf.get('AVERAGE-BANDWIDTH')
+                    or last_stream_inf.get('BANDWIDTH'), scale=1000)
+                manifest_url = format_url(line.strip())
+
+                for idx in _extract_m3u8_playlist_indices(manifest_url):
+                    format_id = [m3u8_id, None, idx]
+                    # Bandwidth of live streams may differ over time thus making
+                    # format_id unpredictable. So it's better to keep provided
+                    # format_id intact.
+                    if not live:
+                        stream_name = build_stream_name()
+                        format_id[1] = stream_name or '%d' % (tbr or len(formats))
+                    f = {
+                        'format_id': join_nonempty(*format_id),
+                        'format_index': idx,
+                        'url': manifest_url,
+                        'manifest_url': m3u8_url,
+                        'tbr': tbr,
+                        'ext': ext,
+                        'fps': float_or_none(last_stream_inf.get('FRAME-RATE')),
+                        'protocol': entry_protocol,
+                        'preference': preference,
+                        'quality': quality,
+                        'has_drm': has_drm,
+                    }
+
+                    # YouTube-specific
+                    if yt_audio_content_id := last_stream_inf.get('YT-EXT-AUDIO-CONTENT-ID'):
+                        f['language'] = yt_audio_content_id.split('.')[0]
+
+                    resolution = last_stream_inf.get('RESOLUTION')
+                    if resolution:
+                        mobj = re.search(r'(?P<width>\d+)[xX](?P<height>\d+)', resolution)
+                        if mobj:
+                            f['width'] = int(mobj.group('width'))
+                            f['height'] = int(mobj.group('height'))
+                    # Unified Streaming Platform
+                    mobj = re.search(
+                        r'audio.*?(?:%3D|=)(\d+)(?:-video.*?(?:%3D|=)(\d+))?', f['url'])
+                    if mobj:
+                        abr, vbr = mobj.groups()
+                        abr, vbr = float_or_none(abr, 1000), float_or_none(vbr, 1000)
+                        f.update({
+                            'vbr': vbr,
+                            'abr': abr,
+                        })
+                    codecs = parse_codecs(last_stream_inf.get('CODECS'))
+                    f.update(codecs)
+                    audio_group_id = last_stream_inf.get('AUDIO')
+                    # As per [1, 4.3.4.1.1] any EXT-X-STREAM-INF tag which
+                    # references a rendition group MUST have a CODECS attribute.
+                    # However, this is not always respected. E.g. [2]
+                    # contains EXT-X-STREAM-INF tag which references AUDIO
+                    # rendition group but does not have CODECS and despite
+                    # referencing an audio group it represents a complete
+                    # (with audio and video) format. So, for such cases we will
+                    # ignore references to rendition groups and treat them
+                    # as complete formats.
+                    if audio_group_id and codecs and f.get('vcodec') != 'none':
+                        audio_group = groups.get(audio_group_id)
+                        if audio_group and audio_group[0].get('URI'):
+                            # TODO: update acodec for audio only formats with
+                            # the same GROUP-ID
+                            f['acodec'] = 'none'
+                    if not f.get('ext'):
+                        f['ext'] = 'm4a' if f.get('vcodec') == 'none' else 'mp4'
+                    formats.append(f)
+
+                    # for DailyMotion
+                    progressive_uri = last_stream_inf.get('PROGRESSIVE-URI')
+                    if progressive_uri:
+                        http_f = f.copy()
+                        del http_f['manifest_url']
+                        http_f.update({
+                            'format_id': f['format_id'].replace('hls-', 'http-'),
+                            'protocol': 'http',
+                            'url': progressive_uri,
+                        })
+                        formats.append(http_f)
+
+                last_stream_inf = {}
+        return formats, subtitles
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

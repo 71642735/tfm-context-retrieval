@@ -1,0 +1,13 @@
+```diff
+--- src/_pytest/capture.py
++++ src/_pytest/capture.py
+@@ -410,7 +410,7 @@
+ 
+     @property
+     def mode(self):
+-        return self.buffer.mode
++        return self.buffer.mode.replace("b", "")
+ 
+     def write(self, obj):
+         if isinstance(obj, six.text_type):
+```

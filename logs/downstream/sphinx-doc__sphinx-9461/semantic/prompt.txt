@@ -1,0 +1,797 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Methods decorated with @classmethod and @property do not get documented.
+**EDIT:** The problem seems to be that `type(BaseClass.baseclass_property)` returns `property`, thus sphinx can just lookup `BaseClass.baseclass_property.__doc__`. However, `type(BaseClass.baseclass_class_property)` returns the type of the returned object, since essentially, a `@classmethod@property` ends up behaving like a class attribute. So Sphinx doesn't really have a chance to extract the docstring.
+
+**EDIT 2:** Seems like this will get fixed in python 3.10, cf. https://bugs.python.org/issue43682. 
+
+> Static methods (`@staticmethod`) and class methods (`@classmethod`) now inherit the method attributes (`__module__`, `__name__`, `__qualname__`, `__doc__`, `__annotations__`) and have a new __wrapped__ attribute. 
+
+I will try to test this with the beta release.
+
+-----
+
+### Describe the bug
+
+> Changed in version 3.9: Class methods can now wrap other descriptors such as property().
+
+That is, since python version 3.9 we can write code like
+
+```python
+class A:
+    @classmethod
+    @property
+    def f(cls):
+        """Some class property."""
+        return "property"
+```
+
+However, sphinx does not seem to document any such methods (regular `@property` decorated methods get documented just fine.)
+
+### How to Reproduce
+
+
+```bash
+git clone https://github.com/randolf-scholz/sphinx_demo
+cd sphinx_demo/docs
+make html
+# open _build/html/dummy_module.submodule.html
+```
+
+The following methods were erroneously not documented:
+
+- `MetaClass.metaclass_class_property`
+- `MetaClass.metaclass_abstract_class_property`
+- `BaseClass.baseclass_class_property`
+- `BaseClass.baseclass_abstract_class_property`
+- `SubClass.subclass_class_property`
+- `SubClass.subclass_abstract_class_property`
+
+
+### Expected behavior
+
+Methods that are decorated with both `@classmethod` and `@property` should be documented appropriately.
+
+### Your project
+
+https://github.com/randolf-scholz/sphinx_demo
+
+### Screenshots
+
+_No response_
+
+### OS
+
+Ubuntu 20.04.2 LTS
+
+### Python version
+
+3.9.6
+
+### Sphinx version
+
+4.0.3
+
+### Sphinx extensions
+
+sphinx.ext.autodoc, sphinx.ext.autosummary
+
+### Extra tools
+
+_No response_
+
+### Additional context
+
+_No response_
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/test_ext_autodoc.py
+Lines: 812-896
+Symbol: test_autodoc_special_members
+
+def test_autodoc_special_members(app):
+    # specific special methods
+    options = {"undoc-members": None,
+               "special-members": "__init__,__special1__"}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+    ]
+
+    # combination with specific members
+    options = {"members": "attr,docattr",
+               "undoc-members": None,
+               "special-members": "__init__,__special1__"}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+    ]
+
+    # all special methods
+    options = {"members": None,
+               "undoc-members": None,
+               "special-members": None}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:attribute:: Class.__annotations__',
+        '   .. py:attribute:: Class.__dict__',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:attribute:: Class.__module__',
+        '   .. py:method:: Class.__special1__()',
+        '   .. py:method:: Class.__special2__()',
+        '   .. py:attribute:: Class.__weakref__',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+        '   .. py:method:: Class.excludemeth()',
+        '   .. py:attribute:: Class.inst_attr_comment',
+        '   .. py:attribute:: Class.inst_attr_inline',
+        '   .. py:attribute:: Class.inst_attr_string',
+        '   .. py:attribute:: Class.mdocattr',
+        '   .. py:method:: Class.meth()',
+        '   .. py:method:: Class.moore(a, e, f) -> happiness',
+        '   .. py:method:: Class.roger(a, *, b=2, c=3, d=4, e=5, f=6)',
+        '   .. py:attribute:: Class.skipattr',
+        '   .. py:method:: Class.skipmeth()',
+        '   .. py:attribute:: Class.udocattr',
+        '   .. py:method:: Class.undocmeth()'
+    ]
+
+    # specific special methods from autodoc_default_options
+    options = {"undoc-members": None}
+    app.config.autodoc_default_options["special-members"] = "__special2__"
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__special2__()',
+    ]
+
+    # specific special methods option with autodoc_default_options
+    options = {"undoc-members": None,
+               "special-members": "__init__,__special1__"}
+    app.config.autodoc_default_options["special-members"] = "__special2__"
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+    ]
+
+    # specific special methods merge with autodoc_default_options
+    options = {"undoc-members": None,
+               "special-members": "+__init__,__special1__"}
+    app.config.autodoc_default_options["special-members"] = "__special2__"
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.__init__(arg)',
+        '   .. py:method:: Class.__special1__()',
+        '   .. py:method:: Class.__special2__()',
+    ]
+
+--- Chunk 2 ---
+File: tests/test_ext_viewcode.py
+Lines: 17-49
+Symbol: test_viewcode
+
+def test_viewcode(app, status, warning):
+    app.builder.build_all()
+
+    warnings = re.sub(r'\\+', '/', warning.getvalue())
+    assert re.findall(
+        r"index.rst:\d+: WARNING: Object named 'func1' not found in include " +
+        r"file .*/spam/__init__.py'",
+        warnings
+    )
+
+    result = (app.outdir / 'index.html').read_text()
+    assert result.count('href="_modules/spam/mod1.html#func1"') == 2
+    assert result.count('href="_modules/spam/mod2.html#func2"') == 2
+    assert result.count('href="_modules/spam/mod1.html#Class1"') == 2
+    assert result.count('href="_modules/spam/mod2.html#Class2"') == 2
+    assert result.count('@decorator') == 1
+
+    # test that the class attribute is correctly documented
+    assert result.count('this is Class3') == 2
+    assert 'this is the class attribute class_attr' in result
+    # the next assert fails, until the autodoc bug gets fixed
+    assert result.count('this is the class attribute class_attr') == 2
+
+    result = (app.outdir / '_modules/spam/mod1.html').read_text()
+    result = re.sub('<span class=".*?">', '<span>', result)  # filter pygments classes
+    assert ('<div class="viewcode-block" id="Class1"><a class="viewcode-back" '
+            'href="../../index.html#spam.Class1">[docs]</a>'
+            '<span>@decorator</span>\n'
+            '<span>class</span> <span>Class1</span>'
+            '<span>(</span><span>object</span><span>):</span>\n'
+            '    <span>&quot;&quot;&quot;</span>\n'
+            '<span>    this is Class1</span>\n'
+            '<span>    &quot;&quot;&quot;</span></div>\n') in result
+
+--- Chunk 3 ---
+File: tests/test_ext_autodoc_configs.py
+Lines: 1155-1222
+Symbol: test_autodoc_default_options_with_values
+
+def test_autodoc_default_options_with_values(app):
+    # with :members:
+    app.config.autodoc_default_options = {'members': 'val1,val2'}
+    actual = do_autodoc(app, 'class', 'target.enums.EnumCls')
+    assert '   .. py:attribute:: EnumCls.val1' in actual
+    assert '   .. py:attribute:: EnumCls.val2' in actual
+    assert '   .. py:attribute:: EnumCls.val3' not in actual
+    assert '   .. py:attribute:: EnumCls.val4' not in actual
+
+    # with :member-order:
+    app.config.autodoc_default_options = {
+        'members': None,
+        'member-order': 'bysource',
+    }
+    actual = do_autodoc(app, 'class', 'target.Class')
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.meth()',
+        '   .. py:method:: Class.skipmeth()',
+        '   .. py:method:: Class.excludemeth()',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+        '   .. py:attribute:: Class.udocattr',
+        '   .. py:attribute:: Class.mdocattr',
+        '   .. py:method:: Class.moore(a, e, f) -> happiness',
+        '   .. py:attribute:: Class.inst_attr_inline',
+        '   .. py:attribute:: Class.inst_attr_comment',
+        '   .. py:attribute:: Class.inst_attr_string',
+    ]
+
+    # with :special-members:
+    app.config.autodoc_default_options = {
+        'special-members': '__init__,__iter__',
+    }
+    actual = do_autodoc(app, 'class', 'target.CustomIter')
+    assert '   .. py:method:: CustomIter.__init__()' in actual
+    assert '      Create a new `CustomIter`.' in actual
+    assert '   .. py:method:: CustomIter.__iter__()' in actual
+    assert '      Iterate squares of each value.' in actual
+    if not IS_PYPY:
+        assert '   .. py:attribute:: CustomIter.__weakref__' not in actual
+        assert '      list of weak references to the object (if defined)' not in actual
+
+    # with :exclude-members:
+    app.config.autodoc_default_options = {
+        'members': None,
+        'exclude-members': 'val1'
+    }
+    actual = do_autodoc(app, 'class', 'target.enums.EnumCls')
+    assert '   .. py:attribute:: EnumCls.val1' not in actual
+    assert '   .. py:attribute:: EnumCls.val2' in actual
+    assert '   .. py:attribute:: EnumCls.val3' in actual
+    assert '   .. py:attribute:: EnumCls.val4' not in actual
+    app.config.autodoc_default_options = {
+        'members': None,
+        'special-members': None,
+        'exclude-members': '__weakref__,snafucate',
+    }
+    actual = do_autodoc(app, 'class', 'target.CustomIter')
+    assert '   .. py:method:: CustomIter.__init__()' in actual
+    assert '      Create a new `CustomIter`.' in actual
+    assert '   .. py:method:: CustomIter.__iter__()' in actual
+    assert '      Iterate squares of each value.' in actual
+    if not IS_PYPY:
+        assert '   .. py:attribute:: CustomIter.__weakref__' not in actual
+        assert '      list of weak references to the object (if defined)' not in actual
+    assert '   .. py:method:: CustomIter.snafucate()' not in actual
+    assert '      Makes this snafucated.' not in actual
+
+--- Chunk 4 ---
+File: tests/test_ext_autodoc.py
+Lines: 1092-1165
+Symbol: test_autodoc_member_order
+
+def test_autodoc_member_order(app):
+    # case member-order='bysource'
+    options = {"members": None,
+               'member-order': 'bysource',
+               "undoc-members": None,
+               'private-members': None}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.meth()',
+        '   .. py:method:: Class.undocmeth()',
+        '   .. py:method:: Class.skipmeth()',
+        '   .. py:method:: Class.excludemeth()',
+        '   .. py:attribute:: Class.skipattr',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+        '   .. py:attribute:: Class.udocattr',
+        '   .. py:attribute:: Class.mdocattr',
+        '   .. py:method:: Class.roger(a, *, b=2, c=3, d=4, e=5, f=6)',
+        '   .. py:method:: Class.moore(a, e, f) -> happiness',
+        '   .. py:attribute:: Class.inst_attr_inline',
+        '   .. py:attribute:: Class.inst_attr_comment',
+        '   .. py:attribute:: Class.inst_attr_string',
+        '   .. py:attribute:: Class._private_inst_attr'
+    ]
+
+    # case member-order='groupwise'
+    options = {"members": None,
+               'member-order': 'groupwise',
+               "undoc-members": None,
+               'private-members': None}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:method:: Class.excludemeth()',
+        '   .. py:method:: Class.meth()',
+        '   .. py:method:: Class.moore(a, e, f) -> happiness',
+        '   .. py:method:: Class.roger(a, *, b=2, c=3, d=4, e=5, f=6)',
+        '   .. py:method:: Class.skipmeth()',
+        '   .. py:method:: Class.undocmeth()',
+        '   .. py:attribute:: Class._private_inst_attr',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+        '   .. py:attribute:: Class.inst_attr_comment',
+        '   .. py:attribute:: Class.inst_attr_inline',
+        '   .. py:attribute:: Class.inst_attr_string',
+        '   .. py:attribute:: Class.mdocattr',
+        '   .. py:attribute:: Class.skipattr',
+        '   .. py:attribute:: Class.udocattr'
+    ]
+
+    # case member-order=None
+    options = {"members": None,
+               "undoc-members": None,
+               'private-members': None}
+    actual = do_autodoc(app, 'class', 'target.Class', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Class(arg)',
+        '   .. py:attribute:: Class._private_inst_attr',
+        '   .. py:attribute:: Class.attr',
+        '   .. py:attribute:: Class.docattr',
+        '   .. py:method:: Class.excludemeth()',
+        '   .. py:attribute:: Class.inst_attr_comment',
+        '   .. py:attribute:: Class.inst_attr_inline',
+        '   .. py:attribute:: Class.inst_attr_string',
+        '   .. py:attribute:: Class.mdocattr',
+        '   .. py:method:: Class.meth()',
+        '   .. py:method:: Class.moore(a, e, f) -> happiness',
+        '   .. py:method:: Class.roger(a, *, b=2, c=3, d=4, e=5, f=6)',
+        '   .. py:attribute:: Class.skipattr',
+        '   .. py:method:: Class.skipmeth()',
+        '   .. py:attribute:: Class.udocattr',
+        '   .. py:method:: Class.undocmeth()'
+    ]
+
+--- Chunk 5 ---
+File: tests/test_ext_autodoc.py
+Lines: 545-599
+Symbol: test_autodoc_members
+
+def test_autodoc_members(app):
+    # default (no-members)
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base')
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+    ]
+
+    # default ALL-members
+    options = {"members": None}
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()',
+        '   .. py:method:: Base.inheritedmeth()',
+        '   .. py:method:: Base.inheritedstaticmeth(cls)'
+    ]
+
+    # default specific-members
+    options = {"members": "inheritedmeth,inheritedstaticmeth"}
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedmeth()',
+        '   .. py:method:: Base.inheritedstaticmeth(cls)'
+    ]
+
+    # ALL-members override autodoc_default_options
+    options = {"members": None}
+    app.config.autodoc_default_options["members"] = "inheritedstaticmeth"
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()',
+        '   .. py:method:: Base.inheritedmeth()',
+        '   .. py:method:: Base.inheritedstaticmeth(cls)'
+    ]
+
+    # members override autodoc_default_options
+    options = {"members": "inheritedmeth"}
+    app.config.autodoc_default_options["members"] = "inheritedstaticmeth"
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedmeth()',
+    ]
+
+    # members extends autodoc_default_options
+    options = {"members": "+inheritedmeth"}
+    app.config.autodoc_default_options["members"] = "inheritedstaticmeth"
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedmeth()',
+        '   .. py:method:: Base.inheritedstaticmeth(cls)'
+    ]
+
+--- Chunk 6 ---
+File: tests/test_ext_autodoc.py
+Lines: 603-669
+Symbol: test_autodoc_exclude_members
+
+def test_autodoc_exclude_members(app):
+    options = {"members": None,
+               "exclude-members": "inheritedmeth,inheritedstaticmeth"}
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()'
+    ]
+
+    # members vs exclude-members
+    options = {"members": "inheritedmeth",
+               "exclude-members": "inheritedmeth"}
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+    ]
+
+    # + has no effect when autodoc_default_options are not present
+    options = {"members": None,
+               "exclude-members": "+inheritedmeth,inheritedstaticmeth"}
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()'
+    ]
+
+    # exclude-members overrides autodoc_default_options
+    options = {"members": None,
+               "exclude-members": "inheritedmeth"}
+    app.config.autodoc_default_options["exclude-members"] = "inheritedstaticmeth"
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()',
+        '   .. py:method:: Base.inheritedstaticmeth(cls)'
+    ]
+
+    # exclude-members extends autodoc_default_options
+    options = {"members": None,
+               "exclude-members": "+inheritedmeth"}
+    app.config.autodoc_default_options["exclude-members"] = "inheritedstaticmeth"
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()',
+    ]
+
+    # no exclude-members causes use autodoc_default_options
+    options = {"members": None}
+    app.config.autodoc_default_options["exclude-members"] = "inheritedstaticmeth,inheritedmeth"
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()',
+    ]
+
+    # empty exclude-members cancels autodoc_default_options
+    options = {"members": None,
+               "exclude-members": None}
+    app.config.autodoc_default_options["exclude-members"] = "inheritedstaticmeth,inheritedmeth"
+    actual = do_autodoc(app, 'class', 'target.inheritance.Base', options)
+    assert list(filter(lambda l: '::' in l, actual)) == [
+        '.. py:class:: Base()',
+        '   .. py:method:: Base.inheritedclassmeth()',
+        '   .. py:method:: Base.inheritedmeth()',
+        '   .. py:method:: Base.inheritedstaticmeth(cls)'
+    ]
+
+--- Chunk 7 ---
+File: tests/test_domain_py.py
+Lines: 637-739
+Symbol: test_pymethod_options
+
+def test_pymethod_options(app):
+    text = (".. py:class:: Class\n"
+            "\n"
+            "   .. py:method:: meth1\n"
+            "   .. py:method:: meth2\n"
+            "      :classmethod:\n"
+            "   .. py:method:: meth3\n"
+            "      :staticmethod:\n"
+            "   .. py:method:: meth4\n"
+            "      :async:\n"
+            "   .. py:method:: meth5\n"
+            "      :property:\n"
+            "   .. py:method:: meth6\n"
+            "      :abstractmethod:\n"
+            "   .. py:method:: meth7\n"
+            "      :final:\n")
+    domain = app.env.get_domain('py')
+    doctree = restructuredtext.parse(app, text)
+    assert_node(doctree, (addnodes.index,
+                          [desc, ([desc_signature, ([desc_annotation, "class "],
+                                                    [desc_name, "Class"])],
+                                  [desc_content, (addnodes.index,
+                                                  desc,
+                                                  addnodes.index,
+                                                  desc,
+                                                  addnodes.index,
+                                                  desc,
+                                                  addnodes.index,
+                                                  desc,
+                                                  addnodes.index,
+                                                  desc,
+                                                  addnodes.index,
+                                                  desc,
+                                                  addnodes.index,
+                                                  desc)])]))
+
+    # method
+    assert_node(doctree[1][1][0], addnodes.index,
+                entries=[('single', 'meth1() (Class method)', 'Class.meth1', '', None)])
+    assert_node(doctree[1][1][1], ([desc_signature, ([desc_name, "meth1"],
+                                                     [desc_parameterlist, ()])],
+                                   [desc_content, ()]))
+    assert 'Class.meth1' in domain.objects
+    assert domain.objects['Class.meth1'] == ('index', 'Class.meth1', 'method', False)
+
+    # :classmethod:
+    assert_node(doctree[1][1][2], addnodes.index,
+                entries=[('single', 'meth2() (Class class method)', 'Class.meth2', '', None)])
+    assert_node(doctree[1][1][3], ([desc_signature, ([desc_annotation, "classmethod "],
+                                                     [desc_name, "meth2"],
+                                                     [desc_parameterlist, ()])],
+                                   [desc_content, ()]))
+    assert 'Class.meth2' in domain.objects
+    assert domain.objects['Class.meth2'] == ('index', 'Class.meth2', 'method', False)
+
+    # :staticmethod:
+    assert_node(doctree[1][1][4], addnodes.index,
+                entries=[('single', 'meth3() (Class static method)', 'Class.meth3', '', None)])
+    assert_node(doctree[1][1][5], ([desc_signature, ([desc_annotation, "static "],
+                                                     [desc_name, "meth3"],
+                                                     [desc_parameterlist, ()])],
+                                   [desc_content, ()]))
+    assert 'Class.meth3' in domain.objects
+    assert domain.objects['Class.meth3'] == ('index', 'Class.meth3', 'method', False)
+
+    # :async:
+    assert_node(doctree[1][1][6], addnodes.index,
+                entries=[('single', 'meth4() (Class method)', 'Class.meth4', '', None)])
+    assert_node(doctree[1][1][7], ([desc_signature, ([desc_annotation, "async "],
+                                                     [desc_name, "meth4"],
+                                                     [desc_parameterlist, ()])],
+                                   [desc_content, ()]))
+    assert 'Class.meth4' in domain.objects
+    assert domain.objects['Class.meth4'] == ('index', 'Class.meth4', 'method', False)
+
+    # :property:
+    assert_node(doctree[1][1][8], addnodes.index,
+                entries=[('single', 'meth5() (Class property)', 'Class.meth5', '', None)])
+    assert_node(doctree[1][1][9], ([desc_signature, ([desc_annotation, "property "],
+                                                     [desc_name, "meth5"])],
+                                   [desc_content, ()]))
+    assert 'Class.meth5' in domain.objects
+    assert domain.objects['Class.meth5'] == ('index', 'Class.meth5', 'method', False)
+
+    # :abstractmethod:
+    assert_node(doctree[1][1][10], addnodes.index,
+                entries=[('single', 'meth6() (Class method)', 'Class.meth6', '', None)])
+    assert_node(doctree[1][1][11], ([desc_signature, ([desc_annotation, "abstract "],
+                                                      [desc_name, "meth6"],
+                                                      [desc_parameterlist, ()])],
+                                    [desc_content, ()]))
+    assert 'Class.meth6' in domain.objects
+    assert domain.objects['Class.meth6'] == ('index', 'Class.meth6', 'method', False)
+
+    # :final:
+    assert_node(doctree[1][1][12], addnodes.index,
+                entries=[('single', 'meth7() (Class method)', 'Class.meth7', '', None)])
+    assert_node(doctree[1][1][13], ([desc_signature, ([desc_annotation, "final "],
+                                                      [desc_name, "meth7"],
+                                                      [desc_parameterlist, ()])],
+                                    [desc_content, ()]))
+    assert 'Class.meth7' in domain.objects
+    assert domain.objects['Class.meth7'] == ('index', 'Class.meth7', 'method', False)
+
+--- Chunk 8 ---
+File: sphinx/ext/napoleon/__init__.py
+Lines: 403-485
+Symbol: _skip_member
+
+def _skip_member(app: Sphinx, what: str, name: str, obj: Any,
+                 skip: bool, options: Any) -> bool:
+    """Determine if private and special class members are included in docs.
+
+    The following settings in conf.py determine if private and special class
+    members or init methods are included in the generated documentation:
+
+    * ``napoleon_include_init_with_doc`` --
+      include init methods if they have docstrings
+    * ``napoleon_include_private_with_doc`` --
+      include private members if they have docstrings
+    * ``napoleon_include_special_with_doc`` --
+      include special members if they have docstrings
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        Application object representing the Sphinx process
+    what : str
+        A string specifying the type of the object to which the member
+        belongs. Valid values: "module", "class", "exception", "function",
+        "method", "attribute".
+    name : str
+        The name of the member.
+    obj : module, class, exception, function, method, or attribute.
+        For example, if the member is the __init__ method of class A, then
+        `obj` will be `A.__init__`.
+    skip : bool
+        A boolean indicating if autodoc will skip this member if `_skip_member`
+        does not override the decision
+    options : sphinx.ext.autodoc.Options
+        The options given to the directive: an object with attributes
+        inherited_members, undoc_members, show_inheritance and noindex that
+        are True if the flag option of same name was given to the auto
+        directive.
+
+    Returns
+    -------
+    bool
+        True if the member should be skipped during creation of the docs,
+        False if it should be included in the docs.
+
+    """
+    has_doc = getattr(obj, '__doc__', False)
+    is_member = (what == 'class' or what == 'exception' or what == 'module')
+    if name != '__weakref__' and has_doc and is_member:
+        cls_is_owner = False
+        if what == 'class' or what == 'exception':
+            qualname = getattr(obj, '__qualname__', '')
+            cls_path, _, _ = qualname.rpartition('.')
+            if cls_path:
+                try:
+                    if '.' in cls_path:
+                        import functools
+                        import importlib
+
+                        mod = importlib.import_module(obj.__module__)
+                        mod_path = cls_path.split('.')
+                        cls = functools.reduce(getattr, mod_path, mod)
+                    else:
+                        cls = inspect.unwrap(obj).__globals__[cls_path]
+                except Exception:
+                    cls_is_owner = False
+                else:
+                    cls_is_owner = (cls and hasattr(cls, name) and  # type: ignore
+                                    name in cls.__dict__)
+            else:
+                cls_is_owner = False
+
+        if what == 'module' or cls_is_owner:
+            is_init = (name == '__init__')
+            is_special = (not is_init and name.startswith('__') and
+                          name.endswith('__'))
+            is_private = (not is_init and not is_special and
+                          name.startswith('_'))
+            inc_init = app.config.napoleon_include_init_with_doc
+            inc_special = app.config.napoleon_include_special_with_doc
+            inc_private = app.config.napoleon_include_private_with_doc
+            if ((is_special and inc_special) or
+                    (is_private and inc_private) or
+                    (is_init and inc_init)):
+                return False
+    return None
+
+--- Chunk 9 ---
+File: tests/test_ext_autodoc_configs.py
+Lines: 494-543
+Symbol: test_mocked_module_imports
+
+def test_mocked_module_imports(app, warning):
+    sys.modules.pop('target', None)  # unload target module to clear the module cache
+
+    # no autodoc_mock_imports
+    options = {"members": 'TestAutodoc,decoratedFunction,func'}
+    actual = do_autodoc(app, 'module', 'target.need_mocks', options)
+    assert list(actual) == []
+    assert "autodoc: failed to import module 'need_mocks'" in warning.getvalue()
+
+    # with autodoc_mock_imports
+    app.config.autodoc_mock_imports = [
+        'missing_module',
+        'missing_package1',
+        'missing_package2',
+        'missing_package3',
+        'sphinx.missing_module4',
+    ]
+
+    warning.truncate(0)
+    actual = do_autodoc(app, 'module', 'target.need_mocks', options)
+    assert list(actual) == [
+        '',
+        '.. py:module:: target.need_mocks',
+        '',
+        '',
+        '.. py:class:: TestAutodoc()',
+        '   :module: target.need_mocks',
+        '',
+        '   TestAutodoc docstring.',
+        '',
+        '',
+        '   .. py:method:: TestAutodoc.decoratedMethod()',
+        '      :module: target.need_mocks',
+        '',
+        '      TestAutodoc::decoratedMethod docstring',
+        '',
+        '',
+        '.. py:function:: decoratedFunction()',
+        '   :module: target.need_mocks',
+        '',
+        '   decoratedFunction docstring',
+        '',
+        '',
+        '.. py:function:: func(arg: missing_module.Class)',
+        '   :module: target.need_mocks',
+        '',
+        '   a function takes mocked object as an argument',
+        '',
+    ]
+    assert warning.getvalue() == ''
+
+--- Chunk 10 ---
+File: tests/test_ext_autodoc.py
+Lines: 2124-2146
+Symbol: test_singledispatchmethod
+
+def test_singledispatchmethod(app):
+    options = {"members": None}
+    actual = do_autodoc(app, 'module', 'target.singledispatchmethod', options)
+    assert list(actual) == [
+        '',
+        '.. py:module:: target.singledispatchmethod',
+        '',
+        '',
+        '.. py:class:: Foo()',
+        '   :module: target.singledispatchmethod',
+        '',
+        '   docstring',
+        '',
+        '',
+        '   .. py:method:: Foo.meth(arg, kwarg=None)',
+        '                  Foo.meth(arg: float, kwarg=None)',
+        '                  Foo.meth(arg: int, kwarg=None)',
+        '                  Foo.meth(arg: str, kwarg=None)',
+        '      :module: target.singledispatchmethod',
+        '',
+        '      A method for general use.',
+        '',
+    ]
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

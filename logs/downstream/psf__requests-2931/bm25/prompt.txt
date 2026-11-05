@@ -1,0 +1,324 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Request with binary payload fails due to calling to_native_string
+Introduced with https://github.com/kennethreitz/requests/issues/2844
+
+```
+import requests
+requests.put("http://httpbin.org/put", data=u"ööö".encode("utf-8"))
+```
+
+This works with 2.8.1, but not with 2.9.
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: test_requests.py
+Lines: 1578-1581
+Symbol: TestTimeout.test_encoded_methods
+
+    def test_encoded_methods(self, httpbin):
+        """See: https://github.com/kennethreitz/requests/issues/2316"""
+        r = requests.request(b'GET', httpbin('get'))
+        assert r.ok
+
+--- Chunk 2 ---
+File: test_requests.py
+Lines: 1453-1461
+Symbol: UtilsTestCase.test_requote_uri_with_unquoted_percents
+
+    def test_requote_uri_with_unquoted_percents(self):
+        """Ensure we handle unquoted percent signs in redirects.
+
+        See: https://github.com/kennethreitz/requests/issues/2356
+        """
+        from requests.utils import requote_uri
+        bad_uri = 'http://example.com/fiz?buz=%ppicture'
+        quoted = 'http://example.com/fiz?buz=%25ppicture'
+        assert quoted == requote_uri(bad_uri)
+
+--- Chunk 3 ---
+File: test_requests.py
+Lines: 1157-1162
+Symbol: TestContentEncodingDetection.test_xhtml_pragma
+
+    def test_xhtml_pragma(self):
+        """XHTML 1.x served with text/html MIME type"""
+        content = '<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />'
+        encodings = requests.utils.get_encodings_from_content(content)
+        assert len(encodings) == 1
+        assert encodings[0] == 'UTF-8'
+
+--- Chunk 4 ---
+File: test_requests.py
+Lines: 540-559
+Symbol: TestRequests.test_unicode_multipart_post
+
+    def test_unicode_multipart_post(self, httpbin):
+        r = requests.post(httpbin('post'),
+            data={'stuff': u('ëlïxr')},
+            files={'file': ('test_requests.py', open(__file__, 'rb'))})
+        assert r.status_code == 200
+
+        r = requests.post(httpbin('post'),
+            data={'stuff': u('ëlïxr').encode('utf-8')},
+            files={'file': ('test_requests.py', open(__file__, 'rb'))})
+        assert r.status_code == 200
+
+        r = requests.post(httpbin('post'),
+            data={'stuff': 'elixr'},
+            files={'file': ('test_requests.py', open(__file__, 'rb'))})
+        assert r.status_code == 200
+
+        r = requests.post(httpbin('post'),
+            data={'stuff': 'elixr'.encode('utf-8')},
+            files={'file': ('test_requests.py', open(__file__, 'rb'))})
+        assert r.status_code == 200
+
+--- Chunk 5 ---
+File: requests/models.py
+Lines: 75-99
+Symbol: RequestEncodingMixin._encode_params
+
+    def _encode_params(data):
+        """Encode parameters in a piece of data.
+
+        Will successfully encode parameters when passed as a dict or a list of
+        2-tuples. Order is retained if data is a list of 2-tuples but arbitrary
+        if parameters are supplied as a dict.
+        """
+
+        if isinstance(data, (str, bytes)):
+            return to_native_string(data)
+        elif hasattr(data, 'read'):
+            return data
+        elif hasattr(data, '__iter__'):
+            result = []
+            for k, vs in to_key_val_list(data):
+                if isinstance(vs, basestring) or not hasattr(vs, '__iter__'):
+                    vs = [vs]
+                for v in vs:
+                    if v is not None:
+                        result.append(
+                            (k.encode('utf-8') if isinstance(k, str) else k,
+                             v.encode('utf-8') if isinstance(v, str) else v))
+            return urlencode(result, doseq=True)
+        else:
+            return data
+
+--- Chunk 6 ---
+File: test_requests.py
+Lines: 663-685
+Symbol: TestRequests.test_links
+
+    def test_links(self):
+        r = requests.Response()
+        r.headers = {
+            'cache-control': 'public, max-age=60, s-maxage=60',
+            'connection': 'keep-alive',
+            'content-encoding': 'gzip',
+            'content-type': 'application/json; charset=utf-8',
+            'date': 'Sat, 26 Jan 2013 16:47:56 GMT',
+            'etag': '"6ff6a73c0e446c1f61614769e3ceb778"',
+            'last-modified': 'Sat, 26 Jan 2013 16:22:39 GMT',
+            'link': ('<https://api.github.com/users/kennethreitz/repos?'
+                     'page=2&per_page=10>; rel="next", <https://api.github.'
+                     'com/users/kennethreitz/repos?page=7&per_page=10>; '
+                     ' rel="last"'),
+            'server': 'GitHub.com',
+            'status': '200 OK',
+            'vary': 'Accept',
+            'x-content-type-options': 'nosniff',
+            'x-github-media-type': 'github.beta',
+            'x-ratelimit-limit': '60',
+            'x-ratelimit-remaining': '57'
+        }
+        assert r.links['next']['rel'] == 'next'
+
+--- Chunk 7 ---
+File: test_requests.py
+Lines: 1711-1719
+Symbol: test_urllib3_retries
+
+def test_urllib3_retries(httpbin):
+    from requests.packages.urllib3.util import Retry
+    s = requests.Session()
+    s.mount('http://', HTTPAdapter(max_retries=Retry(
+        total=2, status_forcelist=[500]
+    )))
+
+    with pytest.raises(RetryError):
+        s.get(httpbin('status/500'))
+
+--- Chunk 8 ---
+File: requests/utils.py
+Lines: 91-135
+Symbol: get_netrc_auth
+
+def get_netrc_auth(url, raise_errors=False):
+    """Returns the Requests tuple auth for a given url from netrc."""
+
+    try:
+        from netrc import netrc, NetrcParseError
+
+        netrc_path = None
+
+        for f in NETRC_FILES:
+            try:
+                loc = os.path.expanduser('~/{0}'.format(f))
+            except KeyError:
+                # os.path.expanduser can fail when $HOME is undefined and
+                # getpwuid fails. See http://bugs.python.org/issue20164 &
+                # https://github.com/kennethreitz/requests/issues/1846
+                return
+
+            if os.path.exists(loc):
+                netrc_path = loc
+                break
+
+        # Abort early if there isn't one.
+        if netrc_path is None:
+            return
+
+        ri = urlparse(url)
+
+        # Strip port numbers from netloc
+        host = ri.netloc.split(':')[0]
+
+        try:
+            _netrc = netrc(netrc_path).authenticators(host)
+            if _netrc:
+                # Return with login / password
+                login_i = (0 if _netrc[0] else 1)
+                return (_netrc[login_i], _netrc[2])
+        except (NetrcParseError, IOError):
+            # If there was a parsing error or a permissions issue reading the file,
+            # we'll just skip netrc auth unless explicitly asked to raise errors.
+            if raise_errors:
+                raise
+
+    # AppEngine hackiness.
+    except (ImportError, AttributeError):
+        pass
+
+--- Chunk 9 ---
+File: requests/models.py
+Lines: 324-396
+Symbol: PreparedRequest.prepare_url
+
+    def prepare_url(self, url, params):
+        """Prepares the given HTTP URL."""
+        #: Accept objects that have string representations.
+        #: We're unable to blindly call unicode/str functions
+        #: as this will include the bytestring indicator (b'')
+        #: on python 3.x.
+        #: https://github.com/kennethreitz/requests/pull/2238
+        if isinstance(url, bytes):
+            url = url.decode('utf8')
+        else:
+            url = unicode(url) if is_py2 else str(url)
+
+        # Don't do any URL preparation for non-HTTP schemes like `mailto`,
+        # `data` etc to work around exceptions from `url_parse`, which
+        # handles RFC 3986 only.
+        if ':' in url and not url.lower().startswith('http'):
+            self.url = url
+            return
+
+        # Support for unicode domain names and paths.
+        try:
+            scheme, auth, host, port, path, query, fragment = parse_url(url)
+        except LocationParseError as e:
+            raise InvalidURL(*e.args)
+
+        if not scheme:
+            error = ("Invalid URL {0!r}: No schema supplied. Perhaps you meant http://{0}?")
+            error = error.format(to_native_string(url, 'utf8'))
+
+            raise MissingSchema(error)
+
+        if not host:
+            raise InvalidURL("Invalid URL %r: No host supplied" % url)
+
+        # Only want to apply IDNA to the hostname
+        try:
+            host = host.encode('idna').decode('utf-8')
+        except UnicodeError:
+            raise InvalidURL('URL has an invalid label.')
+
+        # Carefully reconstruct the network location
+        netloc = auth or ''
+        if netloc:
+            netloc += '@'
+        netloc += host
+        if port:
+            netloc += ':' + str(port)
+
+        # Bare domains aren't valid URLs.
+        if not path:
+            path = '/'
+
+        if is_py2:
+            if isinstance(scheme, str):
+                scheme = scheme.encode('utf-8')
+            if isinstance(netloc, str):
+                netloc = netloc.encode('utf-8')
+            if isinstance(path, str):
+                path = path.encode('utf-8')
+            if isinstance(query, str):
+                query = query.encode('utf-8')
+            if isinstance(fragment, str):
+                fragment = fragment.encode('utf-8')
+
+        enc_params = self._encode_params(params)
+        if enc_params:
+            if query:
+                query = '%s&%s' % (query, enc_params)
+            else:
+                query = enc_params
+
+        url = requote_uri(urlunparse([scheme, netloc, path, None, query, fragment]))
+        self.url = url
+
+--- Chunk 10 ---
+File: requests/utils.py
+Lines: 630-656
+Symbol: guess_json_utf
+
+def guess_json_utf(data):
+    # JSON always starts with two ASCII characters, so detection is as
+    # easy as counting the nulls and from their location and count
+    # determine the encoding. Also detect a BOM, if present.
+    sample = data[:4]
+    if sample in (codecs.BOM_UTF32_LE, codecs.BOM32_BE):
+        return 'utf-32'     # BOM included
+    if sample[:3] == codecs.BOM_UTF8:
+        return 'utf-8-sig'  # BOM included, MS style (discouraged)
+    if sample[:2] in (codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE):
+        return 'utf-16'     # BOM included
+    nullcount = sample.count(_null)
+    if nullcount == 0:
+        return 'utf-8'
+    if nullcount == 2:
+        if sample[::2] == _null2:   # 1st and 3rd are null
+            return 'utf-16-be'
+        if sample[1::2] == _null2:  # 2nd and 4th are null
+            return 'utf-16-le'
+        # Did not detect 2 valid UTF-16 ascii-range characters
+    if nullcount == 3:
+        if sample[:3] == _null3:
+            return 'utf-32-be'
+        if sample[1:] == _null3:
+            return 'utf-32-le'
+        # Did not detect a valid UTF-32 ascii-range character
+    return None
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

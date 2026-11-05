@@ -1,0 +1,31 @@
+An issue with `--simulate` modifying format selection behavior under conditions like missing ffmpeg, `outtmpl` being `-`, or handling livestreams has been reported. 
+
+Let's search the codebase for where `simulate` or `__real_download` checks might affect format selection or default format spec. Since the context provided does not contain the exact file defining format selection or `simulate` defaults (such as `YoutubeDL._set_formatter` or format selection logic checking `simulate`), let's check what parts of the repository could be involved. Wait, looking closely at the provided context chunks:
+- `yt_dlp/__init__.py`
+- `bundle/py2exe.py`
+- `yt_dlp/postprocessor/ffmpeg.py`
+- `yt_dlp/extractor/common.py`
+- `yt_dlp/downloader/external.py`
+- `yt_dlp/extractor/youtube.py`
+- `test/test_YoutubeDL.py`
+- `test/test_update.py`
+
+Wait, none of the chunks actually show the code handling `--simulate`'s effect on default format selection or ffmpeg availability check for formats. Since we are strictly restricted to the provided context and cannot assume access to other repository files beyond what was retrieved (and the retrieved context doesn't include the relevant file or function for format selection logic involving `simulate`), we cannot generate a patch for files outside the retrieved context unless it's present.
+
+Wait, let's carefully review the retrieved context chunks. None of them contain the code where `--simulate` alters the format selection or default format spec. Therefore, based *only* on the provided context, we cannot perform the fix because the necessary code is not present in the chunks.
+
+Wait, let me double check all chunks:
+Chunk 1: `yt_dlp/__init__.py` (`_real_main`)
+Chunk 2: `bundle/py2exe.py` (`main`)
+Chunk 3: `yt_dlp/postprocessor/ffmpeg.py` (`FFmpegEmbedSubtitlePP.run`)
+Chunk 4: `yt_dlp/extractor/common.py` (`InfoExtractor._parse_m3u8_formats_and_subtitles`)
+Chunk 5: `yt_dlp/downloader/external.py` (`FFmpegFD._call_downloader`)
+Chunk 6: `yt_dlp/extractor/youtube.py` (`YoutubeIE._extract_from_webpage`)
+Chunk 7: `test/test_YoutubeDL.py` (`TestFormatSelection.test_format_selection`)
+Chunk 8: `test/test_update.py` (`TestUpdate.test_update_spec`)
+Chunk 9: `yt_dlp/extractor/youtube.py` (`YoutubeTabBaseInfoExtractor._extract_webpage`)
+Chunk 10: `yt_dlp/extractor/common.py` (`InfoExtractor._request_webpage`)
+
+Since the file containing the logic for `--simulate` and format selection is not in the context, I will output an empty diff or no changes as required by the instruction to use *only* the retrieved context. Wait, if no code change can be made from the context, returning nothing or empty patch is appropriate. But let's check if any patch can be formed. No. 
+
+Wait, let's output a valid unified diff or empty if nothing can be modified. Since the instructions say "Return only a unified diff patch", but there's no code from the context to patch, let's see if we can provide an empty response or if any file can be touched. If no changes are possible from the given context, we output nothing. Wait, some parsers expect a valid diff or empty output. Let's provide an empty response (or no text).

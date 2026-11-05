@@ -1,0 +1,14 @@
+```diff
+diff --git a/xarray/core/dataset.py b/xarray/core/dataset.py
+--- a/xarray/core/dataset.py
++++ b/xarray/core/dataset.py
+@@ -365,7 +365,7 @@
+ class DataVariables(Mapping[Any, "DataArray"]):
+     def __init__(self, dataset: Dataset):
+         self._dataset = dataset
+-        self._keys = tuple(k for k in dataset._variables if k not in dataset._coord_names)
++        self._keys = tuple(k for k in dataset._variables if k not in dataset._coord_names and k in dataset._variables)
+ 
+     def __getitem__(self, key: Hashable) -> DataArray:
+         if key in self._keys:
+```

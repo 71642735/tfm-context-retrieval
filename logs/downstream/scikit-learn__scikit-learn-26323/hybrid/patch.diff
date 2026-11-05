@@ -1,0 +1,11 @@
+--- sklearn/compose/_column_transformer.py
+--- sklearn/compose/_column_transformer.py
+@@ -1071,6 +1071,8 @@
+         for _, trans, _ in self.transformers:
+             if hasattr(trans, "set_output"):
+                 trans.set_output(transform=transform)
++        if hasattr(self.remainder, "set_output"):
++            self.remainder.set_output(transform=transform)
+         return super().set_output(transform=transform)
+
+     def get_feature_names_out(self, input_features=None):

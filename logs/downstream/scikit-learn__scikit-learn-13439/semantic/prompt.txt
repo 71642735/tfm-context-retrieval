@@ -1,0 +1,596 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Pipeline should implement __len__
+#### Description
+
+With the new indexing support `pipe[:len(pipe)]` raises an error.
+
+#### Steps/Code to Reproduce
+
+```python
+from sklearn import svm
+from sklearn.datasets import samples_generator
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_regression
+from sklearn.pipeline import Pipeline
+
+# generate some data to play with
+X, y = samples_generator.make_classification(
+    n_informative=5, n_redundant=0, random_state=42)
+
+anova_filter = SelectKBest(f_regression, k=5)
+clf = svm.SVC(kernel='linear')
+pipe = Pipeline([('anova', anova_filter), ('svc', clf)])
+
+len(pipe)
+```
+
+#### Versions
+
+```
+System:
+    python: 3.6.7 | packaged by conda-forge | (default, Feb 19 2019, 18:37:23)  [GCC 4.2.1 Compatible Clang 4.0.1 (tags/RELEASE_401/final)]
+executable: /Users/krisz/.conda/envs/arrow36/bin/python
+   machine: Darwin-18.2.0-x86_64-i386-64bit
+
+BLAS:
+    macros: HAVE_CBLAS=None
+  lib_dirs: /Users/krisz/.conda/envs/arrow36/lib
+cblas_libs: openblas, openblas
+
+Python deps:
+       pip: 19.0.3
+setuptools: 40.8.0
+   sklearn: 0.21.dev0
+     numpy: 1.16.2
+     scipy: 1.2.1
+    Cython: 0.29.6
+    pandas: 0.24.1
+```
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sklearn/tests/test_isotonic.py
+Lines: 143-170
+Symbol: test_isotonic_regression_ties_secondary_
+
+def test_isotonic_regression_ties_secondary_():
+    """
+    Test isotonic regression fit, transform  and fit_transform
+    against the "secondary" ties method and "pituitary" data from R
+     "isotone" package, as detailed in: J. d. Leeuw, K. Hornik, P. Mair,
+     Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
+    (PAVA) and Active Set Methods
+
+    Set values based on pituitary example and
+     the following R command detailed in the paper above:
+    > library("isotone")
+    > data("pituitary")
+    > res1 <- gpava(pituitary$age, pituitary$size, ties="secondary")
+    > res1$x
+
+    `isotone` version: 1.0-2, 2014-09-07
+    R version: R version 3.1.1 (2014-07-10)
+    """
+    x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
+    y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
+    y_true = [22.22222, 22.22222, 22.22222, 22.22222, 22.22222, 22.22222,
+              22.22222, 22.22222, 22.22222, 24.25, 24.25]
+
+    # Check fit, transform and fit_transform
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_almost_equal(ir.transform(x), y_true, 4)
+    assert_array_almost_equal(ir.fit_transform(x, y), y_true, 4)
+
+--- Chunk 2 ---
+File: sklearn/tests/test_isotonic.py
+Lines: 173-194
+Symbol: test_isotonic_regression_with_ties_in_differently_sized_groups
+
+def test_isotonic_regression_with_ties_in_differently_sized_groups():
+    """
+    Non-regression test to handle issue 9432:
+    https://github.com/scikit-learn/scikit-learn/issues/9432
+
+    Compare against output in R:
+    > library("isotone")
+    > x <- c(0, 1, 1, 2, 3, 4)
+    > y <- c(0, 0, 1, 0, 0, 1)
+    > res1 <- gpava(x, y, ties="secondary")
+    > res1$x
+
+    `isotone` version: 1.1-0, 2015-07-24
+    R version: R version 3.3.2 (2016-10-31)
+    """
+    x = np.array([0, 1, 1, 2, 3, 4])
+    y = np.array([0, 0, 1, 0, 0, 1])
+    y_true = np.array([0., 0.25, 0.25, 0.25, 0.25, 1.])
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_almost_equal(ir.transform(x), y_true)
+    assert_array_almost_equal(ir.fit_transform(x, y), y_true)
+
+--- Chunk 3 ---
+File: sklearn/feature_extraction/tests/test_text.py
+Lines: 740-773
+Symbol: test_count_vectorizer_pipeline_grid_selection
+
+def test_count_vectorizer_pipeline_grid_selection():
+    # raw documents
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+
+    # label junk food as -1, the others as +1
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+    # split the dataset for model development and final evaluation
+    train_data, test_data, target_train, target_test = train_test_split(
+        data, target, test_size=.2, random_state=0)
+
+    pipeline = Pipeline([('vect', CountVectorizer()),
+                         ('svc', LinearSVC())])
+
+    parameters = {
+        'vect__ngram_range': [(1, 1), (1, 2)],
+        'svc__loss': ('hinge', 'squared_hinge')
+    }
+
+    # find the best parameters for both the feature extraction and the
+    # classifier
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+
+    # Check that the best model found by grid search is 100% correct on the
+    # held out evaluation set.
+    pred = grid_search.fit(train_data, target_train).predict(test_data)
+    assert_array_equal(pred, target_test)
+
+    # on this toy dataset bigram representation which is used in the last of
+    # the grid_search is considered the best estimator since they all converge
+    # to 100% accuracy models
+    assert_equal(grid_search.best_score_, 1.0)
+    best_vectorizer = grid_search.best_estimator_.named_steps['vect']
+    assert_equal(best_vectorizer.ngram_range, (1, 1))
+
+--- Chunk 4 ---
+File: sklearn/feature_extraction/tests/test_text.py
+Lines: 778-814
+Symbol: test_vectorizer_pipeline_grid_selection
+
+def test_vectorizer_pipeline_grid_selection():
+    # raw documents
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+
+    # label junk food as -1, the others as +1
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+    # split the dataset for model development and final evaluation
+    train_data, test_data, target_train, target_test = train_test_split(
+        data, target, test_size=.1, random_state=0)
+
+    pipeline = Pipeline([('vect', TfidfVectorizer()),
+                         ('svc', LinearSVC())])
+
+    parameters = {
+        'vect__ngram_range': [(1, 1), (1, 2)],
+        'vect__norm': ('l1', 'l2'),
+        'svc__loss': ('hinge', 'squared_hinge'),
+    }
+
+    # find the best parameters for both the feature extraction and the
+    # classifier
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+
+    # Check that the best model found by grid search is 100% correct on the
+    # held out evaluation set.
+    pred = grid_search.fit(train_data, target_train).predict(test_data)
+    assert_array_equal(pred, target_test)
+
+    # on this toy dataset bigram representation which is used in the last of
+    # the grid_search is considered the best estimator since they all converge
+    # to 100% accuracy models
+    assert_equal(grid_search.best_score_, 1.0)
+    best_vectorizer = grid_search.best_estimator_.named_steps['vect']
+    assert_equal(best_vectorizer.ngram_range, (1, 1))
+    assert_equal(best_vectorizer.norm, 'l2')
+    assert not best_vectorizer.fixed_vocabulary_
+
+--- Chunk 5 ---
+File: sklearn/tests/test_multioutput.py
+Lines: 272-305
+Symbol: test_multiclass_multioutput_estimator_predict_proba
+
+def test_multiclass_multioutput_estimator_predict_proba():
+    seed = 542
+
+    # make test deterministic
+    rng = np.random.RandomState(seed)
+
+    # random features
+    X = rng.normal(size=(5, 5))
+
+    # random labels
+    y1 = np.array(['b', 'a', 'a', 'b', 'a']).reshape(5, 1)  # 2 classes
+    y2 = np.array(['d', 'e', 'f', 'e', 'd']).reshape(5, 1)  # 3 classes
+
+    Y = np.concatenate([y1, y2], axis=1)
+
+    clf = MultiOutputClassifier(LogisticRegression(
+        multi_class='ovr', solver='liblinear', random_state=seed))
+
+    clf.fit(X, Y)
+
+    y_result = clf.predict_proba(X)
+    y_actual = [np.array([[0.23481764, 0.76518236],
+                          [0.67196072, 0.32803928],
+                          [0.54681448, 0.45318552],
+                          [0.34883923, 0.65116077],
+                          [0.73687069, 0.26312931]]),
+                np.array([[0.5171785, 0.23878628, 0.24403522],
+                          [0.22141451, 0.64102704, 0.13755846],
+                          [0.16751315, 0.18256843, 0.64991843],
+                          [0.27357372, 0.55201592, 0.17441036],
+                          [0.65745193, 0.26062899, 0.08191907]])]
+
+    for i in range(len(y_actual)):
+        assert_almost_equal(y_result[i], y_actual[i])
+
+--- Chunk 6 ---
+File: sklearn/utils/tests/test_pprint.py
+Lines: 147-215
+Symbol: test_gridsearch_pipeline
+
+def test_gridsearch_pipeline():
+    # render a pipeline inside a gridsearch
+    pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
+
+    pipeline = Pipeline([
+        ('reduce_dim', PCA()),
+        ('classify', LinearSVC())
+    ])
+    N_FEATURES_OPTIONS = [2, 4, 8]
+    C_OPTIONS = [1, 10, 100, 1000]
+    param_grid = [
+        {
+            'reduce_dim': [PCA(iterated_power=7), NMF()],
+            'reduce_dim__n_components': N_FEATURES_OPTIONS,
+            'classify__C': C_OPTIONS
+        },
+        {
+            'reduce_dim': [SelectKBest(chi2)],
+            'reduce_dim__k': N_FEATURES_OPTIONS,
+            'classify__C': C_OPTIONS
+        }
+    ]
+    gspipline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
+    expected = """
+GridSearchCV(cv=3, error_score='raise-deprecating',
+             estimator=Pipeline(memory=None,
+                                steps=[('reduce_dim',
+                                        PCA(copy=True, iterated_power='auto',
+                                            n_components=None,
+                                            random_state=None,
+                                            svd_solver='auto', tol=0.0,
+                                            whiten=False)),
+                                       ('classify',
+                                        LinearSVC(C=1.0, class_weight=None,
+                                                  dual=True, fit_intercept=True,
+                                                  intercept_scaling=1,
+                                                  loss='squared_hinge',
+                                                  max_iter=1000,
+                                                  multi_class='ovr',
+                                                  penalty='l2',
+                                                  random_state=None, tol=0.0001,
+                                                  verbose=0))]),
+             iid='warn', n_jobs=1,
+             param_grid=[{'classify__C': [1, 10, 100, 1000],
+                          'reduce_dim': [PCA(copy=True, iterated_power=7,
+                                             n_components=None,
+                                             random_state=None,
+                                             svd_solver='auto', tol=0.0,
+                                             whiten=False),
+                                         NMF(alpha=0.0, beta_loss='frobenius',
+                                             init=None, l1_ratio=0.0,
+                                             max_iter=200, n_components=None,
+                                             random_state=None, shuffle=False,
+                                             solver='cd', tol=0.0001,
+                                             verbose=0)],
+                          'reduce_dim__n_components': [2, 4, 8]},
+                         {'classify__C': [1, 10, 100, 1000],
+                          'reduce_dim': [SelectKBest(k=10,
+                                                     score_func=<function chi2 at some_address>)],
+                          'reduce_dim__k': [2, 4, 8]}],
+             pre_dispatch='2*n_jobs', refit=True, return_train_score=False,
+             scoring=None, verbose=0)"""
+
+    expected = expected[1:]  # remove first \n
+    repr_ = pp.pformat(gspipline)
+    # Remove address of '<function chi2 at 0x.....>' for reproducibility
+    repr_ = re.sub('function chi2 at 0x.*>',
+                   'function chi2 at some_address>', repr_)
+    assert repr_ == expected
+
+--- Chunk 7 ---
+File: sklearn/linear_model/tests/test_least_angle.py
+Lines: 611-704
+Symbol: test_lasso_lars_vs_R_implementation
+
+def test_lasso_lars_vs_R_implementation():
+    # Test that sklearn LassoLars implementation agrees with the LassoLars
+    # implementation available in R (lars library) under the following
+    # scenarios:
+    # 1) fit_intercept=False and normalize=False
+    # 2) fit_intercept=True and normalize=True
+
+    # Let's generate the data used in the bug report 7778
+    y = np.array([-6.45006793, -3.51251449, -8.52445396, 6.12277822,
+                  -19.42109366])
+    x = np.array([[0.47299829, 0, 0, 0, 0],
+                  [0.08239882, 0.85784863, 0, 0, 0],
+                  [0.30114139, -0.07501577, 0.80895216, 0, 0],
+                  [-0.01460346, -0.1015233, 0.0407278, 0.80338378, 0],
+                  [-0.69363927, 0.06754067, 0.18064514, -0.0803561,
+                   0.40427291]])
+
+    X = x.T
+
+    ###########################################################################
+    # Scenario 1: Let's compare R vs sklearn when fit_intercept=False and
+    # normalize=False
+    ###########################################################################
+    #
+    # The R result was obtained using the following code:
+    #
+    # library(lars)
+    # model_lasso_lars = lars(X, t(y), type="lasso", intercept=FALSE,
+    #                         trace=TRUE, normalize=FALSE)
+    # r = t(model_lasso_lars$beta)
+    #
+
+    r = np.array([[0, 0, 0, 0, 0, -79.810362809499026, -83.528788732782829,
+                   -83.777653739190711, -83.784156932888934,
+                   -84.033390591756657],
+                  [0, 0, 0, 0, -0.476624256777266, 0, 0, 0, 0,
+                   0.025219751009936],
+                  [0, -3.577397088285891, -4.702795355871871,
+                   -7.016748621359461, -7.614898471899412, -0.336938391359179,
+                   0, 0, 0.001213370600853, 0.048162321585148],
+                  [0, 0, 0, 2.231558436628169, 2.723267514525966,
+                   2.811549786389614, 2.813766976061531, 2.817462468949557,
+                   2.817368178703816, 2.816221090636795],
+                  [0, 0, -1.218422599914637, -3.457726183014808,
+                   -4.021304522060710, -45.827461592423745,
+                   -47.776608869312305,
+                   -47.911561610746404, -47.914845922736234,
+                   -48.039562334265717]])
+
+    model_lasso_lars = linear_model.LassoLars(alpha=0, fit_intercept=False,
+                                              normalize=False)
+    model_lasso_lars.fit(X, y)
+    skl_betas = model_lasso_lars.coef_path_
+
+    assert_array_almost_equal(r, skl_betas, decimal=12)
+    ###########################################################################
+
+    ###########################################################################
+    # Scenario 2: Let's compare R vs sklearn when fit_intercept=True and
+    # normalize=True
+    #
+    # Note: When normalize is equal to True, R returns the coefficients in
+    # their original units, that is, they are rescaled back, whereas sklearn
+    # does not do that, therefore, we need to do this step before comparing
+    # their results.
+    ###########################################################################
+    #
+    # The R result was obtained using the following code:
+    #
+    # library(lars)
+    # model_lasso_lars2 = lars(X, t(y), type="lasso", intercept=TRUE,
+    #                           trace=TRUE, normalize=TRUE)
+    # r2 = t(model_lasso_lars2$beta)
+
+    r2 = np.array([[0, 0, 0, 0, 0],
+                   [0, 0, 0, 8.371887668009453, 19.463768371044026],
+                   [0, 0, 0, 0, 9.901611055290553],
+                   [0, 7.495923132833733, 9.245133544334507,
+                    17.389369207545062, 26.971656815643499],
+                   [0, 0, -1.569380717440311, -5.924804108067312,
+                    -7.996385265061972]])
+
+    model_lasso_lars2 = linear_model.LassoLars(alpha=0, fit_intercept=True,
+                                               normalize=True)
+    model_lasso_lars2.fit(X, y)
+    skl_betas2 = model_lasso_lars2.coef_path_
+
+    # Let's rescale back the coefficients returned by sklearn before comparing
+    # against the R result (read the note above)
+    temp = X - np.mean(X, axis=0)
+    normx = np.sqrt(np.sum(temp ** 2, axis=0))
+    skl_betas2 /= normx[:, np.newaxis]
+
+    assert_array_almost_equal(r2, skl_betas2, decimal=12)
+
+--- Chunk 8 ---
+File: sklearn/model_selection/tests/test_validation.py
+Lines: 1191-1223
+Symbol: test_learning_curve_with_shuffle
+
+def test_learning_curve_with_shuffle():
+    # Following test case was designed this way to verify the code
+    # changes made in pull request: #7506.
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [11, 12], [13, 14], [15, 16],
+                 [17, 18], [19, 20], [7, 8], [9, 10], [11, 12], [13, 14],
+                 [15, 16], [17, 18]])
+    y = np.array([1, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 2, 3, 4])
+    groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
+    # Splits on these groups fail without shuffle as the first iteration
+    # of the learning curve doesn't contain label 4 in the training set.
+    estimator = PassiveAggressiveClassifier(max_iter=5, tol=None,
+                                            shuffle=False)
+
+    cv = GroupKFold(n_splits=2)
+    train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
+        groups=groups, shuffle=True, random_state=2)
+    assert_array_almost_equal(train_scores_batch.mean(axis=1),
+                              np.array([0.75, 0.3, 0.36111111]))
+    assert_array_almost_equal(test_scores_batch.mean(axis=1),
+                              np.array([0.36111111, 0.25, 0.25]))
+    assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
+                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups,
+                  error_score='raise')
+
+    train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
+        groups=groups, shuffle=True, random_state=2,
+        exploit_incremental_learning=True)
+    assert_array_almost_equal(train_scores_inc.mean(axis=1),
+                              train_scores_batch.mean(axis=1))
+    assert_array_almost_equal(test_scores_inc.mean(axis=1),
+                              test_scores_batch.mean(axis=1))
+
+--- Chunk 9 ---
+File: setup.py
+Lines: 215-293
+Symbol: setup_package
+
+def setup_package():
+    metadata = dict(name=DISTNAME,
+                    maintainer=MAINTAINER,
+                    maintainer_email=MAINTAINER_EMAIL,
+                    description=DESCRIPTION,
+                    license=LICENSE,
+                    url=URL,
+                    download_url=DOWNLOAD_URL,
+                    version=VERSION,
+                    long_description=LONG_DESCRIPTION,
+                    classifiers=['Intended Audience :: Science/Research',
+                                 'Intended Audience :: Developers',
+                                 'License :: OSI Approved',
+                                 'Programming Language :: C',
+                                 'Programming Language :: Python',
+                                 'Topic :: Software Development',
+                                 'Topic :: Scientific/Engineering',
+                                 'Operating System :: Microsoft :: Windows',
+                                 'Operating System :: POSIX',
+                                 'Operating System :: Unix',
+                                 'Operating System :: MacOS',
+                                 'Programming Language :: Python :: 3',
+                                 'Programming Language :: Python :: 3.5',
+                                 'Programming Language :: Python :: 3.6',
+                                 'Programming Language :: Python :: 3.7',
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: CPython'),
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: PyPy')
+                                 ],
+                    cmdclass=cmdclass,
+                    install_requires=[
+                        'numpy>={}'.format(NUMPY_MIN_VERSION),
+                        'scipy>={}'.format(SCIPY_MIN_VERSION)
+                    ],
+                    **extra_setuptools_args)
+
+    if len(sys.argv) == 1 or (
+            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
+                                    sys.argv[1] in ('--help-commands',
+                                                    'egg_info',
+                                                    '--version',
+                                                    'clean'))):
+        # For these actions, NumPy is not required
+        #
+        # They are required to succeed without Numpy for example when
+        # pip is used to install Scikit-learn when Numpy is not yet present in
+        # the system.
+        try:
+            from setuptools import setup
+        except ImportError:
+            from distutils.core import setup
+
+        metadata['version'] = VERSION
+    else:
+        numpy_status = get_numpy_status()
+        numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
+            NUMPY_MIN_VERSION)
+
+        instructions = ("Installation instructions are available on the "
+                        "scikit-learn website: "
+                        "http://scikit-learn.org/stable/install.html\n")
+
+        if numpy_status['up_to_date'] is False:
+            if numpy_status['version']:
+                raise ImportError("Your installation of Numerical Python "
+                                  "(NumPy) {} is out-of-date.\n{}{}"
+                                  .format(numpy_status['version'],
+                                          numpy_req_str, instructions))
+            else:
+                raise ImportError("Numerical Python (NumPy) is not "
+                                  "installed.\n{}{}"
+                                  .format(numpy_req_str, instructions))
+
+        from numpy.distutils.core import setup
+
+        metadata['configuration'] = configuration
+
+    setup(**metadata)
+
+--- Chunk 10 ---
+File: sklearn/datasets/samples_generator.py
+Lines: 407-452
+Symbol: make_hastie_10_2
+
+def make_hastie_10_2(n_samples=12000, random_state=None):
+    """Generates data for binary classification used in
+    Hastie et al. 2009, Example 10.2.
+
+    The ten features are standard independent Gaussian and
+    the target ``y`` is defined by::
+
+      y[i] = 1 if np.sum(X[i] ** 2) > 9.34 else -1
+
+    Read more in the :ref:`User Guide <sample_generators>`.
+
+    Parameters
+    ----------
+    n_samples : int, optional (default=12000)
+        The number of samples.
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, 10]
+        The input samples.
+
+    y : array of shape [n_samples]
+        The output values.
+
+    References
+    ----------
+    .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
+           Learning Ed. 2", Springer, 2009.
+
+    See also
+    --------
+    make_gaussian_quantiles: a generalization of this dataset approach
+    """
+    rs = check_random_state(random_state)
+
+    shape = (n_samples, 10)
+    X = rs.normal(size=shape).reshape(shape)
+    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
+    y[y == 0.0] = -1.0
+
+    return X, y
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

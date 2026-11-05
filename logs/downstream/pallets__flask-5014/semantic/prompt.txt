@@ -1,0 +1,318 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Require a non-empty name for Blueprints
+Things do not work correctly if a Blueprint is given an empty name (e.g. #4944).
+It would be helpful if a `ValueError` was raised when trying to do that.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: src/flask/blueprints.py
+Lines: 251-266
+Symbol: Blueprint.register_blueprint
+
+    def register_blueprint(self, blueprint: "Blueprint", **options: t.Any) -> None:
+        """Register a :class:`~flask.Blueprint` on this blueprint. Keyword
+        arguments passed to this method will override the defaults set
+        on the blueprint.
+
+        .. versionchanged:: 2.0.1
+            The ``name`` option can be used to change the (pre-dotted)
+            name the blueprint is registered with. This allows the same
+            blueprint to be registered multiple times with unique names
+            for ``url_for``.
+
+        .. versionadded:: 2.0
+        """
+        if blueprint is self:
+            raise ValueError("Cannot register a blueprint on itself")
+        self._blueprints.append((blueprint, options))
+
+--- Chunk 2 ---
+File: tests/test_blueprints.py
+Lines: 996-1010
+Symbol: test_unique_blueprint_names
+
+def test_unique_blueprint_names(app, client) -> None:
+    bp = flask.Blueprint("bp", __name__)
+    bp2 = flask.Blueprint("bp", __name__)
+
+    app.register_blueprint(bp)
+
+    with pytest.raises(ValueError):
+        app.register_blueprint(bp)  # same bp, same name, error
+
+    app.register_blueprint(bp, name="again")  # same bp, different name, ok
+
+    with pytest.raises(ValueError):
+        app.register_blueprint(bp2)  # different bp, same name, error
+
+    app.register_blueprint(bp2, name="alt")  # different bp, different name, ok
+
+--- Chunk 3 ---
+File: src/flask/blueprints.py
+Lines: 208-216
+Symbol: Blueprint._check_setup_finished
+
+    def _check_setup_finished(self, f_name: str) -> None:
+        if self._got_registered_once:
+            raise AssertionError(
+                f"The setup method '{f_name}' can no longer be called on the blueprint"
+                f" '{self.name}'. It has already been registered at least once, any"
+                " changes will not be applied consistently.\n"
+                "Make sure all imports, decorators, functions, etc. needed to set up"
+                " the blueprint are done before registering it."
+            )
+
+--- Chunk 4 ---
+File: src/flask/wrappers.py
+Lines: 76-92
+Symbol: Request.blueprint
+
+    def blueprint(self) -> t.Optional[str]:
+        """The registered name of the current blueprint.
+
+        This will be ``None`` if the endpoint is not part of a
+        blueprint, or if URL matching failed or has not been performed
+        yet.
+
+        This does not necessarily match the name the blueprint was
+        created with. It may have been nested, or registered with a
+        different name.
+        """
+        endpoint = self.endpoint
+
+        if endpoint is not None and "." in endpoint:
+            return endpoint.rpartition(".")[0]
+
+        return None
+
+--- Chunk 5 ---
+File: tests/test_cli.py
+Lines: 672-678
+Symbol: test_cli_empty
+
+def test_cli_empty(app):
+    """If a Blueprint's CLI group is empty, do not register it."""
+    bp = Blueprint("blue", __name__, cli_group="blue")
+    app.register_blueprint(bp)
+
+    result = app.test_cli_runner().invoke(args=["blue", "--help"])
+    assert result.exit_code == 2, f"Unexpected success:\n\n{result.output}"
+
+--- Chunk 6 ---
+File: src/flask/blueprints.py
+Lines: 268-402
+Symbol: Blueprint.register
+
+    def register(self, app: "Flask", options: dict) -> None:
+        """Called by :meth:`Flask.register_blueprint` to register all
+        views and callbacks registered on the blueprint with the
+        application. Creates a :class:`.BlueprintSetupState` and calls
+        each :meth:`record` callback with it.
+
+        :param app: The application this blueprint is being registered
+            with.
+        :param options: Keyword arguments forwarded from
+            :meth:`~Flask.register_blueprint`.
+
+        .. versionchanged:: 2.3
+            Nested blueprints now correctly apply subdomains.
+
+        .. versionchanged:: 2.1
+            Registering the same blueprint with the same name multiple
+            times is an error.
+
+        .. versionchanged:: 2.0.1
+            Nested blueprints are registered with their dotted name.
+            This allows different blueprints with the same name to be
+            nested at different locations.
+
+        .. versionchanged:: 2.0.1
+            The ``name`` option can be used to change the (pre-dotted)
+            name the blueprint is registered with. This allows the same
+            blueprint to be registered multiple times with unique names
+            for ``url_for``.
+        """
+        name_prefix = options.get("name_prefix", "")
+        self_name = options.get("name", self.name)
+        name = f"{name_prefix}.{self_name}".lstrip(".")
+
+        if name in app.blueprints:
+            bp_desc = "this" if app.blueprints[name] is self else "a different"
+            existing_at = f" '{name}'" if self_name != name else ""
+
+            raise ValueError(
+                f"The name '{self_name}' is already registered for"
+                f" {bp_desc} blueprint{existing_at}. Use 'name=' to"
+                f" provide a unique name."
+            )
+
+        first_bp_registration = not any(bp is self for bp in app.blueprints.values())
+        first_name_registration = name not in app.blueprints
+
+        app.blueprints[name] = self
+        self._got_registered_once = True
+        state = self.make_setup_state(app, options, first_bp_registration)
+
+        if self.has_static_folder:
+            state.add_url_rule(
+                f"{self.static_url_path}/<path:filename>",
+                view_func=self.send_static_file,
+                endpoint="static",
+            )
+
+        # Merge blueprint data into parent.
+        if first_bp_registration or first_name_registration:
+
+            def extend(bp_dict, parent_dict):
+                for key, values in bp_dict.items():
+                    key = name if key is None else f"{name}.{key}"
+                    parent_dict[key].extend(values)
+
+            for key, value in self.error_handler_spec.items():
+                key = name if key is None else f"{name}.{key}"
+                value = defaultdict(
+                    dict,
+                    {
+                        code: {
+                            exc_class: func for exc_class, func in code_values.items()
+                        }
+                        for code, code_values in value.items()
+                    },
+                )
+                app.error_handler_spec[key] = value
+
+            for endpoint, func in self.view_functions.items():
+                app.view_functions[endpoint] = func
+
+            extend(self.before_request_funcs, app.before_request_funcs)
+            extend(self.after_request_funcs, app.after_request_funcs)
+            extend(
+                self.teardown_request_funcs,
+                app.teardown_request_funcs,
+            )
+            extend(self.url_default_functions, app.url_default_functions)
+            extend(self.url_value_preprocessors, app.url_value_preprocessors)
+            extend(self.template_context_processors, app.template_context_processors)
+
+        for deferred in self.deferred_functions:
+            deferred(state)
+
+        cli_resolved_group = options.get("cli_group", self.cli_group)
+
+        if self.cli.commands:
+            if cli_resolved_group is None:
+                app.cli.commands.update(self.cli.commands)
+            elif cli_resolved_group is _sentinel:
+                self.cli.name = name
+                app.cli.add_command(self.cli)
+            else:
+                self.cli.name = cli_resolved_group
+                app.cli.add_command(self.cli)
+
+        for blueprint, bp_options in self._blueprints:
+            bp_options = bp_options.copy()
+            bp_url_prefix = bp_options.get("url_prefix")
+            bp_subdomain = bp_options.get("subdomain")
+
+            if bp_subdomain is None:
+                bp_subdomain = blueprint.subdomain
+
+            if state.subdomain is not None and bp_subdomain is not None:
+                bp_options["subdomain"] = bp_subdomain + "." + state.subdomain
+            elif bp_subdomain is not None:
+                bp_options["subdomain"] = bp_subdomain
+            elif state.subdomain is not None:
+                bp_options["subdomain"] = state.subdomain
+
+            if bp_url_prefix is None:
+                bp_url_prefix = blueprint.url_prefix
+
+            if state.url_prefix is not None and bp_url_prefix is not None:
+                bp_options["url_prefix"] = (
+                    state.url_prefix.rstrip("/") + "/" + bp_url_prefix.lstrip("/")
+                )
+            elif bp_url_prefix is not None:
+                bp_options["url_prefix"] = bp_url_prefix
+            elif state.url_prefix is not None:
+                bp_options["url_prefix"] = state.url_prefix
+
+            bp_options["name_prefix"] = name
+            blueprint.register(app, bp_options)
+
+--- Chunk 7 ---
+File: tests/test_blueprints.py
+Lines: 276-287
+Symbol: test_empty_url_defaults
+
+def test_empty_url_defaults(app, client):
+    bp = flask.Blueprint("bp", __name__)
+
+    @bp.route("/", defaults={"page": 1})
+    @bp.route("/page/<int:page>")
+    def something(page):
+        return str(page)
+
+    app.register_blueprint(bp)
+
+    assert client.get("/").data == b"1"
+    assert client.get("/page/2").data == b"2"
+
+--- Chunk 8 ---
+File: src/flask/app.py
+Lines: 985-1010
+Symbol: Flask.register_blueprint
+
+    def register_blueprint(self, blueprint: "Blueprint", **options: t.Any) -> None:
+        """Register a :class:`~flask.Blueprint` on the application. Keyword
+        arguments passed to this method will override the defaults set on the
+        blueprint.
+
+        Calls the blueprint's :meth:`~flask.Blueprint.register` method after
+        recording the blueprint in the application's :attr:`blueprints`.
+
+        :param blueprint: The blueprint to register.
+        :param url_prefix: Blueprint routes will be prefixed with this.
+        :param subdomain: Blueprint routes will match on this subdomain.
+        :param url_defaults: Blueprint routes will use these default values for
+            view arguments.
+        :param options: Additional keyword arguments are passed to
+            :class:`~flask.blueprints.BlueprintSetupState`. They can be
+            accessed in :meth:`~flask.Blueprint.record` callbacks.
+
+        .. versionchanged:: 2.0.1
+            The ``name`` option can be used to change the (pre-dotted)
+            name the blueprint is registered with. This allows the same
+            blueprint to be registered multiple times with unique names
+            for ``url_for``.
+
+        .. versionadded:: 0.7
+        """
+        blueprint.register(self, options)
+
+--- Chunk 9 ---
+File: tests/test_blueprints.py
+Lines: 281-282
+Symbol: test_empty_url_defaults.something
+
+    def something(page):
+        return str(page)
+
+--- Chunk 10 ---
+File: tests/test_blueprints.py
+Lines: 254-256
+Symbol: test_dotted_name_not_allowed
+
+def test_dotted_name_not_allowed(app, client):
+    with pytest.raises(ValueError):
+        flask.Blueprint("app.ui", __name__)
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

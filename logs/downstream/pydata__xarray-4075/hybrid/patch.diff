@@ -1,0 +1,13 @@
+```patch
+diff --git a/xarray/core/weighted.py b/xarray/core/weighted.py
+--- a/xarray/core/weighted.py
++++ b/xarray/core/weighted.py
+@@ -141,7 +141,7 @@
+         if skipna:
+             # we need to mask ``weights`` where ``obj`` is NaN
+             weights = weights.where(obj.notnull())
+-        sum_of_weights = dot(obj.notnull(), weights, dims=dim)
++        sum_of_weights = dot(obj.notnull(), weights * 1, dims=dim)
+ 
+         return sum_of_weights
+```

@@ -1,0 +1,17 @@
+--- seaborn/_core/plot.py
++++ seaborn/_core/plot.py
+@@ -1485,4 +1485,15 @@
+                 else:
+                     ax.tick_params(**{f"{axis}ticks": False})
+ 
++            if isinstance(scales.get(axis), Nominal):
++                n = len(scales.get(axis)._legend[0])
++                if axis == "x":
++                    ax.xaxis.grid(False)
++                    ax.set_xlim(-.5, n - .5, auto=None)
++                else:
++                    ax.yaxis.grid(False)
++                    ax.set_ylim(n - .5, -.5, auto=None)
++
+         for coord in ["x", "y"]:
+             if coord not in scales:

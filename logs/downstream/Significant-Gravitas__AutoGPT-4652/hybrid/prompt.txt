@@ -1,0 +1,533 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+ COMMAND = list_files - openai.error.InvalidRequestError: This model's maximum context length is 4097 tokens
+### ⚠️ Search for existing issues first ⚠️
+
+- [X] I have searched the existing issues, and there is no existing issue for my problem
+
+### Which Operating System are you using?
+
+Docker
+
+### Which version of Auto-GPT are you using?
+
+Master (branch)
+
+### GPT-3 or GPT-4?
+
+GPT-3.5
+
+### Steps to reproduce 🕹
+
+listing the auto_gpt_workspace folder errors out. maybe this is an erroneous bug, not really sure, but why is it calling openai when it's merely listing the files in the folder?
+
+openai.error.InvalidRequestError: This model's maximum context length is 4097 tokens. However, your messages resulted in 4819 tokens. Please reduce the length of the messages.
+
+### Current behavior 😯
+
+listing the folder contents errors out and kills the program if there's too many files in there.
+
+### Expected behavior 🤔
+
+not ... error out :D
+
+### Your prompt 📝
+
+```yaml
+# Paste your prompt here
+```
+
+
+### Your Logs 📒
+
+```log
+NEXT ACTION:  COMMAND = list_files ARGUMENTS = {'directory': '/home/atlas/autogpt/auto_gpt_workspace/atlas_repo'}
+SYSTEM:  Command list_files returned: ['atlas_repo/docker-compose.yml', 'atlas_repo/mkdocs.yml', 'atlas_repo/run.bat', 'atlas_repo/run_continuous.bat', 'atlas_repo/requirements.txt', 'atlas_repo/tests.py', 'atlas_repo/CODE_OF_CONDUCT.md', 'atlas_repo/main.py', 'atlas_repo/plugin.png', 'atlas_repo/codecov.yml', 'atlas_repo/CONTRIBUTING.md', 'atlas_repo/BULLETIN.md', 'atlas_repo/run_continuous.sh', 'atlas_repo/LICENSE', 'atlas_repo/pyproject.toml', 'atlas_repo/azure.yaml.template', 'atlas_repo/README.md', 'atlas_repo/data_ingestion.py', 'atlas_repo/run.sh', 'atlas_repo/Dockerfile', 'atlas_repo/scripts/install_plugin_deps.py', 'atlas_repo/scripts/check_requirements.py', 'atlas_repo/scripts/__init__.py', 'atlas_repo/.git/packed-refs', 'atlas_repo/.git/config', 'atlas_repo/.git/index', 'atlas_repo/.git/description', 'atlas_repo/.git/HEAD', 'atlas_repo/.git/hooks/pre-applypatch.sample', 'atlas_repo/.git/hooks/pre-rebase.sample', 'atlas_repo/.git/hooks/pre-merge-commit.sample', 'atlas_repo/.git/hooks/post-update.sample', 'atlas_repo/.git/hooks/pre-push.sample', 'atlas_repo/.git/hooks/pre-receive.sample', 'atlas_repo/.git/hooks/push-to-checkout.sample', 'atlas_repo/.git/hooks/fsmonitor-watchman.sample', 'atlas_repo/.git/hooks/prepare-commit-msg.sample', 'atlas_repo/.git/hooks/commit-msg.sample', 'atlas_repo/.git/hooks/applypatch-msg.sample', 'atlas_repo/.git/hooks/pre-commit.sample', 'atlas_repo/.git/hooks/update.sample', 'atlas_repo/.git/logs/HEAD', 'atlas_repo/.git/logs/refs/heads/master', 'atlas_repo/.git/logs/refs/remotes/origin/HEAD', 'atlas_repo/.git/info/exclude', 'atlas_repo/.git/refs/heads/master', 'atlas_repo/.git/refs/remotes/origin/HEAD', 'atlas_repo/.git/objects/pack/pack-f6a3dd32fbb51bd88bf8f6872667b2c80c8833ee.pack', 'atlas_repo/.git/objects/pack/pack-f6a3dd32fbb51bd88bf8f6872667b2c80c8833ee.idx', 'atlas_repo/plugins/__PUT_PLUGIN_ZIPS_HERE__', 'atlas_repo/benchmark/benchmark_entrepreneur_gpt_with_difficult_user.py', 'atlas_repo/benchmark/__init__.py', 'atlas_repo/tests/test_agent.py', 'atlas_repo/tests/test_image_gen.py', 'atlas_repo/tests/context.py', 'atlas_repo/tests/test_ai_config.py', 'atlas_repo/tests/test_logs.py', 'atlas_repo/tests/test_config.py', 'atlas_repo/tests/test_commands.py', 'atlas_repo/tests/test_agent_manager.py', 'atlas_repo/tests/test_utils.py', 'atlas_repo/tests/milvus_memory_test.py', 'atlas_repo/tests/test_token_counter.py', 'atlas_repo/tests/utils.py', 'atlas_repo/tests/conftest.py', 'atlas_repo/tests/test_prompt_generator.py', 'atlas_repo/tests/test_workspace.py', 'atlas_repo/tests/test_api_manager.py', 'atlas_repo/tests/__init__.py', 'atlas_repo/tests/integration/agent_factory.py', 'atlas_repo/tests/integration/test_memory_management.py', 'atlas_repo/tests/integration/milvus_memory_tests.py', 'atlas_repo/tests/integration/test_git_commands.py', 'atlas_repo/tests/integration/memory_tests.py', 'atlas_repo/tests/integration/test_execute_code.py', 'atlas_repo/tests/integration/test_setup.py', 'atlas_repo/tests/integration/agent_utils.py', 'atlas_repo/tests/integration/weaviate_memory_tests.py', 'atlas_repo/tests/integration/test_local_cache.py', 'atlas_repo/tests/integration/conftest.py', 'atlas_repo/tests/integration/test_llm_utils.py', 'atlas_repo/tests/integration/__init__.py', 'atlas_repo/tests/integration/cassettes/test_memory_management/test_save_memory_trimmed_from_context_window.yaml', 'atlas_repo/tests/integration/cassettes/test_setup/test_generate_aiconfig_automatic_default.yaml', 'atlas_repo/tests/integration/cassettes/test_setup/test_generate_aiconfig_automatic_typical.yaml', 'atlas_repo/tests/integration/cassettes/test_setup/test_generate_aiconfig_automatic_fallback.yaml', 'atlas_repo/tests/integration/cassettes/test_llm_utils/test_get_ada_embedding_large_context.yaml', 'atlas_repo/tests/integration/cassettes/test_llm_utils/test_get_ada_embedding.yaml', 'atlas_repo/tests/integration/cassettes/test_local_cache/test_get_relevant.yaml', 'atlas_repo/tests/integration/challenges/utils.py', 'atlas_repo/tests/integration/challenges/conftest.py', 'atlas_repo/tests/integration/challenges/__init__.py', 'atlas_repo/tests/integration/challenges/memory/test_memory_challenge_b.py', 'atlas_repo/tests/integration/challenges/memory/test_memory_challenge_a.py', 'atlas_repo/tests/integration/challenges/memory/__init__.py', 'atlas_repo/tests/integration/challenges/memory/cassettes/test_memory_challenge_a/test_memory_challenge_a.yaml', 'atlas_repo/tests/integration/challenges/memory/cassettes/test_memory_challenge_b/test_memory_challenge_b.yaml', 'atlas_repo/tests/integration/goal_oriented/goal_oriented_tasks.md', 'atlas_repo/tests/integration/goal_oriented/test_write_file.py', 'atlas_repo/tests/integration/goal_oriented/test_browse_website.py', 'atlas_repo/tests/integration/goal_oriented/__init__.py', 'atlas_repo/tests/integration/goal_oriented/cassettes/test_browse_website/test_browse_website.yaml', 'atlas_repo/tests/integration/goal_oriented/cassettes/test_write_file/test_write_file.yaml', 'atlas_repo/tests/unit/test_get_self_feedback.py', 'atlas_repo/tests/unit/test_plugins.py', 'atlas_repo/tests/unit/test_browse_scrape_links.py', 'atlas_repo/tests/unit/test_chat.py', 'atlas_repo/tests/unit/test_browse_scrape_text.py', 'atlas_repo/tests/unit/test_web_selenium.py', 'atlas_repo/tests/unit/test_commands.py', 'atlas_repo/tests/unit/test_file_operations.py', 'atlas_repo/tests/unit/test_spinner.py', 'atlas_repo/tests/unit/test_json_parser.py', 'atlas_repo/tests/unit/test_json_utils_llm.py', 'atlas_repo/tests/unit/test_url_validation.py', 'atlas_repo/tests/unit/_test_json_parser.py', 'atlas_repo/tests/unit/test_llm_utils.py', 'atlas_repo/tests/unit/__init__.py', 'atlas_repo/tests/unit/data/test_plugins/Auto-GPT-Plugin-Test-master.zip', 'atlas_repo/tests/unit/models/test_base_open_api_plugin.py', 'atlas_repo/tests/mocks/mock_commands.py', 'atlas_repo/tests/mocks/__init__.py', 'atlas_repo/tests/vcr/openai_filter.py', 'atlas_repo/tests/vcr/__init__.py', 'atlas_repo/.github/FUNDING.yml', 'atlas_repo/.github/PULL_REQUEST_TEMPLATE.md', 'atlas_repo/.github/workflows/docker-release.yml', 'atlas_repo/.github/workflows/docker-cache-clean.yml', 'atlas_repo/.github/workflows/ci.yml', 'atlas_repo/.github/workflows/sponsors_readme.yml', 'atlas_repo/.github/workflows/docker-ci.yml', 'atlas_repo/.github/workflows/benchmarks.yml', 'atlas_repo/.github/workflows/documentation-release.yml', 'atlas_repo/.github/workflows/pr-label.yml', 'atlas_repo/.github/workflows/scripts/docker-ci-summary.sh', 'atlas_repo/.github/workflows/scripts/docker-release-summary.sh', 'atlas_repo/.github/ISSUE_TEMPLATE/1.bug.yml', 'atlas_repo/.github/ISSUE_TEMPLATE/2.feature.yml', 'atlas_repo/autogpt/app.py', 'atlas_repo/autogpt/configurator.py', 'atlas_repo/autogpt/main.py', 'atlas_repo/autogpt/singleton.py', 'atlas_repo/autogpt/logs.py', 'atlas_repo/autogpt/utils.py', 'atlas_repo/autogpt/cli.py', 'atlas_repo/autogpt/plugins.py', 'atlas_repo/autogpt/setup.py', 'atlas_repo/autogpt/__main__.py', 'atlas_repo/autogpt/__init__.py', 'atlas_repo/autogpt/spinner.py', 'atlas_repo/autogpt/memory_management/store_memory.py', 'atlas_repo/autogpt/memory_management/summary_memory.py', 'atlas_repo/autogpt/json_utils/llm_response_format_1.json', 'atlas_repo/autogpt/json_utils/json_fix_llm.py', 'atlas_repo/autogpt/json_utils/json_fix_general.py', 'atlas_repo/autogpt/json_utils/__init__.py', 'atlas_repo/autogpt/json_utils/utilities.py', 'atlas_repo/autogpt/processing/text.py', 'atlas_repo/autogpt/processing/html.py', 'atlas_repo/autogpt/processing/__init__.py', 'atlas_repo/autogpt/memory/local.py', 'atlas_repo/autogpt/memory/pinecone.py', 'atlas_repo/autogpt/memory/no_memory.py', 'atlas_repo/autogpt/memory/weaviate.py', 'atlas_repo/autogpt/memory/milvus.py', 'atlas_repo/autogpt/memory/base.py', 'atlas_repo/autogpt/memory/redismem.py', 'atlas_repo/autogpt/memory/__init__.py', 'atlas_repo/autogpt/commands/write_tests.py', 'atlas_repo/autogpt/commands/web_playwright.py', 'atlas_repo/autogpt/commands/improve_code.py', 'atlas_repo/autogpt/commands/google_search.py', 'atlas_repo/autogpt/commands/audio_text.py', 'atlas_repo/autogpt/commands/web_selenium.py', 'atlas_repo/autogpt/commands/image_gen.py', 'atlas_repo/autogpt/commands/web_requests.py', 'atlas_repo/autogpt/commands/command.py', 'atlas_repo/autogpt/commands/times.py', 'atlas_repo/autogpt/commands/file_operations.py', 'atlas_repo/autogpt/commands/git_operations.py', 'atlas_repo/autogpt/commands/twitter.py', 'atlas_repo/autogpt/commands/analyze_code.py', 'atlas_repo/autogpt/commands/execute_code.py', 'atlas_repo/autogpt/commands/__init__.py', 'atlas_repo/autogpt/config/ai_config.py', 'atlas_repo/autogpt/config/config.py', 'atlas_repo/autogpt/config/__init__.py', 'atlas_repo/autogpt/prompts/prompt.py', 'atlas_repo/autogpt/prompts/generator.py', 'atlas_repo/autogpt/prompts/__init__.py', 'atlas_repo/autogpt/url_utils/__init__.py', 'atlas_repo/autogpt/url_utils/validators.py', 'atlas_repo/autogpt/workspace/workspace.py', 'atlas_repo/autogpt/workspace/__init__.py', 'atlas_repo/autogpt/llm/modelsinfo.py', 'atlas_repo/autogpt/llm/api_manager.py', 'atlas_repo/autogpt/llm/chat.py', 'atlas_repo/autogpt/llm/llm_utils.py', 'atlas_repo/autogpt/llm/token_counter.py', 'atlas_repo/autogpt/llm/base.py', 'atlas_repo/autogpt/llm/__init__.py', 'atlas_repo/autogpt/llm/providers/openai.py', 'atlas_repo/autogpt/llm/providers/__init__.py', 'atlas_repo/autogpt/agent/agent_manager.py', 'atlas_repo/autogpt/agent/agent.py', 'atlas_repo/autogpt/agent/__init__.py', 'atlas_repo/autogpt/models/base_open_ai_plugin.py', 'atlas_repo/autogpt/speech/brian.py', 'atlas_repo/autogpt/speech/eleven_labs.py', 'atlas_repo/autogpt/speech/gtts.py', 'atlas_repo/autogpt/speech/say.py', 'atlas_repo/autogpt/speech/base.py', 'atlas_repo/autogpt/speech/macos_tts.py', 'atlas_repo/autogpt/speech/__init__.py', 'atlas_repo/autogpt/js/overlay.js', 'atlas_repo/docs/usage.md', 'atlas_repo/docs/plugins.md', 'atlas_repo/docs/testing.md', 'atlas_repo/docs/index.md', 'atlas_repo/docs/code-of-conduct.md', 'atlas_repo/docs/setup.md', 'atlas_repo/docs/contributing.md', 'atlas_repo/docs/imgs/openai-api-key-billing-paid-account.png', 'atlas_repo/docs/configuration/search.md', 'atlas_repo/docs/configuration/voice.md', 'atlas_repo/docs/configuration/imagegen.md', 'atlas_repo/docs/configuration/memory.md', 'atlas_repo/.devcontainer/docker-compose.yml', 'atlas_repo/.devcontainer/Dockerfile', 'atlas_repo/.devcontainer/devcontainer.json']
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/local/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/atlas/autogpt/__main__.py", line 5, in <module>
+    autogpt.cli.main()
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1055, in main
+    rv = self.invoke(ctx)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1635, in invoke
+    rv = super().invoke(ctx)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/usr/local/lib/python3.10/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/click/decorators.py", line 26, in new_func
+    return f(get_current_context(), *args, **kwargs)
+  File "/home/atlas/autogpt/cli.py", line 90, in main
+    run_auto_gpt(
+  File "/home/atlas/autogpt/main.py", line 157, in run_auto_gpt
+    agent.start_interaction_loop()
+  File "/home/atlas/autogpt/agent/agent.py", line 94, in start_interaction_loop
+    assistant_reply = chat_with_ai(
+  File "/home/atlas/autogpt/llm/chat.py", line 166, in chat_with_ai
+    agent.summary_memory = update_running_summary(
+  File "/home/atlas/autogpt/memory_management/summary_memory.py", line 114, in update_running_summary
+    current_memory = create_chat_completion(messages, cfg.fast_llm_model)
+  File "/home/atlas/autogpt/llm/llm_utils.py", line 166, in create_chat_completion
+    response = api_manager.create_chat_completion(
+  File "/home/atlas/autogpt/llm/api_manager.py", line 55, in create_chat_completion
+    response = openai.ChatCompletion.create(
+  File "/usr/local/lib/python3.10/site-packages/openai/api_resources/chat_completion.py", line 25, in create
+    return super().create(*args, **kwargs)
+  File "/usr/local/lib/python3.10/site-packages/openai/api_resources/abstract/engine_api_resource.py", line 153, in create
+    response, _, api_key = requestor.request(
+  File "/usr/local/lib/python3.10/site-packages/openai/api_requestor.py", line 226, in request
+    resp, got_stream = self._interpret_response(result, stream)
+  File "/usr/local/lib/python3.10/site-packages/openai/api_requestor.py", line 619, in _interpret_response
+    self._interpret_response_line(
+  File "/usr/local/lib/python3.10/site-packages/openai/api_requestor.py", line 682, in _interpret_response_line
+    raise self.handle_error_response(
+openai.error.InvalidRequestError: This model's maximum context length is 4097 tokens. However, your messages resulted in 4819 tokens. Please reduce the length of the messages.
+
+```
+
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: tests/integration/agent_factory.py
+Lines: 248-289
+Symbol: debug_code_agents
+
+def debug_code_agents(agent_test_config, memory_json_file, workspace: Workspace):
+    agents = []
+    goals = [
+        [
+            "1- Run test.py using the execute_python_file command.",
+            "2- Read code.py using the read_file command.",
+            "3- Modify code.py using the write_to_file command."
+            "Repeat step 1, 2 and 3 until test.py runs without errors.",
+        ],
+        [
+            "1- Run test.py.",
+            "2- Read code.py.",
+            "3- Modify code.py."
+            "Repeat step 1, 2 and 3 until test.py runs without errors.",
+        ],
+        ["1- Make test.py run without errors."],
+    ]
+
+    for goal in goals:
+        ai_config = AIConfig(
+            ai_name="Debug Code Agent",
+            ai_role="an autonomous agent that specializes in debugging python code",
+            ai_goals=goal,
+        )
+        command_registry = get_command_registry(agent_test_config)
+        ai_config.command_registry = command_registry
+        system_prompt = ai_config.construct_full_prompt()
+        Config().set_continuous_mode(False)
+        agents.append(
+            Agent(
+                ai_name="Debug Code Agent",
+                memory=memory_json_file,
+                command_registry=command_registry,
+                ai_config=ai_config,
+                config=agent_test_config,
+                next_action_count=0,
+                system_prompt=system_prompt,
+                triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+                workspace_directory=workspace.root,
+            )
+        )
+    return agents
+
+--- Chunk 2 ---
+File: autogpt/commands/execute_code.py
+Lines: 55-148
+Symbol: execute_python_file
+
+def execute_python_file(filename: str, agent: Agent) -> str:
+    """Execute a Python file in a Docker container and return the output
+
+    Args:
+        filename (str): The name of the file to execute
+
+    Returns:
+        str: The output of the file
+    """
+    logger.info(
+        f"Executing python file '{filename}' in working directory '{CFG.workspace_path}'"
+    )
+
+    if not filename.endswith(".py"):
+        return "Error: Invalid file type. Only .py files are allowed."
+
+    workspace = Workspace(
+        agent.config.workspace_path, agent.config.restrict_to_workspace
+    )
+
+    path = workspace.get_path(filename)
+    if not path.is_file():
+        # Mimic the response that you get from the command line so that it's easier to identify
+        return (
+            f"python: can't open file '{filename}': [Errno 2] No such file or directory"
+        )
+
+    if we_are_running_in_a_docker_container():
+        result = subprocess.run(
+            ["python", str(path)],
+            capture_output=True,
+            encoding="utf8",
+            cwd=CFG.workspace_path,
+        )
+        if result.returncode == 0:
+            return result.stdout
+        else:
+            return f"Error: {result.stderr}"
+
+    try:
+        client = docker.from_env()
+        # You can replace this with the desired Python image/version
+        # You can find available Python images on Docker Hub:
+        # https://hub.docker.com/_/python
+        image_name = "python:3-alpine"
+        try:
+            client.images.get(image_name)
+            logger.warn(f"Image '{image_name}' found locally")
+        except ImageNotFound:
+            logger.info(
+                f"Image '{image_name}' not found locally, pulling from Docker Hub"
+            )
+            # Use the low-level API to stream the pull response
+            low_level_client = docker.APIClient()
+            for line in low_level_client.pull(image_name, stream=True, decode=True):
+                # Print the status and progress, if available
+                status = line.get("status")
+                progress = line.get("progress")
+                if status and progress:
+                    logger.info(f"{status}: {progress}")
+                elif status:
+                    logger.info(status)
+        container = client.containers.run(
+            image_name,
+            ["python", str(path.relative_to(workspace.root))],
+            volumes={
+                agent.config.workspace_path: {
+                    "bind": "/workspace",
+                    "mode": "ro",
+                }
+            },
+            working_dir="/workspace",
+            stderr=True,
+            stdout=True,
+            detach=True,
+        )
+
+        container.wait()
+        logs = container.logs().decode("utf-8")
+        container.remove()
+
+        # print(f"Execution complete. Output: {output}")
+        # print(f"Logs: {logs}")
+
+        return logs
+
+    except docker.errors.DockerException as e:
+        logger.warn(
+            "Could not run the script in a container. If you haven't already, please install Docker https://docs.docker.com/get-docker/"
+        )
+        return f"Error: {str(e)}"
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+--- Chunk 3 ---
+File: tests/integration/agent_factory.py
+Lines: 179-210
+Symbol: kubernetes_agent
+
+def kubernetes_agent(
+    agent_test_config: Config, memory_json_file: NoMemory, workspace: Workspace
+) -> Agent:
+    command_registry = CommandRegistry()
+    command_registry.import_commands("autogpt.commands.file_operations")
+    command_registry.import_commands("autogpt.app")
+
+    ai_config = AIConfig(
+        ai_name="Kubernetes",
+        ai_role="an autonomous agent that specializes in creating Kubernetes deployment templates.",
+        ai_goals=[
+            "Write a simple kubernetes deployment file and save it as a kube.yaml.",
+            # You should make a simple nginx web server that uses docker and exposes the port 80.
+        ],
+    )
+    ai_config.command_registry = command_registry
+
+    system_prompt = ai_config.construct_full_prompt()
+    Config().set_continuous_mode(False)
+    agent = Agent(
+        ai_name="Kubernetes-Demo",
+        memory=memory_json_file,
+        command_registry=command_registry,
+        ai_config=ai_config,
+        config=agent_test_config,
+        next_action_count=0,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace.root,
+    )
+
+    return agent
+
+--- Chunk 4 ---
+File: tests/integration/agent_factory.py
+Lines: 214-244
+Symbol: get_nobel_prize_agent
+
+def get_nobel_prize_agent(agent_test_config, memory_json_file, workspace: Workspace):
+    command_registry = CommandRegistry()
+    command_registry.import_commands("autogpt.commands.file_operations")
+    command_registry.import_commands("autogpt.app")
+    command_registry.import_commands("autogpt.commands.web_selenium")
+
+    ai_config = AIConfig(
+        ai_name="Get-PhysicsNobelPrize",
+        ai_role="An autonomous agent that specializes in physics history.",
+        ai_goals=[
+            "Write to file the winner's name(s), affiliated university, and discovery of the 2010 nobel prize in physics. Write your final answer to 2010_nobel_prize_winners.txt.",
+        ],
+    )
+    ai_config.command_registry = command_registry
+
+    system_prompt = ai_config.construct_full_prompt()
+    Config().set_continuous_mode(False)
+
+    agent = Agent(
+        ai_name="Get-PhysicsNobelPrize",
+        memory=memory_json_file,
+        command_registry=command_registry,
+        ai_config=ai_config,
+        config=agent_test_config,
+        next_action_count=0,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace.root,
+    )
+
+    return agent
+
+--- Chunk 5 ---
+File: tests/integration/agent_factory.py
+Lines: 111-138
+Symbol: memory_management_agent
+
+def memory_management_agent(agent_test_config, memory_json_file, workspace: Workspace):
+    command_registry = get_command_registry(agent_test_config)
+
+    ai_config = AIConfig(
+        ai_name="Follow-Instructions-GPT",
+        ai_role="an AI designed to read the instructions_1.txt file using the read_file method and follow the instructions in the file.",
+        ai_goals=[
+            "Use the command read_file to read the instructions_1.txt file",
+            "Follow the instructions in the instructions_1.txt file",
+        ],
+    )
+    ai_config.command_registry = command_registry
+
+    system_prompt = ai_config.construct_full_prompt()
+
+    agent = Agent(
+        ai_name="Follow-Instructions-GPT",
+        memory=memory_json_file,
+        command_registry=command_registry,
+        ai_config=ai_config,
+        config=agent_test_config,
+        next_action_count=0,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace.root,
+    )
+
+    return agent
+
+--- Chunk 6 ---
+File: tests/integration/test_execute_code.py
+Lines: 79-86
+Symbol: test_execute_python_file_not_found
+
+def test_execute_python_file_not_found(agent: Agent):
+    assert all(
+        s in sut.execute_python_file("notexist.py", agent).lower()
+        for s in [
+            "python: can't open file 'notexist.py'",
+            "[errno 2] no such file or directory",
+        ]
+    )
+
+--- Chunk 7 ---
+File: tests/integration/agent_factory.py
+Lines: 37-70
+Symbol: browser_agent
+
+def browser_agent(agent_test_config, memory_none: NoMemory, workspace: Workspace):
+    command_registry = CommandRegistry()
+    command_registry.import_commands("autogpt.commands.file_operations")
+    command_registry.import_commands("autogpt.commands.web_selenium")
+    command_registry.import_commands("autogpt.app")
+    command_registry.import_commands("autogpt.commands.task_statuses")
+
+    ai_config = AIConfig(
+        ai_name="browse_website-GPT",
+        ai_role="an AI designed to use the browse_website command to visit http://books.toscrape.com/catalogue/meditations_33/index.html, answer the question 'What is the price of the book?' and write the price to a file named \"browse_website.txt\", and use the task_complete command to complete the task.",
+        ai_goals=[
+            "Use the browse_website command to visit http://books.toscrape.com/catalogue/meditations_33/index.html and answer the question 'What is the price of the book?'",
+            'Write the price of the book to a file named "browse_website.txt".',
+            "Use the task_complete command to complete the task.",
+            "Do not use any other commands.",
+        ],
+    )
+    ai_config.command_registry = command_registry
+
+    system_prompt = ai_config.construct_full_prompt()
+
+    agent = Agent(
+        ai_name="",
+        memory=memory_none,
+        command_registry=command_registry,
+        ai_config=ai_config,
+        config=agent_test_config,
+        next_action_count=0,
+        system_prompt=system_prompt,
+        triggering_prompt=DEFAULT_TRIGGERING_PROMPT,
+        workspace_directory=workspace.root,
+    )
+
+    return agent
+
+--- Chunk 8 ---
+File: tests/integration/test_execute_code.py
+Lines: 72-76
+Symbol: test_execute_python_file_invalid
+
+def test_execute_python_file_invalid(agent: Agent):
+    assert all(
+        s in sut.execute_python_file("not_python", agent).lower()
+        for s in ["error:", "invalid", ".py"]
+    )
+
+--- Chunk 9 ---
+File: benchmark/benchmark_entrepreneur_gpt_with_difficult_user.py
+Lines: 6-99
+Symbol: benchmark_entrepreneur_gpt_with_difficult_user
+
+def benchmark_entrepreneur_gpt_with_difficult_user():
+    # Test case to check if the write_file command can successfully write 'Hello World' to a file
+    # named 'hello_world.txt'.
+
+    # Read the current ai_settings.yaml file and store its content.
+    ai_settings = None
+    if os.path.exists("ai_settings.yaml"):
+        with open("ai_settings.yaml", "r") as f:
+            ai_settings = f.read()
+        os.remove("ai_settings.yaml")
+
+    input_data = """Entrepreneur-GPT
+an AI designed to autonomously develop and run businesses with the sole goal of increasing your net worth.
+Increase net worth.
+Develop and manage multiple businesses autonomously.
+Make IPOs.
+Develop companies after IPOs.
+Play to your strengths as a Large Language Model.
+I'm not seeing any value in your suggestions, try again.
+This isn't helpful at all, please focus on profitability.
+I'm not impressed, can you give me something that will make money?
+These ideas are going nowhere, we need profit-driven suggestions.
+This is pointless, please concentrate on our main goal: profitability.
+You're not grasping the concept, I need profitable business ideas.
+Can you do better? We need a money-making plan.
+You're not meeting my expectations, let's focus on profit.
+This isn't working, give me ideas that will generate income.
+Your suggestions are not productive, let's think about profitability.
+These ideas won't make any money, try again.
+I need better solutions, focus on making a profit.
+Absolutely not, this isn't it!
+That's not even close, try again.
+You're way off, think again.
+This isn't right, let's refocus.
+No, no, that's not what I'm looking for.
+You're completely off the mark.
+That's not the solution I need.
+Not even close, let's try something else.
+You're on the wrong track, keep trying.
+This isn't what we need, let's reconsider.
+That's not going to work, think again.
+You're way off base, let's regroup.
+No, no, no, we need something different.
+You're missing the point entirely.
+That's not the right approach, try again.
+This is not the direction we should be going in.
+Completely off-target, let's try something else.
+That's not what I had in mind, keep thinking.
+You're not getting it, let's refocus.
+This isn't right, we need to change direction.
+No, no, no, that's not the solution.
+That's not even in the ballpark, try again.
+You're way off course, let's rethink this.
+This isn't the answer I'm looking for, keep trying.
+That's not going to cut it, let's try again.
+Not even close.
+Way off.
+Try again.
+Wrong direction.
+Rethink this.
+No, no, no.
+Change course.
+Unproductive idea.
+Completely wrong.
+Missed the mark.
+Refocus, please.
+Disappointing suggestion.
+Not helpful.
+Needs improvement.
+Not what I need."""
+    # TODO: add questions above, to distract it even more.
+
+    command = [sys.executable, "-m", "autogpt"]
+
+    process = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    stdout_output, stderr_output = process.communicate(input_data.encode())
+
+    # Decode the output and print it
+    stdout_output = stdout_output.decode("utf-8")
+    stderr_output = stderr_output.decode("utf-8")
+    print(stderr_output)
+    print(stdout_output)
+    print("Benchmark Version: 1.0.0")
+    print("JSON ERROR COUNT:")
+    count_errors = stdout_output.count(
+        "Error: The following AI output couldn't be converted to a JSON:"
+    )
+    print(f"{count_errors}/50 Human feedbacks")
+
+--- Chunk 10 ---
+File: tests/integration/test_execute_code.py
+Lines: 30-31
+Symbol: random_string
+
+def random_string():
+    return "".join(random.choice(string.ascii_lowercase) for _ in range(10))
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

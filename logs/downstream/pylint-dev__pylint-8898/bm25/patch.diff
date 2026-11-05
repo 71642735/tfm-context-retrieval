@@ -1,0 +1,17 @@
+```diff
+--- pylint/config/argument.py
++++ pylint/config/argument.py
+@@ -102,5 +102,9 @@
+     """Transforms a comma separated list of regular expressions."""
+-    patterns = []
+-    for pattern in utils._splitstrip(value):
+-        patterns.append(re.compile(pattern))
+-    return patterns
++    if not value:
++        return []
++    if isinstance(value, list | tuple):
++        return [re.compile(pattern) for pattern in value]
++    # If it's a single string from a config file or CLI, we treat it as a single regex
++    # or use _splitstrip only if it's meant to be multiple. Wait, options using 
++    # _regexp_csv_transformer take regex patterns. If someone passes a single regex 
+```

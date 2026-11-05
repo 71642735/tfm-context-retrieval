@@ -1,0 +1,744 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+Unexpected exception when multiplying geometry.Point and number
+```python
+from sympy import geometry as ge
+import sympy
+
+point1 = ge.Point(0,0)
+point2 = ge.Point(1,1)
+```
+
+This line works fine
+```python
+point1 + point2 * sympy.sympify(2.0)
+```
+
+But when I write the same this way it raises an exception
+```python
+point1 + sympy.sympify(2.0) * point2
+```
+
+```
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)
+    219         try:
+--> 220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+    221         except TypeError:
+
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __new__(cls, *args, **kwargs)
+    128                 Expecting sequence of coordinates, not `{}`'''
+--> 129                                        .format(func_name(coords))))
+    130         # A point where only `dim` is specified is initialized
+
+TypeError: 
+Expecting sequence of coordinates, not `Mul`
+
+During handling of the above exception, another exception occurred:
+
+GeometryError                             Traceback (most recent call last)
+<ipython-input-20-6dcbddac1ee2> in <module>
+----> 1 point1 + sympy.sympify(2.0)* point2
+
+~/.virtualenvs/test/lib/python3.6/site-packages/sympy/geometry/point.py in __add__(self, other)
+    220             s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+    221         except TypeError:
+--> 222             raise GeometryError("Don't know how to add {} and a Point object".format(other))
+    223 
+    224         coords = [simplify(a + b) for a, b in zip(s, o)]
+
+GeometryError: Don't know how to add 2.0*Point2D(1, 1) and a Point object
+```
+
+The expected behaviour is, that both lines give the same result
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: sympy/geometry/point.py
+Lines: 185-222
+Symbol: Point.__add__
+
+    def __add__(self, other):
+        """Add other to self by incrementing self's coordinates by
+        those of other.
+
+        Notes
+        =====
+
+        >>> from sympy.geometry.point import Point
+
+        When sequences of coordinates are passed to Point methods, they
+        are converted to a Point internally. This __add__ method does
+        not do that so if floating point values are used, a floating
+        point result (in terms of SymPy Floats) will be returned.
+
+        >>> Point(1, 2) + (.1, .2)
+        Point2D(1.1, 2.2)
+
+        If this is not desired, the `translate` method can be used or
+        another Point can be added:
+
+        >>> Point(1, 2).translate(.1, .2)
+        Point2D(11/10, 11/5)
+        >>> Point(1, 2) + Point(.1, .2)
+        Point2D(11/10, 11/5)
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.translate
+
+        """
+        try:
+            s, o = Point._normalize_dimension(self, Point(other, evaluate=False))
+        except TypeError:
+            raise GeometryError("Don't know how to add {} and a Point object".format(other))
+
+        coords = [simplify(a + b) for a, b in zip(s, o)]
+        return Point(coords, evaluate=False)
+
+--- Chunk 2 ---
+File: sympy/geometry/point.py
+Lines: 250-279
+Symbol: Point.__mul__
+
+    def __mul__(self, factor):
+        """Multiply point's coordinates by a factor.
+
+        Notes
+        =====
+
+        >>> from sympy.geometry.point import Point
+
+        When multiplying a Point by a floating point number,
+        the coordinates of the Point will be changed to Floats:
+
+        >>> Point(1, 2)*0.1
+        Point2D(0.1, 0.2)
+
+        If this is not desired, the `scale` method can be used or
+        else only multiply or divide by integers:
+
+        >>> Point(1, 2).scale(1.1, 1.1)
+        Point2D(11/10, 11/5)
+        >>> Point(1, 2)*11/10
+        Point2D(11/10, 11/5)
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.scale
+        """
+        factor = sympify(factor)
+        coords = [simplify(x*factor) for x in self.args]
+        return Point(coords, evaluate=False)
+
+--- Chunk 3 ---
+File: sympy/geometry/point.py
+Lines: 382-432
+Symbol: Point.distance
+
+    def distance(self, other):
+        """The Euclidean distance between self and another GeometricEntity.
+
+        Returns
+        =======
+
+        distance : number or symbolic expression.
+
+        Raises
+        ======
+
+        TypeError : if other is not recognized as a GeometricEntity or is a
+                    GeometricEntity for which distance is not defined.
+
+        See Also
+        ========
+
+        sympy.geometry.line.Segment.length
+        sympy.geometry.point.Point.taxicab_distance
+
+        Examples
+        ========
+
+        >>> from sympy.geometry import Point, Line
+        >>> p1, p2 = Point(1, 1), Point(4, 5)
+        >>> l = Line((3, 1), (2, 2))
+        >>> p1.distance(p2)
+        5
+        >>> p1.distance(l)
+        sqrt(2)
+
+        The computed distance may be symbolic, too:
+
+        >>> from sympy.abc import x, y
+        >>> p3 = Point(x, y)
+        >>> p3.distance((0, 0))
+        sqrt(x**2 + y**2)
+
+        """
+        if not isinstance(other, GeometryEntity):
+            try:
+                other = Point(other, dim=self.ambient_dimension)
+            except TypeError:
+                raise TypeError("not recognized as a GeometricEntity: %s" % type(other))
+        if isinstance(other, Point):
+            s, p = Point._normalize_dimension(self, Point(other))
+            return sqrt(Add(*((a - b)**2 for a, b in zip(s, p))))
+        distance = getattr(other, 'distance', None)
+        if distance is None:
+            raise TypeError("distance between Point and %s is not defined" % type(other))
+        return distance(self)
+
+--- Chunk 4 ---
+File: sympy/geometry/line.py
+Lines: 896-982
+Symbol: LinearEntity.projection
+
+    def projection(self, other):
+        """Project a point, line, ray, or segment onto this linear entity.
+
+        Parameters
+        ==========
+
+        other : Point or LinearEntity (Line, Ray, Segment)
+
+        Returns
+        =======
+
+        projection : Point or LinearEntity (Line, Ray, Segment)
+            The return type matches the type of the parameter ``other``.
+
+        Raises
+        ======
+
+        GeometryError
+            When method is unable to perform projection.
+
+        Notes
+        =====
+
+        A projection involves taking the two points that define
+        the linear entity and projecting those points onto a
+        Line and then reforming the linear entity using these
+        projections.
+        A point P is projected onto a line L by finding the point
+        on L that is closest to P. This point is the intersection
+        of L and the line perpendicular to L that passes through P.
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point, perpendicular_line
+
+        Examples
+        ========
+
+        >>> from sympy import Point, Line, Segment, Rational
+        >>> p1, p2, p3 = Point(0, 0), Point(1, 1), Point(Rational(1, 2), 0)
+        >>> l1 = Line(p1, p2)
+        >>> l1.projection(p3)
+        Point2D(1/4, 1/4)
+        >>> p4, p5 = Point(10, 0), Point(12, 1)
+        >>> s1 = Segment(p4, p5)
+        >>> l1.projection(s1)
+        Segment2D(Point2D(5, 5), Point2D(13/2, 13/2))
+        >>> p1, p2, p3 = Point(0, 0, 1), Point(1, 1, 2), Point(2, 0, 1)
+        >>> l1 = Line(p1, p2)
+        >>> l1.projection(p3)
+        Point3D(2/3, 2/3, 5/3)
+        >>> p4, p5 = Point(10, 0, 1), Point(12, 1, 3)
+        >>> s1 = Segment(p4, p5)
+        >>> l1.projection(s1)
+        Segment3D(Point3D(10/3, 10/3, 13/3), Point3D(5, 5, 6))
+
+        """
+
+        if not isinstance(other, GeometryEntity):
+            other = Point(other, dim=self.ambient_dimension)
+
+        def proj_point(p):
+            return Point.project(p - self.p1, self.direction) + self.p1
+
+        if isinstance(other, Point):
+            return proj_point(other)
+        elif isinstance(other, LinearEntity):
+            p1, p2 = proj_point(other.p1), proj_point(other.p2)
+            # test to see if we're degenerate
+            if p1 == p2:
+                return p1
+            projected = other.__class__(p1, p2)
+            projected = Intersection(self, projected)
+            # if we happen to have intersected in only a point, return that
+            if projected.is_FiniteSet and len(projected) == 1:
+                # projected is a set of size 1, so unpack it in `a`
+                a, = projected
+                return a
+            # order args so projection is in the same direction as self
+            if self.direction.dot(projected.direction) < 0:
+                p1, p2 = projected.args
+                projected = projected.func(p2, p1)
+            return projected
+
+        raise GeometryError(
+            "Do not know how to project %s onto %s" % (other, self))
+
+--- Chunk 5 ---
+File: sympy/geometry/point.py
+Lines: 108-178
+Symbol: Point.__new__
+
+    def __new__(cls, *args, **kwargs):
+        evaluate = kwargs.get('evaluate', global_evaluate[0])
+        on_morph = kwargs.get('on_morph', 'ignore')
+
+        # unpack into coords
+        coords = args[0] if len(args) == 1 else args
+
+        # check args and handle quickly handle Point instances
+        if isinstance(coords, Point):
+            # even if we're mutating the dimension of a point, we
+            # don't reevaluate its coordinates
+            evaluate = False
+            if len(coords) == kwargs.get('dim', len(coords)):
+                return coords
+
+        if not is_sequence(coords):
+            raise TypeError(filldedent('''
+                Expecting sequence of coordinates, not `{}`'''
+                                       .format(func_name(coords))))
+        # A point where only `dim` is specified is initialized
+        # to zeros.
+        if len(coords) == 0 and kwargs.get('dim', None):
+            coords = (S.Zero,)*kwargs.get('dim')
+
+        coords = Tuple(*coords)
+        dim = kwargs.get('dim', len(coords))
+
+        if len(coords) < 2:
+            raise ValueError(filldedent('''
+                Point requires 2 or more coordinates or
+                keyword `dim` > 1.'''))
+        if len(coords) != dim:
+            message = ("Dimension of {} needs to be changed "
+                       "from {} to {}.").format(coords, len(coords), dim)
+            if on_morph == 'ignore':
+                pass
+            elif on_morph == "error":
+                raise ValueError(message)
+            elif on_morph == 'warn':
+                warnings.warn(message)
+            else:
+                raise ValueError(filldedent('''
+                        on_morph value should be 'error',
+                        'warn' or 'ignore'.'''))
+        if any(coords[dim:]):
+            raise ValueError('Nonzero coordinates cannot be removed.')
+        if any(a.is_number and im(a) for a in coords):
+            raise ValueError('Imaginary coordinates are not permitted.')
+        if not all(isinstance(a, Expr) for a in coords):
+            raise TypeError('Coordinates must be valid SymPy expressions.')
+
+        # pad with zeros appropriately
+        coords = coords[:dim] + (S.Zero,)*(dim - len(coords))
+
+        # Turn any Floats into rationals and simplify
+        # any expressions before we instantiate
+        if evaluate:
+            coords = coords.xreplace(dict(
+                [(f, simplify(nsimplify(f, rational=True)))
+                 for f in coords.atoms(Float)]))
+
+        # return 2D or 3D instances
+        if len(coords) == 2:
+            kwargs['_nocheck'] = True
+            return Point2D(*coords, **kwargs)
+        elif len(coords) == 3:
+            kwargs['_nocheck'] = True
+            return Point3D(*coords, **kwargs)
+
+        # the general Point
+        return GeometryEntity.__new__(cls, *coords)
+
+--- Chunk 6 ---
+File: sympy/geometry/entity.py
+Lines: 503-531
+Symbol: GeometryEntity.parameter_value
+
+    def parameter_value(self, other, t):
+        """Return the parameter corresponding to the given point.
+        Evaluating an arbitrary point of the entity at this parameter
+        value will return the given point.
+
+        Examples
+        ========
+
+        >>> from sympy import Line, Point
+        >>> from sympy.abc import t
+        >>> a = Point(0, 0)
+        >>> b = Point(2, 2)
+        >>> Line(a, b).parameter_value((1, 1), t)
+        {t: 1/2}
+        >>> Line(a, b).arbitrary_point(t).subs(_)
+        Point2D(1, 1)
+        """
+        from sympy.geometry.point import Point
+        from sympy.core.symbol import Dummy
+        from sympy.solvers.solvers import solve
+        if not isinstance(other, GeometryEntity):
+            other = Point(other, dim=self.ambient_dimension)
+        if not isinstance(other, Point):
+            raise ValueError("other must be a point")
+        T = Dummy('t', real=True)
+        sol = solve(self.arbitrary_point(T) - other, T, dict=True)
+        if not sol:
+            raise ValueError("Given point is not on %s" % func_name(self))
+        return {t: sol[0][T]}
+
+--- Chunk 7 ---
+File: sympy/geometry/point.py
+Lines: 478-517
+Symbol: Point.intersection
+
+    def intersection(self, other):
+        """The intersection between this point and another GeometryEntity.
+
+        Parameters
+        ==========
+
+        other : GeometryEntity or sequence of coordinates
+
+        Returns
+        =======
+
+        intersection : list of Points
+
+        Notes
+        =====
+
+        The return value will either be an empty list if there is no
+        intersection, otherwise it will contain this point.
+
+        Examples
+        ========
+
+        >>> from sympy import Point
+        >>> p1, p2, p3 = Point(0, 0), Point(1, 1), Point(0, 0)
+        >>> p1.intersection(p2)
+        []
+        >>> p1.intersection(p3)
+        [Point2D(0, 0)]
+
+        """
+        if not isinstance(other, GeometryEntity):
+            other = Point(other)
+        if isinstance(other, Point):
+            if self == other:
+                return [self]
+            p1, p2 = Point._normalize_dimension(self, other)
+            if p1 == self and p1 == p2:
+                return [self]
+            return []
+        return other.intersection(self)
+
+--- Chunk 8 ---
+File: sympy/geometry/point.py
+Lines: 447-476
+Symbol: Point.evalf
+
+    def evalf(self, prec=None, **options):
+        """Evaluate the coordinates of the point.
+
+        This method will, where possible, create and return a new Point
+        where the coordinates are evaluated as floating point numbers to
+        the precision indicated (default=15).
+
+        Parameters
+        ==========
+
+        prec : int
+
+        Returns
+        =======
+
+        point : Point
+
+        Examples
+        ========
+
+        >>> from sympy import Point, Rational
+        >>> p1 = Point(Rational(1, 2), Rational(3, 2))
+        >>> p1
+        Point2D(1/2, 3/2)
+        >>> p1.evalf()
+        Point2D(0.5, 1.5)
+
+        """
+        coords = [x.evalf(prec, **options) for x in self.args]
+        return Point(*coords, evaluate=False)
+
+--- Chunk 9 ---
+File: sympy/geometry/point.py
+Lines: 801-845
+Symbol: Point.canberra_distance
+
+    def canberra_distance(self, p):
+        """The Canberra Distance from self to point p.
+
+        Returns the weighted sum of horizontal and vertical distances to
+        point p.
+
+        Parameters
+        ==========
+
+        p : Point
+
+        Returns
+        =======
+
+        canberra_distance : The weighted sum of horizontal and vertical
+        distances to point p. The weight used is the sum of absolute values
+        of the coordinates.
+
+        Examples
+        ========
+
+        >>> from sympy.geometry import Point
+        >>> p1, p2 = Point(1, 1), Point(3, 3)
+        >>> p1.canberra_distance(p2)
+        1
+        >>> p1, p2 = Point(0, 0), Point(3, 3)
+        >>> p1.canberra_distance(p2)
+        2
+
+        Raises
+        ======
+
+        ValueError when both vectors are zero.
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.distance
+
+        """
+
+        s, p = Point._normalize_dimension(self, Point(p))
+        if self.is_zero and p.is_zero:
+            raise ValueError("Cannot project to the zero vector.")
+        return Add(*((abs(a - b)/(abs(a) + abs(b))) for a, b in zip(s, p)))
+
+--- Chunk 10 ---
+File: sympy/geometry/polygon.py
+Lines: 1079-1276
+Symbol: Polygon._do_poly_distance
+
+    def _do_poly_distance(self, e2):
+        """
+        Calculates the least distance between the exteriors of two
+        convex polygons e1 and e2. Does not check for the convexity
+        of the polygons as this is checked by Polygon.distance.
+
+        Notes
+        =====
+
+            - Prints a warning if the two polygons possibly intersect as the return
+              value will not be valid in such a case. For a more through test of
+              intersection use intersection().
+
+        See Also
+        ========
+
+        sympy.geometry.point.Point.distance
+
+        Examples
+        ========
+
+        >>> from sympy.geometry import Point, Polygon
+        >>> square = Polygon(Point(0, 0), Point(0, 1), Point(1, 1), Point(1, 0))
+        >>> triangle = Polygon(Point(1, 2), Point(2, 2), Point(2, 1))
+        >>> square._do_poly_distance(triangle)
+        sqrt(2)/2
+
+        Description of method used
+        ==========================
+
+        Method:
+        [1] http://cgm.cs.mcgill.ca/~orm/mind2p.html
+        Uses rotating calipers:
+        [2] https://en.wikipedia.org/wiki/Rotating_calipers
+        and antipodal points:
+        [3] https://en.wikipedia.org/wiki/Antipodal_point
+        """
+        e1 = self
+
+        '''Tests for a possible intersection between the polygons and outputs a warning'''
+        e1_center = e1.centroid
+        e2_center = e2.centroid
+        e1_max_radius = S.Zero
+        e2_max_radius = S.Zero
+        for vertex in e1.vertices:
+            r = Point.distance(e1_center, vertex)
+            if e1_max_radius < r:
+                e1_max_radius = r
+        for vertex in e2.vertices:
+            r = Point.distance(e2_center, vertex)
+            if e2_max_radius < r:
+                e2_max_radius = r
+        center_dist = Point.distance(e1_center, e2_center)
+        if center_dist <= e1_max_radius + e2_max_radius:
+            warnings.warn("Polygons may intersect producing erroneous output")
+
+        '''
+        Find the upper rightmost vertex of e1 and the lowest leftmost vertex of e2
+        '''
+        e1_ymax = Point(0, -oo)
+        e2_ymin = Point(0, oo)
+
+        for vertex in e1.vertices:
+            if vertex.y > e1_ymax.y or (vertex.y == e1_ymax.y and vertex.x > e1_ymax.x):
+                e1_ymax = vertex
+        for vertex in e2.vertices:
+            if vertex.y < e2_ymin.y or (vertex.y == e2_ymin.y and vertex.x < e2_ymin.x):
+                e2_ymin = vertex
+        min_dist = Point.distance(e1_ymax, e2_ymin)
+
+        '''
+        Produce a dictionary with vertices of e1 as the keys and, for each vertex, the points
+        to which the vertex is connected as its value. The same is then done for e2.
+        '''
+        e1_connections = {}
+        e2_connections = {}
+
+        for side in e1.sides:
+            if side.p1 in e1_connections:
+                e1_connections[side.p1].append(side.p2)
+            else:
+                e1_connections[side.p1] = [side.p2]
+
+            if side.p2 in e1_connections:
+                e1_connections[side.p2].append(side.p1)
+            else:
+                e1_connections[side.p2] = [side.p1]
+
+        for side in e2.sides:
+            if side.p1 in e2_connections:
+                e2_connections[side.p1].append(side.p2)
+            else:
+                e2_connections[side.p1] = [side.p2]
+
+            if side.p2 in e2_connections:
+                e2_connections[side.p2].append(side.p1)
+            else:
+                e2_connections[side.p2] = [side.p1]
+
+        e1_current = e1_ymax
+        e2_current = e2_ymin
+        support_line = Line(Point(S.Zero, S.Zero), Point(S.One, S.Zero))
+
+        '''
+        Determine which point in e1 and e2 will be selected after e2_ymin and e1_ymax,
+        this information combined with the above produced dictionaries determines the
+        path that will be taken around the polygons
+        '''
+        point1 = e1_connections[e1_ymax][0]
+        point2 = e1_connections[e1_ymax][1]
+        angle1 = support_line.angle_between(Line(e1_ymax, point1))
+        angle2 = support_line.angle_between(Line(e1_ymax, point2))
+        if angle1 < angle2:
+            e1_next = point1
+        elif angle2 < angle1:
+            e1_next = point2
+        elif Point.distance(e1_ymax, point1) > Point.distance(e1_ymax, point2):
+            e1_next = point2
+        else:
+            e1_next = point1
+
+        point1 = e2_connections[e2_ymin][0]
+        point2 = e2_connections[e2_ymin][1]
+        angle1 = support_line.angle_between(Line(e2_ymin, point1))
+        angle2 = support_line.angle_between(Line(e2_ymin, point2))
+        if angle1 > angle2:
+            e2_next = point1
+        elif angle2 > angle1:
+            e2_next = point2
+        elif Point.distance(e2_ymin, point1) > Point.distance(e2_ymin, point2):
+            e2_next = point2
+        else:
+            e2_next = point1
+
+        '''
+        Loop which determines the distance between anti-podal pairs and updates the
+        minimum distance accordingly. It repeats until it reaches the starting position.
+        '''
+        while True:
+            e1_angle = support_line.angle_between(Line(e1_current, e1_next))
+            e2_angle = pi - support_line.angle_between(Line(
+                e2_current, e2_next))
+
+            if (e1_angle < e2_angle) is True:
+                support_line = Line(e1_current, e1_next)
+                e1_segment = Segment(e1_current, e1_next)
+                min_dist_current = e1_segment.distance(e2_current)
+
+                if min_dist_current.evalf() < min_dist.evalf():
+                    min_dist = min_dist_current
+
+                if e1_connections[e1_next][0] != e1_current:
+                    e1_current = e1_next
+                    e1_next = e1_connections[e1_next][0]
+                else:
+                    e1_current = e1_next
+                    e1_next = e1_connections[e1_next][1]
+            elif (e1_angle > e2_angle) is True:
+                support_line = Line(e2_next, e2_current)
+                e2_segment = Segment(e2_current, e2_next)
+                min_dist_current = e2_segment.distance(e1_current)
+
+                if min_dist_current.evalf() < min_dist.evalf():
+                    min_dist = min_dist_current
+
+                if e2_connections[e2_next][0] != e2_current:
+                    e2_current = e2_next
+                    e2_next = e2_connections[e2_next][0]
+                else:
+                    e2_current = e2_next
+                    e2_next = e2_connections[e2_next][1]
+            else:
+                support_line = Line(e1_current, e1_next)
+                e1_segment = Segment(e1_current, e1_next)
+                e2_segment = Segment(e2_current, e2_next)
+                min1 = e1_segment.distance(e2_next)
+                min2 = e2_segment.distance(e1_next)
+
+                min_dist_current = min(min1, min2)
+                if min_dist_current.evalf() < min_dist.evalf():
+                    min_dist = min_dist_current
+
+                if e1_connections[e1_next][0] != e1_current:
+                    e1_current = e1_next
+                    e1_next = e1_connections[e1_next][0]
+                else:
+                    e1_current = e1_next
+                    e1_next = e1_connections[e1_next][1]
+
+                if e2_connections[e2_next][0] != e2_current:
+                    e2_current = e2_next
+                    e2_next = e2_connections[e2_next][0]
+                else:
+                    e2_current = e2_next
+                    e2_next = e2_connections[e2_next][1]
+            if e1_current == e1_ymax and e2_current == e2_ymin:
+                break
+        return min_dist
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

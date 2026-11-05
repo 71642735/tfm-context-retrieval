@@ -1,0 +1,541 @@
+You are fixing an issue in a Python repository.
+
+ISSUE:
+GenerationConfig.from_pretrained raise ValueError after training, maybe raise it earlier?
+### System Info
+
+- `transformers` version: 4.38.2
+- Platform: Linux-4.18.0-305.3.1.el8.x86_64-x86_64-with-glibc2.28
+- Python version: 3.10.13
+- Huggingface_hub version: 0.21.4
+- Safetensors version: 0.4.2
+- Accelerate version: 0.28.0
+- Accelerate config:    - compute_environment: LOCAL_MACHINE
+        - distributed_type: MULTI_GPU
+        - mixed_precision: no
+        - use_cpu: False                                                                                                                - debug: False
+        - num_processes: 8
+        - machine_rank: 0                                                                                                               - num_machines: 1
+        - gpu_ids: all
+        - rdzv_backend: static                                                                                                          - same_network: True                                                                                                            - main_training_function: main
+        - downcast_bf16: no
+        - tpu_use_cluster: False
+        - tpu_use_sudo: False
+        - tpu_env: []
+- PyTorch version (GPU?): 2.2.1 (True)
+- Tensorflow version (GPU?): not installed (NA)
+- Flax version (CPU?/GPU?/TPU?): not installed (NA)
+- Jax version: not installed
+- JaxLib version: not installed
+- Using GPU in script?: <fill in>
+- Using distributed or parallel set-up in script?: <fill in>
+
+### Who can help?
+
+@gante   @pacman100   @muellerzr 
+
+**Raise Errors as Early as Possible**: I noticed that `GenerationConfig.save_pretrained` in `transformers/generation/configuration_utils.py` will raise a `ValueError` if the config cannot pass the validation. I think it's better to raise the error earlier (e.g., after `self.validate` in `__init__`) instead of raising it in `Trainer._save`. Users might be upset after several hours of training and finding the model checkpoint is not saved.
+
+For example, finetuning [LLaVA](https://github.com/haotian-liu/LLaVA) will raise this error. [Issue#1252](https://github.com/haotian-liu/LLaVA/issues/1252#issue) and [issue#1144](https://github.com/haotian-liu/LLaVA/issues/1144#issue) meet the same phenomenon.
+
+
+Please correct me if I am wrong. Thanks!
+
+### Information
+
+- [ ] The official example scripts
+- [X] My own modified scripts
+
+### Tasks
+
+- [ ] An officially supported task in the `examples` folder (such as GLUE/SQuAD, ...)
+- [X] My own task or dataset (give details below)
+
+### Reproduction
+
+Maybe no reproduction is necessary.
+
+1. Install [LLaVA](https://github.com/haotian-liu/LLaVA) by following the [guide](https://github.com/haotian-liu/LLaVA#install).
+2. Train and finetune the model by following the [guide](https://github.com/haotian-liu/LLaVA#train). [Issue#1252](https://github.com/haotian-liu/LLaVA/issues/1252#issue) and [issue#1144](https://github.com/haotian-liu/LLaVA/issues/1144#issue) also give the training script.
+
+### Expected behavior
+
+Raise the ValueError before training if PretrainedConfig cannot pass the validation.
+
+
+RETRIEVED CONTEXT:
+--- Chunk 1 ---
+File: src/transformers/models/llava/modeling_llava.py
+Lines: 136-156
+Symbol: LlavaPreTrainedModel._init_weights
+
+    def _init_weights(self, module):
+        # important: this ported version of Llava isn't meant for training from scratch - only
+        # inference and fine-tuning - so the proper init weights code has been removed - the original codebase
+        # https://github.com/haotian-liu/LLaVA/tree/main/llava should serve for that purpose
+        std = (
+            self.config.initializer_range
+            if hasattr(self.config, "initializer_range")
+            else self.config.text_config.initializer_range
+        )
+
+        if hasattr(module, "class_embedding"):
+            module.class_embedding.data.normal_(mean=0.0, std=std)
+
+        if isinstance(module, (nn.Linear, nn.Conv2d)):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+
+--- Chunk 2 ---
+File: src/transformers/commands/env.py
+Lines: 56-139
+Symbol: EnvironmentCommand.run
+
+    def run(self):
+        safetensors_version = "not installed"
+        if is_safetensors_available():
+            import safetensors
+
+            safetensors_version = safetensors.__version__
+        elif importlib.util.find_spec("safetensors") is not None:
+            import safetensors
+
+            safetensors_version = f"{safetensors.__version__} but is ignored because of PyTorch version too old."
+
+        accelerate_version = "not installed"
+        accelerate_config = accelerate_config_str = "not found"
+        if is_accelerate_available():
+            import accelerate
+            from accelerate.commands.config import default_config_file, load_config_from_file
+
+            accelerate_version = accelerate.__version__
+            # Get the default from the config file.
+            if self._accelerate_config_file is not None or os.path.isfile(default_config_file):
+                accelerate_config = load_config_from_file(self._accelerate_config_file).to_dict()
+
+            accelerate_config_str = (
+                "\n".join([f"\t- {prop}: {val}" for prop, val in accelerate_config.items()])
+                if isinstance(accelerate_config, dict)
+                else f"\t{accelerate_config}"
+            )
+
+        pt_version = "not installed"
+        pt_cuda_available = "NA"
+        if is_torch_available():
+            import torch
+
+            pt_version = torch.__version__
+            pt_cuda_available = torch.cuda.is_available()
+
+        tf_version = "not installed"
+        tf_cuda_available = "NA"
+        if is_tf_available():
+            import tensorflow as tf
+
+            tf_version = tf.__version__
+            try:
+                # deprecated in v2.1
+                tf_cuda_available = tf.test.is_gpu_available()
+            except AttributeError:
+                # returns list of devices, convert to bool
+                tf_cuda_available = bool(tf.config.list_physical_devices("GPU"))
+
+        flax_version = "not installed"
+        jax_version = "not installed"
+        jaxlib_version = "not installed"
+        jax_backend = "NA"
+        if is_flax_available():
+            import flax
+            import jax
+            import jaxlib
+
+            flax_version = flax.__version__
+            jax_version = jax.__version__
+            jaxlib_version = jaxlib.__version__
+            jax_backend = jax.lib.xla_bridge.get_backend().platform
+
+        info = {
+            "`transformers` version": version,
+            "Platform": platform.platform(),
+            "Python version": platform.python_version(),
+            "Huggingface_hub version": huggingface_hub.__version__,
+            "Safetensors version": f"{safetensors_version}",
+            "Accelerate version": f"{accelerate_version}",
+            "Accelerate config": f"{accelerate_config_str}",
+            "PyTorch version (GPU?)": f"{pt_version} ({pt_cuda_available})",
+            "Tensorflow version (GPU?)": f"{tf_version} ({tf_cuda_available})",
+            "Flax version (CPU?/GPU?/TPU?)": f"{flax_version} ({jax_backend})",
+            "Jax version": f"{jax_version}",
+            "JaxLib version": f"{jaxlib_version}",
+            "Using GPU in script?": "<fill in>",
+            "Using distributed or parallel set-up in script?": "<fill in>",
+        }
+
+        print("\nCopy-and-paste the text below in your GitHub issue and FILL OUT the two last points.\n")
+        print(self.format_dict(info))
+
+        return info
+
+--- Chunk 3 ---
+File: src/transformers/models/vipllava/modeling_vipllava.py
+Lines: 143-163
+Symbol: VipLlavaPreTrainedModel._init_weights
+
+    def _init_weights(self, module):
+        # important: this ported version of VipLlava isn't meant for training from scratch - only
+        # inference and fine-tuning - so the proper init weights code has been removed - the original codebase
+        # https://github.com/haotian-liu/LLaVA/tree/main/vipllava should serve for that purpose
+        std = (
+            self.config.initializer_range
+            if hasattr(self.config, "initializer_range")
+            else self.config.text_config.initializer_range
+        )
+
+        if hasattr(module, "class_embedding"):
+            module.class_embedding.data.normal_(mean=0.0, std=std)
+
+        if isinstance(module, (nn.Linear, nn.Conv2d)):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+
+--- Chunk 4 ---
+File: src/transformers/utils/import_utils.py
+Lines: 278-288
+Symbol: is_torch_sdpa_available
+
+def is_torch_sdpa_available():
+    if not is_torch_available():
+        return False
+    elif _torch_version == "N/A":
+        return False
+
+    # NOTE: We require torch>=2.1 (and not torch>=2.0) to use SDPA in Transformers for two reasons:
+    # - Allow the global use of the `scale` argument introduced in https://github.com/pytorch/pytorch/pull/95259
+    # - Memory-efficient attention supports arbitrary attention_mask: https://github.com/pytorch/pytorch/pull/104310
+    # NOTE: We require torch>=2.1.1 to avoid a numerical issue in SDPA with non-contiguous inputs: https://github.com/pytorch/pytorch/issues/112577
+    return version.parse(_torch_version) >= version.parse("2.1.1")
+
+--- Chunk 5 ---
+File: src/transformers/modeling_utils.py
+Lines: 1440-1527
+Symbol: PreTrainedModel._check_and_enable_flash_attn_2
+
+    def _check_and_enable_flash_attn_2(
+        cls,
+        config,
+        torch_dtype: Optional[torch.dtype] = None,
+        device_map: Optional[Union[str, Dict[str, int]]] = None,
+        check_device_map: bool = True,
+        hard_check_only: bool = False,
+    ) -> PretrainedConfig:
+        """
+        Checks the availability of Flash Attention 2 and compatibility with the current model.
+
+        If all checks pass and `hard_check_only` is False, the method will set the config attribute `attn_implementation` to "flash_attention_2" so that the model can initialize the correct attention module.
+        """
+        if not cls._supports_flash_attn_2:
+            raise ValueError(
+                f"{cls.__name__} does not support Flash Attention 2.0 yet. Please request to add support where"
+                f" the model is hosted, on its model hub page: https://huggingface.co/{config._name_or_path}/discussions/new"
+                " or in the Transformers GitHub repo: https://github.com/huggingface/transformers/issues/new"
+            )
+
+        if not is_flash_attn_2_available():
+            preface = "FlashAttention2 has been toggled on, but it cannot be used due to the following error:"
+            install_message = "Please refer to the documentation of https://huggingface.co/docs/transformers/perf_infer_gpu_one#flashattention-2 to install Flash Attention 2."
+
+            if importlib.util.find_spec("flash_attn") is None:
+                raise ImportError(f"{preface} the package flash_attn seems to be not installed. {install_message}")
+
+            flash_attention_version = version.parse(importlib.metadata.version("flash_attn"))
+            if torch.version.cuda:
+                if flash_attention_version < version.parse("2.1.0"):
+                    raise ImportError(
+                        f"{preface} you need flash_attn package version to be greater or equal than 2.1.0. Detected version {flash_attention_version}. {install_message}"
+                    )
+                else:
+                    raise ImportError(f"{preface} Flash Attention 2 is not available. {install_message}")
+            elif torch.version.hip:
+                if flash_attention_version < version.parse("2.0.4"):
+                    raise ImportError(
+                        f"{preface} you need flash_attn package version to be greater or equal than 2.0.4. Make sure to have that version installed - detected version {flash_attention_version}. {install_message}"
+                    )
+                else:
+                    raise ImportError(f"{preface} Flash Attention 2 is not available. {install_message}")
+
+        _is_bettertransformer = getattr(cls, "use_bettertransformer", False)
+
+        if _is_bettertransformer:
+            raise ValueError(
+                "Flash Attention 2 and BetterTransformer API are not compatible. Please make sure to disable BetterTransformers by doing model.reverse_bettertransformer()"
+            )
+
+        if torch_dtype is None:
+            logger.warning_once(
+                "You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour"
+            )
+        elif torch_dtype is not None and torch_dtype not in [torch.float16, torch.bfloat16]:
+            logger.warning_once(
+                "Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but"
+                f" the current dype in {cls.__name__} is {torch_dtype}. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator,"
+                ' or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`'
+            )
+
+        # The check `torch.empty(0).device.type != "cuda"` is needed as the model may be initialized after `torch.set_default_device` has been called,
+        # or the model may be initialized under the context manager `with torch.device("cuda"):`.
+        if check_device_map and device_map is None and torch.empty(0).device.type != "cuda":
+            if torch.cuda.is_available():
+                logger.warning_once(
+                    "You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU"
+                    " after initializing it on CPU with `model.to('cuda')`."
+                )
+            else:
+                raise ValueError(
+                    "You are attempting to use Flash Attention 2.0 with a model not initialized on GPU and with no GPU available. "
+                    "This is not supported yet. Please make sure to have access to a GPU and either initialise the model on a GPU by passing a device_map "
+                    "or initialising the model on CPU and then moving it to GPU."
+                )
+        elif (
+            check_device_map
+            and device_map is not None
+            and isinstance(device_map, dict)
+            and ("cpu" in device_map.values() or "disk" in device_map.values())
+        ):
+            raise ValueError(
+                "You are attempting to use Flash Attention 2.0 with a model dispatched on CPU or disk. This is not supported. Please make sure to "
+                "initialise the model on a GPU by passing a device_map that contains only GPU devices as keys."
+            )
+        if not hard_check_only:
+            config._attn_implementation = "flash_attention_2"
+        return config
+
+--- Chunk 6 ---
+File: src/transformers/quantizers/quantizer_bnb_8bit.py
+Lines: 60-101
+Symbol: Bnb8BitHfQuantizer.validate_environment
+
+    def validate_environment(self, *args, **kwargs):
+        if not (is_accelerate_available() and is_bitsandbytes_available()):
+            raise ImportError(
+                "Using `bitsandbytes` 8-bit quantization requires Accelerate: `pip install accelerate` "
+                "and the latest version of bitsandbytes: `pip install -i https://pypi.org/simple/ bitsandbytes`"
+            )
+
+        if kwargs.get("from_tf", False) or kwargs.get("from_flax", False):
+            raise ValueError(
+                "Converting into 4-bit or 8-bit weights from tf/flax weights is currently not supported, please make"
+                " sure the weights are in PyTorch format."
+            )
+
+        if not torch.cuda.is_available():
+            raise RuntimeError("No GPU found. A GPU is needed for quantization.")
+
+        device_map = kwargs.get("device_map", None)
+        if (
+            device_map is not None
+            and isinstance(device_map, dict)
+            and not self.quantization_config.llm_int8_enable_fp32_cpu_offload
+        ):
+            device_map_without_lm_head = {
+                key: device_map[key] for key in device_map.keys() if key not in self.modules_to_not_convert
+            }
+            if "cpu" in device_map_without_lm_head.values() or "disk" in device_map_without_lm_head.values():
+                raise ValueError(
+                    """
+                    Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the
+                    quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules
+                    in 32-bit, you need to set `load_in_8bit_fp32_cpu_offload=True` and pass a custom `device_map` to
+                    `from_pretrained`. Check
+                    https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu
+                    for more details.
+                    """
+                )
+
+        if version.parse(importlib.metadata.version("bitsandbytes")) < version.parse("0.37.2"):
+            raise ValueError(
+                "You have a version of `bitsandbytes` that is not compatible with 8bit inference and training"
+                " make sure you have the latest version of `bitsandbytes` installed"
+            )
+
+--- Chunk 7 ---
+File: src/transformers/quantizers/quantizer_bnb_4bit.py
+Lines: 60-101
+Symbol: Bnb4BitHfQuantizer.validate_environment
+
+    def validate_environment(self, *args, **kwargs):
+        if not (is_accelerate_available() and is_bitsandbytes_available()):
+            raise ImportError(
+                "Using `bitsandbytes` 8-bit quantization requires Accelerate: `pip install accelerate` "
+                "and the latest version of bitsandbytes: `pip install -i https://pypi.org/simple/ bitsandbytes`"
+            )
+
+        if kwargs.get("from_tf", False) or kwargs.get("from_flax", False):
+            raise ValueError(
+                "Converting into 4-bit or 8-bit weights from tf/flax weights is currently not supported, please make"
+                " sure the weights are in PyTorch format."
+            )
+
+        if not torch.cuda.is_available():
+            raise RuntimeError("No GPU found. A GPU is needed for quantization.")
+
+        device_map = kwargs.get("device_map", None)
+        if (
+            device_map is not None
+            and isinstance(device_map, dict)
+            and not self.quantization_config.llm_int8_enable_fp32_cpu_offload
+        ):
+            device_map_without_lm_head = {
+                key: device_map[key] for key in device_map.keys() if key not in self.modules_to_not_convert
+            }
+            if "cpu" in device_map_without_lm_head.values() or "disk" in device_map_without_lm_head.values():
+                raise ValueError(
+                    """
+                    Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the
+                    quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules
+                    in 32-bit, you need to set `load_in_8bit_fp32_cpu_offload=True` and pass a custom `device_map` to
+                    `from_pretrained`. Check
+                    https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu
+                    for more details.
+                    """
+                )
+
+        if version.parse(importlib.metadata.version("bitsandbytes")) < version.parse("0.39.0"):
+            raise ValueError(
+                "You have a version of `bitsandbytes` that is not compatible with 4bit inference and training"
+                " make sure you have the latest version of `bitsandbytes` installed"
+            )
+
+--- Chunk 8 ---
+File: src/transformers/modeling_utils.py
+Lines: 1530-1557
+Symbol: PreTrainedModel._check_and_enable_sdpa
+
+    def _check_and_enable_sdpa(cls, config, hard_check_only: bool = False) -> PretrainedConfig:
+        """
+        Checks the availability of SDPA for a given model.
+
+        If all checks pass and `hard_check_only` is False, the method will set the config attribute `_attn_implementation` to "flash_attention_2" so that the model can initialize the correct attention module.
+        """
+        if hard_check_only:
+            if not cls._supports_sdpa:
+                raise ValueError(
+                    f"{cls.__name__} does not support an attention implementation through torch.nn.functional.scaled_dot_product_attention yet."
+                    " Please request the support for this architecture: https://github.com/huggingface/transformers/issues/28005. If you believe"
+                    ' this error is a bug, please open an issue in Transformers GitHub repository and load your model with the argument `attn_implementation="eager"` meanwhile. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="eager")`'
+                )
+            if not is_torch_sdpa_available():
+                raise ImportError(
+                    "PyTorch SDPA requirements in Transformers are not met. Please install torch>=2.1.1."
+                )
+
+        if not is_torch_sdpa_available() or not cls._supports_sdpa:
+            return config
+
+        _is_bettertransformer = getattr(cls, "use_bettertransformer", False)
+        if _is_bettertransformer:
+            return config
+
+        if not hard_check_only:
+            config._attn_implementation = "sdpa"
+        return config
+
+--- Chunk 9 ---
+File: scripts/stale.py
+Lines: 35-70
+Symbol: main
+
+def main():
+    g = Github(os.environ["GITHUB_TOKEN"])
+    repo = g.get_repo("huggingface/transformers")
+    open_issues = repo.get_issues(state="open")
+
+    for i, issue in enumerate(open_issues):
+        print(i, issue)
+        comments = sorted(list(issue.get_comments()), key=lambda i: i.created_at, reverse=True)
+        last_comment = comments[0] if len(comments) > 0 else None
+        if (
+            last_comment is not None and last_comment.user.login == "github-actions[bot]"
+            and (dt.utcnow() - issue.updated_at.replace(tzinfo=None)).days > 7
+            and (dt.utcnow() - issue.created_at.replace(tzinfo=None)).days >= 30
+            and not any(label.name.lower() in LABELS_TO_EXEMPT for label in issue.get_labels())
+        ):
+            # print(f"Would close issue {issue.number} since it has been 7 days of inactivity since bot mention.")
+            try:
+                issue.edit(state="closed")
+            except github.GithubException as e:
+                print("Couldn't close the issue:", repr(e))
+        elif (
+            (dt.utcnow() - issue.updated_at.replace(tzinfo=None)).days > 23
+            and (dt.utcnow() - issue.created_at.replace(tzinfo=None)).days >= 30
+            and not any(label.name.lower() in LABELS_TO_EXEMPT for label in issue.get_labels())
+        ):
+            # print(f"Would add stale comment to {issue.number}")
+            try:
+                issue.create_comment(
+                    "This issue has been automatically marked as stale because it has not had "
+                    "recent activity. If you think this still needs to be addressed "
+                    "please comment on this thread.\n\nPlease note that issues that do not follow the "
+                    "[contributing guidelines](https://github.com/huggingface/transformers/blob/main/CONTRIBUTING.md) "
+                    "are likely to be ignored."
+                )
+            except github.GithubException as e:
+                print("Couldn't create comment:", repr(e))
+
+--- Chunk 10 ---
+File: src/transformers/models/whisper/generation_whisper.py
+Lines: 1046-1080
+Symbol: WhisperGenerationMixin._set_language_and_task
+
+    def _set_language_and_task(language, task, is_multilingual, generation_config):
+        if is_multilingual is not None:
+            if not hasattr(generation_config, "is_multilingual"):
+                raise ValueError(
+                    "The generation config is outdated and is thus not compatible with the `is_multilingual` argument "
+                    "to `generate`. Please update the generation config as per the instructions "
+                    "https://github.com/huggingface/transformers/issues/25084#issuecomment-1664398224"
+                )
+            generation_config.is_multilingual = is_multilingual
+
+        if hasattr(generation_config, "is_multilingual") and not generation_config.is_multilingual:
+            if task is not None or language is not None:
+                raise ValueError(
+                    "Cannot specify `task` or `language` for an English-only model. If the model is intended to be "
+                    "multilingual, pass `is_multilingual=True` to generate, or update the generation config."
+                )
+
+        if language is not None:
+            if not hasattr(generation_config, "lang_to_id"):
+                raise ValueError(
+                    "The generation config is outdated and is thus not compatible with the `language` argument "
+                    "to `generate`. Either set the language using the `forced_decoder_ids` in the model config, "
+                    "or update the generation config as per the instructions https://github.com/huggingface/transformers/issues/25084#issuecomment-1664398224"
+                )
+            language = language.lower()
+            generation_config.language = language
+
+        if task is not None:
+            if not hasattr(generation_config, "task_to_id"):
+                raise ValueError(
+                    "The generation config is outdated and is thus not compatible with the `task` argument "
+                    "to `generate`. Either set the task using the `forced_decoder_ids` in the model config, "
+                    "or update the generation config as per the instructions https://github.com/huggingface/transformers/issues/25084#issuecomment-1664398224"
+                )
+            generation_config.task = task
+
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only a unified diff patch.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the patch.

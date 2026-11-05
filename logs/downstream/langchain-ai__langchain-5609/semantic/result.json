@@ -1,0 +1,14 @@
+{
+  "task_id": "langchain-ai__langchain-5609",
+  "repository": "langchain-ai/langchain",
+  "base_commit": "28d6277396013a16613008647c312bbd6c4623cc",
+  "retrieval_method": "semantic",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 7455,
+  "output_tokens": 28,
+  "thinking_tokens": 0,
+  "total_tokens": 7483
+}

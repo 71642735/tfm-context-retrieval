@@ -1,0 +1,14 @@
+{
+  "task_id": "sympy__sympy-17655",
+  "repository": "sympy/sympy",
+  "base_commit": "f5e965947af2410ded92cfad987aaf45262ea434",
+  "retrieval_method": "bm25",
+  "k": 10,
+  "model": "gemini-3.5-flash-lite",
+  "max_output_tokens": 4096,
+  "thinking_level": "minimal",
+  "input_tokens": 7005,
+  "output_tokens": 134,
+  "thinking_tokens": 0,
+  "total_tokens": 7139
+}

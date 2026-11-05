@@ -1,0 +1,1 @@
+{"task_id": "pytest-dev__pytest-5809", "retrieval_method": "bm25", "status": "resolved", "resolved": true, "infrastructure_failure": false, "detail": null, "patch_path": "logs\\downstream\\pytest-dev__pytest-5809\\bm25\\patch.diff"}

@@ -1,0 +1,151 @@
+task_id,method,status,cause,prefix,eol,git_error
+pytest-dev__pytest-5809,bm25,resolved,,todo_a/,CRLF,
+pytest-dev__pytest-5809,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: _pytest/pastebin.py: No such file or directory | error: test_pastebin.py: No such file or directory
+pytest-dev__pytest-5809,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 20
+instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: ansible/modules/async_wrapper.py: No such file or directory
+instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86,semantic,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 43
+instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb,bm25,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb,semantic,invalid_patch,sin_diff_valido,sin_prefijo,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb,hybrid,not_resolved,,todo_a/,CRLF,
+langchain-ai__langchain-5609,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 18
+langchain-ai__langchain-5609,semantic,invalid_patch,sin_diff_valido,sin_prefijo,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+langchain-ai__langchain-5609,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 31
+scikit-learn__scikit-learn-13439,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: pipeline.py: No such file or directory | error: tests/test_pipeline.py: No such file or directory
+scikit-learn__scikit-learn-13439,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: pipeline.py: No such file or directory
+scikit-learn__scikit-learn-13439,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 12
+Significant-Gravitas__AutoGPT-4652,bm25,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+Significant-Gravitas__AutoGPT-4652,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 25
+Significant-Gravitas__AutoGPT-4652,hybrid,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+yt-dlp__yt-dlp-9862,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: YoutubeDL.py: No such file or directory
+yt-dlp__yt-dlp-9862,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 16
+yt-dlp__yt-dlp-9862,hybrid,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+keras-team__keras-19863,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 18
+keras-team__keras-19863,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: src/models/model.py: No such file or directory
+keras-team__keras-19863,hybrid,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: keras/src/models/model.py:194 | error: keras/src/models/model.py: patch does not apply
+huggingface__transformers-29675,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: src/transformers/generation/configuration_utils.py:375 | error: src/transformers/generation/configuration_utils.py: patch does not apply
+huggingface__transformers-29675,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: src/transformers/generation/configuration_utils.py:370 | error: src/transformers/generation/configuration_utils.py: patch does not apply
+huggingface__transformers-29675,hybrid,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+langchain-ai__langchain-4579,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 22
+langchain-ai__langchain-4579,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: document_loaders/web_base.py: No such file or directory
+langchain-ai__langchain-4579,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: document_loaders/web_base.py: No such file or directory
+yt-dlp__yt-dlp-4841,bm25,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+yt-dlp__yt-dlp-4841,semantic,invalid_patch,fichero_inexistente,todo_a/,CRLF,error: yt_dlp/extractor/discoveryplus.py: No such file or directory
+yt-dlp__yt-dlp-4841,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: extractor/discoveryplus.py: No such file or directory
+keras-team__keras-19201,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: backend/jax/distribution_lib.py: No such file or directory | error: backend/jax/distribution_lib_test.py: No such file or directory
+keras-team__keras-19201,semantic,not_resolved,,todo_a/,CRLF,
+keras-team__keras-19201,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: backend/jax/distribution_lib.py: No such file or directory | error: backend/jax/distribution_lib_test.py: No such file or directory
+huggingface__transformers-26752,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:623 | error: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply | error: patch failed: src/transformers/models/encoder_decoder/modeling_tf_encoder_decoder.py:588 | error: src/transformers/models/encoder_decoder/modeling_tf_encoder_decoder.py: patch does not apply | error: patch failed: src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py:604 | error: src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py: patch does not apply | error: patch failed: src/transformers/models/vision_encoder_decoder/modeling_vision_encoder_decoder.py:620 | error: src/transformers/models/vision_encoder_decoder/modeling_vision_encoder_decoder.py: patch does not apply
+huggingface__transformers-26752,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: transformers/models/encoder_decoder/modeling_encoder_decoder.py: No such file or directory
+huggingface__transformers-26752,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: transformers/models/encoder_decoder/modeling_encoder_decoder.py: No such file or directory
+langchain-ai__langchain-4646,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: output_parsers/pydantic.py: No such file or directory
+langchain-ai__langchain-4646,semantic,invalid_patch,corrupt_patch,todo_a/,CRLF,error: corrupt patch at line 22
+langchain-ai__langchain-4646,hybrid,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: langchain/output_parsers/pydantic.py:10 | error: langchain/output_parsers/pydantic.py: patch does not apply
+yt-dlp__yt-dlp-5933,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: options.py: No such file or directory
+yt-dlp__yt-dlp-5933,semantic,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+yt-dlp__yt-dlp-5933,hybrid,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+keras-team__keras-18871,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 6
+keras-team__keras-18871,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 100
+keras-team__keras-18871,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 100
+instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 16
+instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba,semantic,invalid_patch,corrupt_patch,todo_a/,CRLF,error: corrupt patch at line 16
+instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 23
+instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a,bm25,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a,semantic,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a,hybrid,not_resolved,,todo_a/,CRLF,
+instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4,bm25,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4,semantic,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4,hybrid,invalid_patch,fragmento_sin_cabecera,sin_prefijo,CRLF,"error: patch fragment without header at line 3: @@ -321,0 +322,96 @@?"
+instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: config/qtargs.py: No such file or directory | error: config/configdata.py: No such file or directory
+instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d,semantic,invalid_patch,fragmento_sin_cabecera,sin_prefijo,CRLF,"error: patch fragment without header at line 3: @@ -1,3 +1,6 @@?"
+instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d,hybrid,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: qutebrowser/config/qtargs.py:19 | error: qutebrowser/config/qtargs.py: patch does not apply | error: patch failed: qutebrowser/config/configdata.yml:3500 | error: qutebrowser/config/configdata.yml: patch does not apply
+instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: ansible/executor/process/worker.py: No such file or directory
+instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 28
+instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 12
+instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 11
+instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: plugins/upstream/models.py: No such file or directory
+instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 6
+instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: config/qtargs.py: No such file or directory | error: config/configdata.py: No such file or directory
+instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 54
+instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d,hybrid,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+astropy__astropy-13398,bm25,invalid_patch,fragmento_sin_cabecera,sin_prefijo,CRLF,"error: patch fragment without header at line 75: @@ -1,10 +1,14 @@?"
+astropy__astropy-13398,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 10
+astropy__astropy-13398,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: coordinates/builtin_frames/intermediate_rotation_transforms.py: No such file or directory
+matplotlib__matplotlib-24177,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 16
+matplotlib__matplotlib-24177,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 67
+matplotlib__matplotlib-24177,hybrid,not_resolved,,todo_a/,CRLF,
+psf__requests-1142,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: models.py: No such file or directory
+psf__requests-1142,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 12
+psf__requests-1142,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 6
+sphinx-doc__sphinx-8721,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: ext/viewcode.py: No such file or directory
+sphinx-doc__sphinx-8721,semantic,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+sphinx-doc__sphinx-8721,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: ext/viewcode.py: No such file or directory
+sympy__sympy-19637,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: core/sympify.py: No such file or directory
+sympy__sympy-19637,semantic,invalid_patch,sin_diff_valido,sin_prefijo,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+sympy__sympy-19637,hybrid,invalid_patch,sin_diff_valido,sin_prefijo,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+django__django-10880,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: db/models/aggregates.py: No such file or directory
+django__django-10880,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: django/db/models/aggregates.py:11 | error: django/db/models/aggregates.py: patch does not apply
+django__django-10880,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 12
+mwaskom__seaborn-3069,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: seaborn/_core/plot.py:1094 | error: seaborn/_core/plot.py: patch does not apply
+mwaskom__seaborn-3069,semantic,invalid_patch,corrupt_patch,todo_a/,CRLF,error: corrupt patch at line 22
+mwaskom__seaborn-3069,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 18
+pydata__xarray-4075,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: core/weighted.py: No such file or directory | error: core/weighted.py: No such file or directory
+pydata__xarray-4075,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: xarray/core/weighted.py:141 | error: xarray/core/weighted.py: patch does not apply
+pydata__xarray-4075,hybrid,invalid_patch,corrupt_patch,todo_a/,CRLF,error: corrupt patch at line 13
+pallets__flask-5014,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 12
+pallets__flask-5014,semantic,invalid_patch,fragmento_sin_cabecera,sin_prefijo,CRLF,"error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?"
+pallets__flask-5014,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 28
+pylint-dev__pylint-8898,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 17
+pylint-dev__pylint-8898,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: config/argument.py: No such file or directory
+pylint-dev__pylint-8898,hybrid,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+pytest-dev__pytest-10081,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: _pytest/unittest.py: No such file or directory
+pytest-dev__pytest-10081,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: src/_pytest/unittest.py:319 | error: src/_pytest/unittest.py: patch does not apply
+pytest-dev__pytest-10081,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: _pytest/unittest.py: No such file or directory
+scikit-learn__scikit-learn-26323,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: sklearn/compose/_column_transformer.py:274 | error: sklearn/compose/_column_transformer.py: patch does not apply
+scikit-learn__scikit-learn-26323,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: sklearn/compose/_column_transformer.py:370 | error: sklearn/compose/_column_transformer.py: patch does not apply
+scikit-learn__scikit-learn-26323,hybrid,invalid_patch,fragmento_sin_cabecera,sin_prefijo,CRLF,"error: patch fragment without header at line 3: @@ -1071,6 +1071,8 @@?"
+matplotlib__matplotlib-26208,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: matplotlib/axes/_axes.py: No such file or directory
+matplotlib__matplotlib-26208,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: lib/matplotlib/axes/_axes.py:4700 | error: lib/matplotlib/axes/_axes.py: patch does not apply
+matplotlib__matplotlib-26208,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: matplotlib/axes/_axes.py: No such file or directory
+psf__requests-5414,bm25,resolved,,todo_a/,CRLF,
+psf__requests-5414,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: models.py: No such file or directory
+psf__requests-5414,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: models.py: No such file or directory
+astropy__astropy-14598,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: astropy/io/fits/card.py:1023 | error: astropy/io/fits/card.py: patch does not apply
+astropy__astropy-14598,semantic,invalid_patch,sin_diff_valido,sin_cabeceras,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+astropy__astropy-14598,hybrid,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: astropy/io/fits/card.py:1078 | error: astropy/io/fits/card.py: patch does not apply
+sphinx-doc__sphinx-9461,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: sphinx/util/inspect.py:341 | error: sphinx/util/inspect.py: patch does not apply
+sphinx-doc__sphinx-9461,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: ext/autodoc/__init__.py: No such file or directory
+sphinx-doc__sphinx-9461,hybrid,invalid_patch,corrupt_patch,todo_a/,CRLF,error: corrupt patch at line 28
+sympy__sympy-16886,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 9
+sympy__sympy-16886,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: crypto/crypto.py: No such file or directory
+sympy__sympy-16886,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: crypto/crypto.py: No such file or directory
+django__django-14373,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: django/utils/dateformat.py:315 | error: django/utils/dateformat.py: patch does not apply
+django__django-14373,semantic,invalid_patch,fragmento_sin_cabecera,sin_prefijo,CRLF,"error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?"
+django__django-14373,hybrid,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: django/utils/dateformat.py:315 | error: django/utils/dateformat.py: patch does not apply
+pydata__xarray-6992,bm25,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: xarray/core/dataset.py:365 | error: xarray/core/dataset.py: patch does not apply
+pydata__xarray-6992,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: xarray/core/dataset.py:365 | error: xarray/core/dataset.py: patch does not apply
+pydata__xarray-6992,hybrid,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: xarray/core/dataset.py:365 | error: xarray/core/dataset.py: patch does not apply
+pylint-dev__pylint-4970,bm25,invalid_patch,sin_diff_valido,sin_prefijo,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+pylint-dev__pylint-4970,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: checkers/similar.py: No such file or directory | error: checkers/similar.py: No such file or directory
+pylint-dev__pylint-4970,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: checkers/similar.py: No such file or directory
+pytest-dev__pytest-5262,bm25,invalid_patch,sin_diff_valido,sin_prefijo,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+pytest-dev__pytest-5262,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: src/_pytest/capture.py:410 | error: src/_pytest/capture.py: patch does not apply
+pytest-dev__pytest-5262,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: _pytest/capture.py: No such file or directory
+scikit-learn__scikit-learn-14087,bm25,not_resolved,,todo_a/,CRLF,
+scikit-learn__scikit-learn-14087,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 12
+scikit-learn__scikit-learn-14087,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: linear_model/logistic.py: No such file or directory
+matplotlib__matplotlib-24627,bm25,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: matplotlib/axes/_base.py: No such file or directory | error: matplotlib/figure.py: No such file or directory
+matplotlib__matplotlib-24627,semantic,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: lib/matplotlib/axes/_base.py:1314 | error: lib/matplotlib/axes/_base.py: patch does not apply
+matplotlib__matplotlib-24627,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: matplotlib/artist.py: No such file or directory | error: matplotlib/axes/_base.py: No such file or directory | error: matplotlib/figure.py: No such file or directory
+psf__requests-2931,bm25,invalid_patch,sin_diff_valido,sin_prefijo,CRLF,"error: No valid patches in input (allow with ""--allow-empty"")"
+psf__requests-2931,semantic,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: utils.py: No such file or directory
+psf__requests-2931,hybrid,invalid_patch,contexto_no_coincide,todo_a/,CRLF,error: patch failed: requests/utils.py:628 | error: requests/utils.py: patch does not apply
+astropy__astropy-14309,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 10
+astropy__astropy-14309,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 12
+astropy__astropy-14309,hybrid,invalid_patch,fichero_inexistente,sin_prefijo,CRLF,error: io/fits/connect.py: No such file or directory
+sphinx-doc__sphinx-9711,bm25,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 5
+sphinx-doc__sphinx-9711,semantic,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 5
+sphinx-doc__sphinx-9711,hybrid,invalid_patch,corrupt_patch,sin_prefijo,CRLF,error: corrupt patch at line 5
+sympy__sympy-17655,bm25,invalid_patch,fragmento_sin_cabecera,sin_prefijo,CRLF,"error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?"
+sympy__sympy-17655,semantic,not_resolved,,todo_a/,CRLF,
+sympy__sympy-17655,hybrid,not_resolved,,todo_a/,CRLF,

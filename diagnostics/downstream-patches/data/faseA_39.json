@@ -1,0 +1,858 @@
+[
+ {
+  "task": "Significant-Gravitas__AutoGPT-4652",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 25",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 25",
+  "info": {
+   "files": [
+    [
+     "autogpt/commands/file_operations.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py",
+     "LF (eol=lf)",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py",
+     "LF (eol=lf)",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "langchain-ai__langchain-4646",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "langchain/output_parsers/pydantic.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "yt-dlp__yt-dlp-5933",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "yt_dlp/options.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 6",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 6",
+  "info": {
+   "files": [
+    [
+     "keras/models/model.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 100",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 100",
+  "info": {
+   "files": [
+    [
+     "keras/models/model.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 100",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 100",
+  "info": {
+   "files": [
+    [
+     "keras/models/model.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "bm25",
+  "ref_ok": true,
+  "ref_err": "",
+  "rec_ok": true,
+  "rec_err": "",
+  "info": {
+   "files": [
+    [
+     "lib/ansible/executor/process/worker.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 28",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 28",
+  "info": {
+   "files": [
+    [
+     "lib/ansible/executor/process/worker.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 12",
+  "info": {
+   "files": [
+    [
+     "lib/ansible/executor/process/worker.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 11",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 11",
+  "info": {
+   "files": [
+    [
+     "openlibrary/plugins/upstream/models.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "openlibrary/plugins/upstream/models.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 6",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 6",
+  "info": {
+   "files": [
+    [
+     "openlibrary/plugins/upstream/models.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "qutebrowser/config/qtargs.py",
+     "CRLF",
+     true
+    ],
+    [
+     "qutebrowser/config/configdata.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 54",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 54",
+  "info": {
+   "files": [
+    [
+     "qutebrowser/config/configdata.yml",
+     "CRLF",
+     true
+    ],
+    [
+     "qutebrowser/config/configdata.yml",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [
+    "qutebrowser/browser/webengine/webengineinit.py"
+   ],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "mwaskom__seaborn-3069",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 18",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 18",
+  "info": {
+   "files": [
+    [
+     "seaborn/_core/plot.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 12",
+  "info": {
+   "files": [
+    [
+     "src/flask/blueprints.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+  "rec_ok": false,
+  "rec_err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+  "info": {
+   "files": [
+    [
+     "src/flask/blueprints.py",
+     "CRLF",
+     true
+    ],
+    [
+     "src/flask/blueprints.py",
+     "CRLF",
+     true
+    ],
+    [
+     "src/flask/blueprints.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 28",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 28",
+  "info": {
+   "files": [
+    [
+     "src/flask/blueprints.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "lib/matplotlib/axes/_axes.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "lib/matplotlib/axes/_axes.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "django__django-14373",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+  "rec_ok": false,
+  "rec_err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+  "info": {
+   "files": [
+    [
+     "django/utils/dateformat.py",
+     "CRLF",
+     true
+    ],
+    [
+     "django/utils/dateformat.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "rec_ok": false,
+  "rec_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "info": {
+   "files": [
+    [
+     "pylint/checkers/similar.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "pylint/checkers/similar.py",
+     "CRLF",
+     true
+    ],
+    [
+     "pylint/checkers/similar.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "hybrid",
+  "ref_ok": true,
+  "ref_err": "",
+  "rec_ok": true,
+  "rec_err": "",
+  "info": {
+   "files": [
+    [
+     "pylint/checkers/similar.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "rec_ok": false,
+  "rec_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "info": {
+   "files": [
+    [
+     "src/_pytest/capture.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "src/_pytest/capture.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 12",
+  "info": {
+   "files": [
+    [
+     "sklearn/linear_model/logistic.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "method": "hybrid",
+  "ref_ok": true,
+  "ref_err": "",
+  "rec_ok": true,
+  "rec_err": "",
+  "info": {
+   "files": [
+    [
+     "sklearn/linear_model/logistic.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "psf__requests-2931",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "rec_ok": false,
+  "rec_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "info": {
+   "files": [
+    [
+     "requests/models.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "psf__requests-2931",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "requests/utils.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 10",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 10",
+  "info": {
+   "files": [
+    [
+     "astropy/io/fits/connect.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 12",
+  "info": {
+   "files": [
+    [
+     "astropy/io/fits/connect.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+  "rec_ok": false,
+  "rec_err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "astropy/io/fits/connect.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 5",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 5",
+  "info": {
+   "files": [
+    [
+     "sphinx/extension.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 5",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 5",
+  "info": {
+   "files": [
+    [
+     "sphinx/extension.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 5",
+  "rec_ok": false,
+  "rec_err": "error: corrupt patch at line 5",
+  "info": {
+   "files": [
+    [
+     "sphinx/extension.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ },
+ {
+  "task": "sympy__sympy-17655",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+  "rec_ok": false,
+  "rec_err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+  "info": {
+   "files": [
+    [
+     "sympy/geometry/point.py",
+     "CRLF",
+     true
+    ],
+    [
+     "sympy/geometry/point.py",
+     "CRLF",
+     true
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "same_state": true,
+  "same_exact": true
+ }
+]

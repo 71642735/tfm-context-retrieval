@@ -1,0 +1,1246 @@
+[
+ {
+  "task": "Significant-Gravitas__AutoGPT-4652",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 25",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 25",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "autogpt/commands/file_operations.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 25",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 25",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py",
+    true,
+    false
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py",
+    true,
+    false
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": true,
+   "err": "",
+   "match_status": false,
+   "match_exact": false
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-4646",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "langchain/output_parsers/pydantic.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "yt-dlp__yt-dlp-5933",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "yt_dlp/options.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 6",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 6",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "keras/models/model.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 6",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 6",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 100",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 100",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "keras/models/model.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 100",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 100",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 100",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 100",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "keras/models/model.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 100",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 100",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "bm25",
+  "ref_ok": true,
+  "ref_err": "",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: lib/ansible/executor/process/worker.py:101\nerror: lib/ansible/executor/process/worker.py: patch does not apply",
+   "match_status": false,
+   "match_exact": false
+  },
+  "files_info": [
+   [
+    "lib/ansible/executor/process/worker.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": true,
+   "err": "",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": true,
+   "err": "",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 28",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 28",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "lib/ansible/executor/process/worker.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 28",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 28",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "lib/ansible/executor/process/worker.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 11",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 11",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "openlibrary/plugins/upstream/models.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 11",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 11",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "openlibrary/plugins/upstream/models.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 6",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 6",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "openlibrary/plugins/upstream/models.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 6",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 6",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: qutebrowser/config/qtargs.py:147\nerror: qutebrowser/config/qtargs.py: patch does not apply\nerror: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+   "match_status": true,
+   "match_exact": false
+  },
+  "files_info": [
+   [
+    "qutebrowser/config/qtargs.py",
+    false,
+    true
+   ],
+   [
+    "qutebrowser/config/configdata.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 54",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 54",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "qutebrowser/config/configdata.yml",
+    false,
+    true
+   ],
+   [
+    "qutebrowser/config/configdata.yml",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 54",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 54",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "mwaskom__seaborn-3069",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 18",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 18",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "seaborn/_core/plot.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 18",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 18",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "src/flask/blueprints.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+  "LF": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "src/flask/blueprints.py",
+    false,
+    true
+   ],
+   [
+    "src/flask/blueprints.py",
+    false,
+    true
+   ],
+   [
+    "src/flask/blueprints.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 28",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 28",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "src/flask/blueprints.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 28",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 28",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "lib/matplotlib/axes/_axes.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "lib/matplotlib/axes/_axes.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "django__django-14373",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+  "LF": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "django/utils/dateformat.py",
+    false,
+    true
+   ],
+   [
+    "django/utils/dateformat.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "LF": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "pylint/checkers/similar.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply\nerror: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+   "match_status": true,
+   "match_exact": false
+  },
+  "files_info": [
+   [
+    "pylint/checkers/similar.py",
+    false,
+    true
+   ],
+   [
+    "pylint/checkers/similar.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "hybrid",
+  "ref_ok": true,
+  "ref_err": "",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: pylint/checkers/similar.py:800\nerror: pylint/checkers/similar.py: patch does not apply",
+   "match_status": false,
+   "match_exact": false
+  },
+  "files_info": [
+   [
+    "pylint/checkers/similar.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": true,
+   "err": "",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": true,
+   "err": "",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "LF": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "src/_pytest/capture.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "src/_pytest/capture.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "sklearn/linear_model/logistic.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "method": "hybrid",
+  "ref_ok": true,
+  "ref_err": "",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: sklearn/linear_model/logistic.py:2191\nerror: sklearn/linear_model/logistic.py: patch does not apply",
+   "match_status": false,
+   "match_exact": false
+  },
+  "files_info": [
+   [
+    "sklearn/linear_model/logistic.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": true,
+   "err": "",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": true,
+   "err": "",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "psf__requests-2931",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "LF": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "requests/models.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "psf__requests-2931",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "requests/utils.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 10",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 10",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "astropy/io/fits/connect.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 10",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 10",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 12",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "astropy/io/fits/connect.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 12",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+  "LF": {
+   "ok": false,
+   "err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "astropy/io/fits/connect.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 5",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "sphinx/extension.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "semantic",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 5",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "sphinx/extension.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "hybrid",
+  "ref_ok": false,
+  "ref_err": "error: corrupt patch at line 5",
+  "LF": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "sphinx/extension.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: corrupt patch at line 5",
+   "match_status": true,
+   "match_exact": true
+  }
+ },
+ {
+  "task": "sympy__sympy-17655",
+  "method": "bm25",
+  "ref_ok": false,
+  "ref_err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+  "LF": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+   "match_status": true,
+   "match_exact": true
+  },
+  "files_info": [
+   [
+    "sympy/geometry/point.py",
+    false,
+    true
+   ],
+   [
+    "sympy/geometry/point.py",
+    false,
+    true
+   ]
+  ],
+  "CRLF_regla": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+   "match_status": true,
+   "match_exact": true
+  },
+  "WT_copia": {
+   "ok": false,
+   "err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+   "match_status": true,
+   "match_exact": true
+  }
+ }
+]

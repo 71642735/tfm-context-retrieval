@@ -612,7 +612,9 @@ Esta separación permite analizar si una mejor recuperación de contexto se trad
 
 Porque la petición al LLM se ha realizado correctamente y el modelo ha generado una respuesta. El problema es que el diff producido no puede aplicarse correctamente sobre el repositorio en el commit correspondiente.
 
-Por tanto, no ha fallado la infraestructura, el proveedor del LLM ni el sistema de evaluación. La generación se ha completado, pero el resultado generado no es válido como patch aplicable. Por este motivo se considera un resultado negativo del modelo y no se regenera automáticamente.
+Por tanto, no ha fallado la infraestructura, el proveedor del LLM ni el sistema de evaluación. La generación se ha completado, pero el resultado generado no es aplicable según el protocolo original (`git apply --check`). Por este motivo se registra como `invalid_patch`, distinto de `infrastructure_error`, y no se regenera automáticamente para respetar Pass@1.
+
+Ahora bien, `invalid_patch` es un resultado de no aplicabilidad y no permite atribuir automáticamente la causa al LLM. El diagnóstico posterior identificó problemas de formato en la salida (el prompt solo pedía un unified diff), parches sin prefijos `a/` y `b/` interpretados con `-p1`, y posibles efectos de los finales de línea (parches guardados con CRLF y comprobación en Windows con `autocrlf=true`). Véase `docs/downstream-patch-diagnostics.md`.
 
 ---
 
@@ -670,7 +672,7 @@ Así se garantiza que los resultados finales se obtienen bajo un protocolo comú
 
 Porque el modelo ya ha realizado su único intento bajo el protocolo Pass@1. Gemini ha generado una respuesta, pero esta no contiene un patch aplicable al commit base de la tarea.
 
-Por tanto, `invalid_patch` representa un fallo del modelo dentro del experimento y se considera un resultado definitivo. No se realiza una nueva generación, ya que eso supondría conceder al modelo un segundo intento.
+Por tanto, `invalid_patch` se considera un resultado definitivo dentro del experimento: no se realiza una nueva generación, ya que eso supondría conceder al modelo un segundo intento. Registra que el parche no pudo aplicarse según el protocolo original, pero no permite atribuir automáticamente la causa al LLM. El diagnóstico posterior identificó problemas de formato, de prefijos de ruta y posibles efectos de los finales de línea que contribuyen a este resultado (véase `docs/downstream-patch-diagnostics.md`).
 
 ### ¿Por qué un `infrastructure_error` no se considera un resultado experimental definitivo?
 

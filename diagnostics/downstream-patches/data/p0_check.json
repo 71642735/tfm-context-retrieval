@@ -1,0 +1,644 @@
+[
+ {
+  "task": "pytest-dev__pytest-5809",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: _pytest/pastebin.py: No such file or directory\nerror: test_pastebin.py: No such file or directory"
+ },
+ {
+  "task": "pytest-dev__pytest-5809",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: corrupt patch at line 20"
+ },
+ {
+  "task": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: ansible/modules/async_wrapper.py: No such file or directory"
+ },
+ {
+  "task": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: corrupt patch at line 43"
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: corrupt patch at line 18"
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: corrupt patch at line 31"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: pipeline.py: No such file or directory\nerror: tests/test_pipeline.py: No such file or directory"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: pipeline.py: No such file or directory"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "Significant-Gravitas__AutoGPT-4652",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 25",
+  "orig": "error: corrupt patch at line 25"
+ },
+ {
+  "task": "yt-dlp__yt-dlp-9862",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: YoutubeDL.py: No such file or directory"
+ },
+ {
+  "task": "yt-dlp__yt-dlp-9862",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: corrupt patch at line 16"
+ },
+ {
+  "task": "keras-team__keras-19863",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: corrupt patch at line 18"
+ },
+ {
+  "task": "keras-team__keras-19863",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: src/models/model.py: No such file or directory"
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: corrupt patch at line 22"
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: document_loaders/web_base.py: No such file or directory"
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: document_loaders/web_base.py: No such file or directory"
+ },
+ {
+  "task": "yt-dlp__yt-dlp-4841",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: extractor/discoveryplus.py: No such file or directory"
+ },
+ {
+  "task": "keras-team__keras-19201",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: backend/jax/distribution_lib.py: No such file or directory\nerror: backend/jax/distribution_lib_test.py: No such file or directory"
+ },
+ {
+  "task": "keras-team__keras-19201",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: backend/jax/distribution_lib.py: No such file or directory\nerror: backend/jax/distribution_lib_test.py: No such file or directory"
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "orig": "error: transformers/models/encoder_decoder/modeling_encoder_decoder.py: No such file or directory"
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "orig": "error: transformers/models/encoder_decoder/modeling_encoder_decoder.py: No such file or directory"
+ },
+ {
+  "task": "langchain-ai__langchain-4646",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+  "orig": "error: output_parsers/pydantic.py: No such file or directory"
+ },
+ {
+  "task": "yt-dlp__yt-dlp-5933",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+  "orig": "error: options.py: No such file or directory"
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 6",
+  "orig": "error: corrupt patch at line 6"
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 100",
+  "orig": "error: corrupt patch at line 100"
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 100",
+  "orig": "error: corrupt patch at line 100"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: corrupt patch at line 16"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: corrupt patch at line 23"
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: patch fragment without header at line 3: @@ -321,0 +322,96 @@?"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: config/qtargs.py: No such file or directory\nerror: config/configdata.py: No such file or directory"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: patch fragment without header at line 3: @@ -1,3 +1,6 @@?"
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "m": "bm25",
+  "ran": true,
+  "ok": true,
+  "err": "",
+  "orig": "error: ansible/executor/process/worker.py: No such file or directory"
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 28",
+  "orig": "error: corrupt patch at line 28"
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 12",
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 11",
+  "orig": "error: corrupt patch at line 11"
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+  "orig": "error: plugins/upstream/models.py: No such file or directory"
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 6",
+  "orig": "error: corrupt patch at line 6"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "orig": "error: config/qtargs.py: No such file or directory\nerror: config/configdata.py: No such file or directory"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 54",
+  "orig": "error: corrupt patch at line 54"
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: patch fragment without header at line 75: @@ -1,10 +1,14 @@?"
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: corrupt patch at line 10"
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: coordinates/builtin_frames/intermediate_rotation_transforms.py: No such file or directory"
+ },
+ {
+  "task": "matplotlib__matplotlib-24177",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: corrupt patch at line 16"
+ },
+ {
+  "task": "matplotlib__matplotlib-24177",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: corrupt patch at line 67"
+ },
+ {
+  "task": "psf__requests-1142",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: models.py: No such file or directory"
+ },
+ {
+  "task": "psf__requests-1142",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "psf__requests-1142",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: corrupt patch at line 6"
+ },
+ {
+  "task": "sphinx-doc__sphinx-8721",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: ext/viewcode.py: No such file or directory"
+ },
+ {
+  "task": "sphinx-doc__sphinx-8721",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: ext/viewcode.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: core/sympify.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "django__django-10880",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: db/models/aggregates.py: No such file or directory"
+ },
+ {
+  "task": "django__django-10880",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "mwaskom__seaborn-3069",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 18",
+  "orig": "error: corrupt patch at line 18"
+ },
+ {
+  "task": "pydata__xarray-4075",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: core/weighted.py: No such file or directory\nerror: core/weighted.py: No such file or directory"
+ },
+ {
+  "task": "pallets__flask-5014",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 12",
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "pallets__flask-5014",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+  "orig": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?"
+ },
+ {
+  "task": "pallets__flask-5014",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 28",
+  "orig": "error: corrupt patch at line 28"
+ },
+ {
+  "task": "pylint-dev__pylint-8898",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: corrupt patch at line 17"
+ },
+ {
+  "task": "pylint-dev__pylint-8898",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: config/argument.py: No such file or directory"
+ },
+ {
+  "task": "pytest-dev__pytest-10081",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: _pytest/unittest.py: No such file or directory"
+ },
+ {
+  "task": "pytest-dev__pytest-10081",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: _pytest/unittest.py: No such file or directory"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-26323",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: patch fragment without header at line 3: @@ -1071,6 +1071,8 @@?"
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "orig": "error: matplotlib/axes/_axes.py: No such file or directory"
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "orig": "error: matplotlib/axes/_axes.py: No such file or directory"
+ },
+ {
+  "task": "psf__requests-5414",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: models.py: No such file or directory"
+ },
+ {
+  "task": "psf__requests-5414",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: models.py: No such file or directory"
+ },
+ {
+  "task": "sphinx-doc__sphinx-9461",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: ext/autodoc/__init__.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: corrupt patch at line 9"
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "m": "semantic",
+  "ran": false,
+  "orig": "error: crypto/crypto.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: crypto/crypto.py: No such file or directory"
+ },
+ {
+  "task": "django__django-14373",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+  "orig": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?"
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+  "orig": "error: checkers/similar.py: No such file or directory\nerror: checkers/similar.py: No such file or directory"
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "m": "hybrid",
+  "ran": true,
+  "ok": true,
+  "err": "",
+  "orig": "error: checkers/similar.py: No such file or directory"
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+  "orig": "error: _pytest/capture.py: No such file or directory"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 12",
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "m": "hybrid",
+  "ran": true,
+  "ok": true,
+  "err": "",
+  "orig": "error: linear_model/logistic.py: No such file or directory"
+ },
+ {
+  "task": "matplotlib__matplotlib-24627",
+  "m": "bm25",
+  "ran": false,
+  "orig": "error: matplotlib/axes/_base.py: No such file or directory\nerror: matplotlib/figure.py: No such file or directory"
+ },
+ {
+  "task": "matplotlib__matplotlib-24627",
+  "m": "hybrid",
+  "ran": false,
+  "orig": "error: matplotlib/artist.py: No such file or directory\nerror: matplotlib/axes/_base.py: No such file or directory\nerror: matplotlib/figure.py: No such file or directory"
+ },
+ {
+  "task": "psf__requests-2931",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "psf__requests-2931",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+  "orig": "error: utils.py: No such file or directory"
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 10",
+  "orig": "error: corrupt patch at line 10"
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 12",
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+  "orig": "error: io/fits/connect.py: No such file or directory"
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 5",
+  "orig": "error: corrupt patch at line 5"
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "m": "semantic",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 5",
+  "orig": "error: corrupt patch at line 5"
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "m": "hybrid",
+  "ran": true,
+  "ok": false,
+  "err": "error: corrupt patch at line 5",
+  "orig": "error: corrupt patch at line 5"
+ },
+ {
+  "task": "sympy__sympy-17655",
+  "m": "bm25",
+  "ran": true,
+  "ok": false,
+  "err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+  "orig": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?"
+ }
+]

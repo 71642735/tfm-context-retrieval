@@ -1,0 +1,1532 @@
+[
+ {
+  "task": "pytest-dev__pytest-5809",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: _pytest/pastebin.py: No such file or directory\nerror: test_pastebin.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: src/_pytest/pastebin.py:76\nerror: src/_pytest/pastebin.py: patch does not apply\nerror: patch failed: testing/test_pastebin.py:130\nerror: testing/test_pastebin.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "src/_pytest/pastebin.py",
+    "testing/test_pastebin.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pytest-dev__pytest-5809",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 20",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 20",
+  "recon_info": {
+   "files": [
+    "src/_pytest/pastebin.py",
+    "testing/test_pastebin.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: ansible/modules/async_wrapper.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: lib/ansible/modules/async_wrapper.py:42\nerror: lib/ansible/modules/async_wrapper.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "lib/ansible/modules/async_wrapper.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 43",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 43",
+  "recon_info": {
+   "files": [
+    "lib/ansible/modules/async_wrapper.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_ok": false,
+  "recon_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_info": {
+   "files": [
+    "openlibrary/plugins/upstream/table_of_contents.py",
+    "openlibrary/plugins/upstream/tests/test_table_of_contents.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 18",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 18",
+  "recon_info": {
+   "files": [
+    "langchain/agents/chat/output_parser.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_ok": false,
+  "recon_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_info": {
+   "files": [
+    "langchain/agents/mrkl/output_parser.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 31",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 31",
+  "recon_info": {
+   "files": [
+    "langchain/agents/mrkl/output_parser.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: pipeline.py: No such file or directory\nerror: tests/test_pipeline.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sklearn/pipeline.py:194\nerror: sklearn/pipeline.py: patch does not apply\nerror: patch failed: sklearn/tests/test_pipeline.py:536\nerror: sklearn/tests/test_pipeline.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sklearn/pipeline.py",
+    "sklearn/tests/test_pipeline.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: pipeline.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sklearn/pipeline.py:190\nerror: sklearn/pipeline.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sklearn/pipeline.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 12",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 12",
+  "recon_info": {
+   "files": [
+    "sklearn/pipeline.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "Significant-Gravitas__AutoGPT-4652",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 25",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 25",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 25",
+  "recon_info": {
+   "files": [
+    "autogpt/commands/file_operations.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "yt-dlp__yt-dlp-9862",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: YoutubeDL.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: yt_dlp/YoutubeDL.py:2194\nerror: yt_dlp/YoutubeDL.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "yt_dlp/YoutubeDL.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "yt-dlp__yt-dlp-9862",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 16",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 16",
+  "recon_info": {
+   "files": [
+    "yt_dlp/YoutubeDL.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "keras-team__keras-19863",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 18",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 18",
+  "recon_info": {
+   "files": [
+    "keras/src/layers/layer.py",
+    "keras/src/utils/summary_utils.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "keras-team__keras-19863",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: src/models/model.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: keras/src/models/model.py:107\nerror: keras/src/models/model.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "keras/src/models/model.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 22",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 22",
+  "recon_info": {
+   "files": [
+    "langchain/document_loaders/web_base.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: document_loaders/web_base.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: langchain/document_loaders/web_base.py:37\nerror: langchain/document_loaders/web_base.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "langchain/document_loaders/web_base.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: document_loaders/web_base.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: langchain/document_loaders/web_base.py:53\nerror: langchain/document_loaders/web_base.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "langchain/document_loaders/web_base.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "yt-dlp__yt-dlp-4841",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: extractor/discoveryplus.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: yt_dlp/extractor/discoveryplus.py: No such file or directory",
+  "recon_info": {
+   "files": [],
+   "missing_in_commit": [
+    "yt_dlp/extractor/discoveryplus.py"
+   ],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "keras-team__keras-19201",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: backend/jax/distribution_lib.py: No such file or directory\nerror: backend/jax/distribution_lib_test.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: keras/backend/jax/distribution_lib.py:201\nerror: keras/backend/jax/distribution_lib.py: patch does not apply\nerror: patch failed: keras/backend/jax/distribution_lib_test.py:52\nerror: keras/backend/jax/distribution_lib_test.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "keras/backend/jax/distribution_lib.py",
+    "keras/backend/jax/distribution_lib_test.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "keras-team__keras-19201",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: backend/jax/distribution_lib.py: No such file or directory\nerror: backend/jax/distribution_lib_test.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: keras/backend/jax/distribution_lib.py:201\nerror: keras/backend/jax/distribution_lib.py: patch does not apply\nerror: patch failed: keras/backend/jax/distribution_lib_test.py:52\nerror: keras/backend/jax/distribution_lib_test.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "keras/backend/jax/distribution_lib.py",
+    "keras/backend/jax/distribution_lib_test.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: transformers/models/encoder_decoder/modeling_encoder_decoder.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:628\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "huggingface__transformers-26752",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: transformers/models/encoder_decoder/modeling_encoder_decoder.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py:621\nerror: src/transformers/models/encoder_decoder/modeling_encoder_decoder.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "langchain-ai__langchain-4646",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: output_parsers/pydantic.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: langchain/output_parsers/pydantic.py:10\nerror: langchain/output_parsers/pydantic.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "langchain/output_parsers/pydantic.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "yt-dlp__yt-dlp-5933",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: options.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: yt_dlp/options.py:1071\nerror: yt_dlp/options.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "yt_dlp/options.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 6",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 6",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 6",
+  "recon_info": {
+   "files": [
+    "keras/models/model.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 100",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 100",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 100",
+  "recon_info": {
+   "files": [
+    "keras/models/model.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "keras-team__keras-18871",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 100",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 100",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 100",
+  "recon_info": {
+   "files": [
+    "keras/models/model.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 16",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 16",
+  "recon_info": {
+   "files": [
+    "qutebrowser/commands/runners.py",
+    "qutebrowser/config/config.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 23",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 23",
+  "recon_info": {
+   "files": [
+    "qutebrowser/commands/runners.py",
+    "qutebrowser/misc/utilcmds.py",
+    "qutebrowser/mainwindow/statusbar/command.py",
+    "qutebrowser/mainwindow/mainwindow.py"
+   ],
+   "missing_in_commit": [
+    "qutebrowser/misc/commands.py"
+   ],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: patch fragment without header at line 3: @@ -321,0 +322,96 @@?",
+  "recon_ok": false,
+  "recon_err": "error: patch fragment without header at line 3: @@ -321,0 +322,96 @@?",
+  "recon_info": {
+   "files": [
+    "openlibrary/core/vendors.py",
+    "openlibrary/core/vendors.py",
+    "openlibrary/core/models.py",
+    "openlibrary/core/models.py",
+    "scripts/affiliate_server.py",
+    "scripts/affiliate_server.py",
+    "scripts/promise_batch_imports.py",
+    "scripts/promise_batch_imports.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: config/qtargs.py: No such file or directory\nerror: config/configdata.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: qutebrowser/config/qtargs.py:14\nerror: qutebrowser/config/qtargs.py: patch does not apply\nerror: patch failed: qutebrowser/config/configdata.py:3502\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "qutebrowser/config/qtargs.py",
+    "qutebrowser/config/configdata.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: patch fragment without header at line 3: @@ -1,3 +1,6 @@?",
+  "recon_ok": false,
+  "recon_err": "error: patch fragment without header at line 3: @@ -1,3 +1,6 @@?",
+  "recon_info": {
+   "files": [
+    "qutebrowser/config/qtargs.py",
+    "qutebrowser/config/qtargs.py",
+    "qutebrowser/config/configdata.yml",
+    "qutebrowser/config/configdata.yml"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: ansible/executor/process/worker.py: No such file or directory",
+  "repo_ok": true,
+  "repo_err": "",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: lib/ansible/executor/process/worker.py:101\nerror: lib/ansible/executor/process/worker.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "lib/ansible/executor/process/worker.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 28",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 28",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 28",
+  "recon_info": {
+   "files": [
+    "lib/ansible/executor/process/worker.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 12",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 12",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 12",
+  "recon_info": {
+   "files": [
+    "lib/ansible/executor/process/worker.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 11",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 11",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 11",
+  "recon_info": {
+   "files": [
+    "openlibrary/plugins/upstream/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: plugins/upstream/models.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: openlibrary/plugins/upstream/models.py:102\nerror: openlibrary/plugins/upstream/models.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "openlibrary/plugins/upstream/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 6",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 6",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 6",
+  "recon_info": {
+   "files": [
+    "openlibrary/plugins/upstream/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: config/qtargs.py: No such file or directory\nerror: config/configdata.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: qutebrowser/config/qtargs.py:147\nerror: qutebrowser/config/qtargs.py: patch does not apply\nerror: patch failed: qutebrowser/config/configdata.py:3500\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "qutebrowser/config/qtargs.py",
+    "qutebrowser/config/configdata.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 54",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 54",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 54",
+  "recon_info": {
+   "files": [
+    "qutebrowser/config/configdata.yml",
+    "qutebrowser/config/configdata.yml"
+   ],
+   "missing_in_commit": [
+    "qutebrowser/browser/webengine/webengineinit.py"
+   ],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: patch fragment without header at line 75: @@ -1,10 +1,14 @@?",
+  "recon_ok": false,
+  "recon_err": "error: patch fragment without header at line 75: @@ -1,10 +1,14 @@?",
+  "recon_info": {
+   "files": [
+    "astropy/coordinates/builtin_frames/altaz.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 10",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 10",
+  "recon_info": {
+   "files": [
+    "astropy/coordinates/builtin_frames/__init__.py",
+    "astropy/coordinates/builtin_frames/altaz.py",
+    "astropy/coordinates/builtin_frames/itrs.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: coordinates/builtin_frames/intermediate_rotation_transforms.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py:10\nerror: astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-24177",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 16",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 16",
+  "recon_info": {
+   "files": [
+    "lib/matplotlib/axes/_axes.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-24177",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 67",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 67",
+  "recon_info": {
+   "files": [
+    "lib/matplotlib/tests/test_axes.py",
+    "lib/matplotlib/tests/test_axes.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "psf__requests-1142",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: models.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: requests/models.py:377\nerror: requests/models.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "requests/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "psf__requests-1142",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 12",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 12",
+  "recon_info": {
+   "files": [
+    "requests/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "psf__requests-1142",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 6",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 6",
+  "recon_info": {
+   "files": [
+    "requests/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-8721",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: ext/viewcode.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sphinx/ext/viewcode.py:233\nerror: sphinx/ext/viewcode.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sphinx/ext/viewcode.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-8721",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: ext/viewcode.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sphinx/ext/viewcode.py:171\nerror: sphinx/ext/viewcode.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sphinx/ext/viewcode.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: core/sympify.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sympy/core/sympify.py:484\nerror: sympy/core/sympify.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sympy/core/sympify.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_ok": false,
+  "recon_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_info": {
+   "files": [
+    "sympy/core/sympify.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_ok": false,
+  "recon_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_info": {
+   "files": [
+    "sympy/core/sympify.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "django__django-10880",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: db/models/aggregates.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: django/db/models/aggregates.py:69\nerror: django/db/models/aggregates.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "django/db/models/aggregates.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "django__django-10880",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 12",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 12",
+  "recon_info": {
+   "files": [
+    "django/db/models/aggregates.py",
+    "django/db/models/aggregates.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "mwaskom__seaborn-3069",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 18",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 18",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 18",
+  "recon_info": {
+   "files": [
+    "seaborn/_core/plot.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pydata__xarray-4075",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: core/weighted.py: No such file or directory\nerror: core/weighted.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: xarray/core/weighted.py:107\nerror: xarray/core/weighted.py: patch does not apply\nerror: patch failed: xarray/core/weighted.py:107\nerror: xarray/core/weighted.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "xarray/core/weighted.py",
+    "xarray/core/weighted.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 12",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 12",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 12",
+  "recon_info": {
+   "files": [
+    "src/flask/blueprints.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+  "repo_ok": false,
+  "repo_err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+  "recon_ok": false,
+  "recon_err": "error: patch fragment without header at line 3: @@ -103,6 +103,8 @@?",
+  "recon_info": {
+   "files": [
+    "src/flask/blueprints.py",
+    "src/flask/blueprints.py",
+    "src/flask/blueprints.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pallets__flask-5014",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 28",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 28",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 28",
+  "recon_info": {
+   "files": [
+    "src/flask/blueprints.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-8898",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 17",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 17",
+  "recon_info": {
+   "files": [
+    "pylint/config/argument.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-8898",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: config/argument.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: pylint/config/argument.py:101\nerror: pylint/config/argument.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "pylint/config/argument.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pytest-dev__pytest-10081",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: _pytest/unittest.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: src/_pytest/unittest.py:147\nerror: src/_pytest/unittest.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "src/_pytest/unittest.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pytest-dev__pytest-10081",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: _pytest/unittest.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: src/_pytest/unittest.py:142\nerror: src/_pytest/unittest.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "src/_pytest/unittest.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-26323",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: patch fragment without header at line 3: @@ -1071,6 +1071,8 @@?",
+  "recon_ok": false,
+  "recon_err": "error: patch fragment without header at line 3: @@ -1071,6 +1071,8 @@?",
+  "recon_info": {
+   "files": [
+    "sklearn/compose/_column_transformer.py",
+    "sklearn/compose/_column_transformer.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: matplotlib/axes/_axes.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: lib/matplotlib/axes/_axes.py:7965\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "lib/matplotlib/axes/_axes.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-26208",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: matplotlib/axes/_axes.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: lib/matplotlib/axes/_axes.py:4826\nerror: lib/matplotlib/axes/_axes.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "lib/matplotlib/axes/_axes.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "psf__requests-5414",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: models.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: requests/models.py:395\nerror: requests/models.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "requests/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "psf__requests-5414",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: models.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: requests/models.py:406\nerror: requests/models.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "requests/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-9461",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: ext/autodoc/__init__.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sphinx/ext/autodoc/__init__.py:1479\nerror: sphinx/ext/autodoc/__init__.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sphinx/ext/autodoc/__init__.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: corrupt patch at line 9",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 9",
+  "recon_info": {
+   "files": [
+    "sympy/crypto/crypto.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "method": "semantic",
+  "in_repo_head": false,
+  "orig_error": "error: crypto/crypto.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sympy/crypto/crypto.py:1429\nerror: sympy/crypto/crypto.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sympy/crypto/crypto.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: crypto/crypto.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sympy/crypto/crypto.py:1532\nerror: sympy/crypto/crypto.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sympy/crypto/crypto.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "django__django-14373",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+  "repo_ok": false,
+  "repo_err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+  "recon_ok": false,
+  "recon_err": "error: patch fragment without header at line 3: @@ -315,3 +315,3 @@?",
+  "recon_info": {
+   "files": [
+    "django/utils/dateformat.py",
+    "django/utils/dateformat.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "repo_ok": false,
+  "repo_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_ok": false,
+  "recon_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_info": {
+   "files": [
+    "pylint/checkers/similar.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: checkers/similar.py: No such file or directory\nerror: checkers/similar.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply\nerror: patch failed: pylint/checkers/similar.py:801\nerror: pylint/checkers/similar.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "pylint/checkers/similar.py",
+    "pylint/checkers/similar.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pylint-dev__pylint-4970",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: checkers/similar.py: No such file or directory",
+  "repo_ok": true,
+  "repo_err": "",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: pylint/checkers/similar.py:800\nerror: pylint/checkers/similar.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "pylint/checkers/similar.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "repo_ok": false,
+  "repo_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_ok": false,
+  "recon_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_info": {
+   "files": [
+    "src/_pytest/capture.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "pytest-dev__pytest-5262",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: _pytest/capture.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: src/_pytest/capture.py:410\nerror: src/_pytest/capture.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "src/_pytest/capture.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 12",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 12",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 12",
+  "recon_info": {
+   "files": [
+    "sklearn/linear_model/logistic.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "scikit-learn__scikit-learn-14087",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: linear_model/logistic.py: No such file or directory",
+  "repo_ok": true,
+  "repo_err": "",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: sklearn/linear_model/logistic.py:2191\nerror: sklearn/linear_model/logistic.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "sklearn/linear_model/logistic.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-24627",
+  "method": "bm25",
+  "in_repo_head": false,
+  "orig_error": "error: matplotlib/axes/_base.py: No such file or directory\nerror: matplotlib/figure.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: lib/matplotlib/axes/_base.py:1227\nerror: lib/matplotlib/axes/_base.py: patch does not apply\nerror: patch failed: lib/matplotlib/figure.py:1187\nerror: lib/matplotlib/figure.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "lib/matplotlib/axes/_base.py",
+    "lib/matplotlib/figure.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "matplotlib__matplotlib-24627",
+  "method": "hybrid",
+  "in_repo_head": false,
+  "orig_error": "error: matplotlib/artist.py: No such file or directory\nerror: matplotlib/axes/_base.py: No such file or directory\nerror: matplotlib/figure.py: No such file or directory",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: lib/matplotlib/artist.py:213\nerror: lib/matplotlib/artist.py: patch does not apply\nerror: patch failed: lib/matplotlib/axes/_base.py:1186\nerror: lib/matplotlib/axes/_base.py: patch does not apply\nerror: patch failed: lib/matplotlib/figure.py:1172\nerror: lib/matplotlib/figure.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "lib/matplotlib/artist.py",
+    "lib/matplotlib/axes/_base.py",
+    "lib/matplotlib/figure.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "psf__requests-2931",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "repo_ok": false,
+  "repo_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_ok": false,
+  "recon_err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "recon_info": {
+   "files": [
+    "requests/models.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "psf__requests-2931",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: utils.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: requests/utils.py:647\nerror: requests/utils.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "requests/utils.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 10",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 10",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 10",
+  "recon_info": {
+   "files": [
+    "astropy/io/fits/connect.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 12",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 12",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 12",
+  "recon_info": {
+   "files": [
+    "astropy/io/fits/connect.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "astropy__astropy-14309",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: io/fits/connect.py: No such file or directory",
+  "repo_ok": false,
+  "repo_err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+  "recon_ok": false,
+  "recon_err": "error: patch failed: astropy/io/fits/connect.py:69\nerror: astropy/io/fits/connect.py: patch does not apply",
+  "recon_info": {
+   "files": [
+    "astropy/io/fits/connect.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 5",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 5",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 5",
+  "recon_info": {
+   "files": [
+    "sphinx/extension.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "semantic",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 5",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 5",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 5",
+  "recon_info": {
+   "files": [
+    "sphinx/extension.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sphinx-doc__sphinx-9711",
+  "method": "hybrid",
+  "in_repo_head": true,
+  "orig_error": "error: corrupt patch at line 5",
+  "repo_ok": false,
+  "repo_err": "error: corrupt patch at line 5",
+  "recon_ok": false,
+  "recon_err": "error: corrupt patch at line 5",
+  "recon_info": {
+   "files": [
+    "sphinx/extension.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ },
+ {
+  "task": "sympy__sympy-17655",
+  "method": "bm25",
+  "in_repo_head": true,
+  "orig_error": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+  "repo_ok": false,
+  "repo_err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+  "recon_ok": false,
+  "recon_err": "error: patch fragment without header at line 3: @@ -218,6 +218,8 @@?",
+  "recon_info": {
+   "files": [
+    "sympy/geometry/point.py",
+    "sympy/geometry/point.py"
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  }
+ }
+]

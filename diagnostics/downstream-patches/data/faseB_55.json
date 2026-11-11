@@ -1,0 +1,1145 @@
+[
+ {
+  "task": "pytest-dev__pytest-5809",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch failed: testing/test_pastebin.py:130\nerror: testing/test_pastebin.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "src/_pytest/pastebin.py",
+     "CRLF",
+     null
+    ],
+    [
+     "testing/test_pastebin.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: _pytest/pastebin.py: No such file or directory\nerror: test_pastebin.py: No such file or directory"
+ },
+ {
+  "task": "pytest-dev__pytest-5809",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: corrupt patch at line 20",
+  "info": {
+   "files": [
+    [
+     "src/_pytest/pastebin.py",
+     "CRLF",
+     null
+    ],
+    [
+     "testing/test_pastebin.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 20"
+ },
+ {
+  "task": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+  "method": "bm25",
+  "ok": true,
+  "err": "",
+  "info": {
+   "files": [
+    [
+     "lib/ansible/modules/async_wrapper.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: ansible/modules/async_wrapper.py: No such file or directory"
+ },
+ {
+  "task": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: corrupt patch at line 43",
+  "info": {
+   "files": [
+    [
+     "lib/ansible/modules/async_wrapper.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 43"
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "info": {
+   "files": [
+    [
+     "openlibrary/plugins/upstream/table_of_contents.py",
+     "CRLF",
+     null
+    ],
+    [
+     "openlibrary/plugins/upstream/tests/test_table_of_contents.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: corrupt patch at line 18",
+  "info": {
+   "files": [
+    [
+     "langchain/agents/chat/output_parser.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 18"
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "info": {
+   "files": [
+    [
+     "langchain/agents/mrkl/output_parser.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "langchain-ai__langchain-5609",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: corrupt patch at line 31",
+  "info": {
+   "files": [
+    [
+     "langchain/agents/mrkl/output_parser.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 31"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: sklearn/pipeline.py:194\nerror: sklearn/pipeline.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sklearn/pipeline.py",
+     "CRLF",
+     null
+    ],
+    [
+     "sklearn/tests/test_pipeline.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: pipeline.py: No such file or directory\nerror: tests/test_pipeline.py: No such file or directory"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch failed: sklearn/pipeline.py:190\nerror: sklearn/pipeline.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sklearn/pipeline.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: pipeline.py: No such file or directory"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-13439",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: corrupt patch at line 12",
+  "info": {
+   "files": [
+    [
+     "sklearn/pipeline.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "yt-dlp__yt-dlp-9862",
+  "method": "bm25",
+  "ok": true,
+  "err": "",
+  "info": {
+   "files": [
+    [
+     "yt_dlp/YoutubeDL.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: YoutubeDL.py: No such file or directory"
+ },
+ {
+  "task": "yt-dlp__yt-dlp-9862",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: corrupt patch at line 16",
+  "info": {
+   "files": [
+    [
+     "yt_dlp/YoutubeDL.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 16"
+ },
+ {
+  "task": "keras-team__keras-19863",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: corrupt patch at line 18",
+  "info": {
+   "files": [
+    [
+     "keras/src/layers/layer.py",
+     "CRLF",
+     null
+    ],
+    [
+     "keras/src/utils/summary_utils.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 18"
+ },
+ {
+  "task": "keras-team__keras-19863",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch failed: keras/src/models/model.py:107\nerror: keras/src/models/model.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "keras/src/models/model.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: src/models/model.py: No such file or directory"
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: corrupt patch at line 22",
+  "info": {
+   "files": [
+    [
+     "langchain/document_loaders/web_base.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 22"
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch failed: langchain/document_loaders/web_base.py:37\nerror: langchain/document_loaders/web_base.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "langchain/document_loaders/web_base.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: document_loaders/web_base.py: No such file or directory"
+ },
+ {
+  "task": "langchain-ai__langchain-4579",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch failed: langchain/document_loaders/web_base.py:53\nerror: langchain/document_loaders/web_base.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "langchain/document_loaders/web_base.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: document_loaders/web_base.py: No such file or directory"
+ },
+ {
+  "task": "yt-dlp__yt-dlp-4841",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: yt_dlp/extractor/discoveryplus.py: No such file or directory",
+  "info": {
+   "files": [],
+   "missing_in_commit": [
+    "yt_dlp/extractor/discoveryplus.py"
+   ],
+   "unsafe": []
+  },
+  "orig": "error: extractor/discoveryplus.py: No such file or directory"
+ },
+ {
+  "task": "keras-team__keras-19201",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: keras/backend/jax/distribution_lib_test.py:52\nerror: keras/backend/jax/distribution_lib_test.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "keras/backend/jax/distribution_lib.py",
+     "CRLF",
+     null
+    ],
+    [
+     "keras/backend/jax/distribution_lib_test.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: backend/jax/distribution_lib.py: No such file or directory\nerror: backend/jax/distribution_lib_test.py: No such file or directory"
+ },
+ {
+  "task": "keras-team__keras-19201",
+  "method": "hybrid",
+  "ok": true,
+  "err": "",
+  "info": {
+   "files": [
+    [
+     "keras/backend/jax/distribution_lib.py",
+     "CRLF",
+     null
+    ],
+    [
+     "keras/backend/jax/distribution_lib_test.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: backend/jax/distribution_lib.py: No such file or directory\nerror: backend/jax/distribution_lib_test.py: No such file or directory"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: corrupt patch at line 16",
+  "info": {
+   "files": [
+    [
+     "qutebrowser/commands/runners.py",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/config/config.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 16"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: corrupt patch at line 23",
+  "info": {
+   "files": [
+    [
+     "qutebrowser/commands/runners.py",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/misc/utilcmds.py",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/mainwindow/statusbar/command.py",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/mainwindow/mainwindow.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [
+    "qutebrowser/misc/commands.py"
+   ],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 23"
+ },
+ {
+  "task": "instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch fragment without header at line 3: @@ -321,0 +322,96 @@?",
+  "info": {
+   "files": [
+    [
+     "openlibrary/core/vendors.py",
+     "CRLF",
+     null
+    ],
+    [
+     "openlibrary/core/vendors.py",
+     "CRLF",
+     null
+    ],
+    [
+     "openlibrary/core/models.py",
+     "CRLF",
+     null
+    ],
+    [
+     "openlibrary/core/models.py",
+     "CRLF",
+     null
+    ],
+    [
+     "scripts/affiliate_server.py",
+     "CRLF",
+     null
+    ],
+    [
+     "scripts/affiliate_server.py",
+     "CRLF",
+     null
+    ],
+    [
+     "scripts/promise_batch_imports.py",
+     "CRLF",
+     null
+    ],
+    [
+     "scripts/promise_batch_imports.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: patch fragment without header at line 3: @@ -321,0 +322,96 @@?"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: qutebrowser/config/qtargs.py:14\nerror: qutebrowser/config/qtargs.py: patch does not apply\nerror: patch failed: qutebrowser/config/configdata.py:3502\nerror: qutebrowser/config/configdata.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "qutebrowser/config/qtargs.py",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/config/configdata.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: config/qtargs.py: No such file or directory\nerror: config/configdata.py: No such file or directory"
+ },
+ {
+  "task": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch fragment without header at line 3: @@ -1,3 +1,6 @@?",
+  "info": {
+   "files": [
+    [
+     "qutebrowser/config/qtargs.py",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/config/qtargs.py",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/config/configdata.yml",
+     "CRLF",
+     null
+    ],
+    [
+     "qutebrowser/config/configdata.yml",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: patch fragment without header at line 3: @@ -1,3 +1,6 @@?"
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch fragment without header at line 75: @@ -1,10 +1,14 @@?",
+  "info": {
+   "files": [
+    [
+     "astropy/coordinates/builtin_frames/altaz.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: patch fragment without header at line 75: @@ -1,10 +1,14 @@?"
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: corrupt patch at line 10",
+  "info": {
+   "files": [
+    [
+     "astropy/coordinates/builtin_frames/__init__.py",
+     "CRLF",
+     null
+    ],
+    [
+     "astropy/coordinates/builtin_frames/altaz.py",
+     "CRLF",
+     null
+    ],
+    [
+     "astropy/coordinates/builtin_frames/itrs.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 10"
+ },
+ {
+  "task": "astropy__astropy-13398",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch failed: astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py:10\nerror: astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: coordinates/builtin_frames/intermediate_rotation_transforms.py: No such file or directory"
+ },
+ {
+  "task": "matplotlib__matplotlib-24177",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: corrupt patch at line 16",
+  "info": {
+   "files": [
+    [
+     "lib/matplotlib/axes/_axes.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 16"
+ },
+ {
+  "task": "matplotlib__matplotlib-24177",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: corrupt patch at line 67",
+  "info": {
+   "files": [
+    [
+     "lib/matplotlib/tests/test_axes.py",
+     "CRLF",
+     null
+    ],
+    [
+     "lib/matplotlib/tests/test_axes.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 67"
+ },
+ {
+  "task": "psf__requests-1142",
+  "method": "bm25",
+  "ok": true,
+  "err": "",
+  "info": {
+   "files": [
+    [
+     "requests/models.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: models.py: No such file or directory"
+ },
+ {
+  "task": "psf__requests-1142",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: corrupt patch at line 12",
+  "info": {
+   "files": [
+    [
+     "requests/models.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "psf__requests-1142",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: corrupt patch at line 6",
+  "info": {
+   "files": [
+    [
+     "requests/models.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 6"
+ },
+ {
+  "task": "sphinx-doc__sphinx-8721",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: sphinx/ext/viewcode.py:233\nerror: sphinx/ext/viewcode.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sphinx/ext/viewcode.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: ext/viewcode.py: No such file or directory"
+ },
+ {
+  "task": "sphinx-doc__sphinx-8721",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch failed: sphinx/ext/viewcode.py:171\nerror: sphinx/ext/viewcode.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sphinx/ext/viewcode.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: ext/viewcode.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: sympy/core/sympify.py:484\nerror: sympy/core/sympify.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sympy/core/sympify.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: core/sympify.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "info": {
+   "files": [
+    [
+     "sympy/core/sympify.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "sympy__sympy-19637",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: No valid patches in input (allow with \"--allow-empty\")",
+  "info": {
+   "files": [
+    [
+     "sympy/core/sympify.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: No valid patches in input (allow with \"--allow-empty\")"
+ },
+ {
+  "task": "django__django-10880",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: django/db/models/aggregates.py:69\nerror: django/db/models/aggregates.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "django/db/models/aggregates.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: db/models/aggregates.py: No such file or directory"
+ },
+ {
+  "task": "django__django-10880",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: corrupt patch at line 12",
+  "info": {
+   "files": [
+    [
+     "django/db/models/aggregates.py",
+     "CRLF",
+     null
+    ],
+    [
+     "django/db/models/aggregates.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 12"
+ },
+ {
+  "task": "pydata__xarray-4075",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: xarray/core/weighted.py:107\nerror: xarray/core/weighted.py: patch does not apply\nerror: patch failed: xarray/core/weighted.py:107\nerror: xarray/core/weighted.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "xarray/core/weighted.py",
+     "CRLF",
+     null
+    ],
+    [
+     "xarray/core/weighted.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: core/weighted.py: No such file or directory\nerror: core/weighted.py: No such file or directory"
+ },
+ {
+  "task": "pylint-dev__pylint-8898",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: corrupt patch at line 17",
+  "info": {
+   "files": [
+    [
+     "pylint/config/argument.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 17"
+ },
+ {
+  "task": "pylint-dev__pylint-8898",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch failed: pylint/config/argument.py:101\nerror: pylint/config/argument.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "pylint/config/argument.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: config/argument.py: No such file or directory"
+ },
+ {
+  "task": "pytest-dev__pytest-10081",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: src/_pytest/unittest.py:147\nerror: src/_pytest/unittest.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "src/_pytest/unittest.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: _pytest/unittest.py: No such file or directory"
+ },
+ {
+  "task": "pytest-dev__pytest-10081",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch failed: src/_pytest/unittest.py:142\nerror: src/_pytest/unittest.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "src/_pytest/unittest.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: _pytest/unittest.py: No such file or directory"
+ },
+ {
+  "task": "scikit-learn__scikit-learn-26323",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch fragment without header at line 3: @@ -1071,6 +1071,8 @@?",
+  "info": {
+   "files": [
+    [
+     "sklearn/compose/_column_transformer.py",
+     "CRLF",
+     null
+    ],
+    [
+     "sklearn/compose/_column_transformer.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: patch fragment without header at line 3: @@ -1071,6 +1071,8 @@?"
+ },
+ {
+  "task": "psf__requests-5414",
+  "method": "semantic",
+  "ok": true,
+  "err": "",
+  "info": {
+   "files": [
+    [
+     "requests/models.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: models.py: No such file or directory"
+ },
+ {
+  "task": "psf__requests-5414",
+  "method": "hybrid",
+  "ok": true,
+  "err": "",
+  "info": {
+   "files": [
+    [
+     "requests/models.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: models.py: No such file or directory"
+ },
+ {
+  "task": "sphinx-doc__sphinx-9461",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch failed: sphinx/ext/autodoc/__init__.py:1479\nerror: sphinx/ext/autodoc/__init__.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sphinx/ext/autodoc/__init__.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: ext/autodoc/__init__.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: corrupt patch at line 9",
+  "info": {
+   "files": [
+    [
+     "sympy/crypto/crypto.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: corrupt patch at line 9"
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "method": "semantic",
+  "ok": false,
+  "err": "error: patch failed: sympy/crypto/crypto.py:1429\nerror: sympy/crypto/crypto.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sympy/crypto/crypto.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: crypto/crypto.py: No such file or directory"
+ },
+ {
+  "task": "sympy__sympy-16886",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch failed: sympy/crypto/crypto.py:1532\nerror: sympy/crypto/crypto.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "sympy/crypto/crypto.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: crypto/crypto.py: No such file or directory"
+ },
+ {
+  "task": "matplotlib__matplotlib-24627",
+  "method": "bm25",
+  "ok": false,
+  "err": "error: patch failed: lib/matplotlib/axes/_base.py:1227\nerror: lib/matplotlib/axes/_base.py: patch does not apply\nerror: patch failed: lib/matplotlib/figure.py:1187\nerror: lib/matplotlib/figure.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "lib/matplotlib/axes/_base.py",
+     "CRLF",
+     null
+    ],
+    [
+     "lib/matplotlib/figure.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: matplotlib/axes/_base.py: No such file or directory\nerror: matplotlib/figure.py: No such file or directory"
+ },
+ {
+  "task": "matplotlib__matplotlib-24627",
+  "method": "hybrid",
+  "ok": false,
+  "err": "error: patch failed: lib/matplotlib/artist.py:213\nerror: lib/matplotlib/artist.py: patch does not apply\nerror: patch failed: lib/matplotlib/axes/_base.py:1186\nerror: lib/matplotlib/axes/_base.py: patch does not apply\nerror: patch failed: lib/matplotlib/figure.py:1172\nerror: lib/matplotlib/figure.py: patch does not apply",
+  "info": {
+   "files": [
+    [
+     "lib/matplotlib/artist.py",
+     "CRLF",
+     null
+    ],
+    [
+     "lib/matplotlib/axes/_base.py",
+     "CRLF",
+     null
+    ],
+    [
+     "lib/matplotlib/figure.py",
+     "CRLF",
+     null
+    ]
+   ],
+   "missing_in_commit": [],
+   "unsafe": []
+  },
+  "orig": "error: matplotlib/artist.py: No such file or directory\nerror: matplotlib/axes/_base.py: No such file or directory\nerror: matplotlib/figure.py: No such file or directory"
+ }
+]

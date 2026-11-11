@@ -1794,3 +1794,27 @@ resultados experimentales congelados.
 La fase experimental se considera cerrada. Cualquier posible mejora del
 pipeline o extensión del experimento se reserva para el apartado de
 limitaciones y trabajo futuro.
+
+
+---
+
+## Nota de corrección metodológica (2026-11-11)
+
+Esta nota se añade al final y **no sustituye ni borra** el registro anterior.
+
+La auditoría de los `invalid_patch` registrada más arriba (113/141 con diff reconocible y 28/141 sin diff;
+33 con estructura completa y 80 unified diffs sin cabecera Git) se obtuvo con la heurística de subcadenas de
+`src/downstream/analysis.py` (`analyze_invalid_patches`, líneas 188-191). Una revisión posterior detectó que esa
+heurística tuvo un falso positivo (`sphinx-doc__sphinx-8721`, estrategia semantic, una respuesta de texto) y omitió
+cinco parches con cabecera de fichero defectuosa (`openlibrary-910b0857...`, `qutebrowser-473a15f7...`
+y `scikit-learn-26323` con hybrid, `django-14373` con semantic, `sympy-17655` con bm25).
+
+Criterio adoptado: estructura de parche reconocible por Git (el error de `git apply --check` no es
+`No valid patches in input`). Con él, **117/141 (83 %)** `invalid_patch` tienen estructura reconocible
+(112 con cabeceras completas y 5 con cabecera defectuosa) y **24/141 (17 %)** no contienen diff.
+
+Es una corrección de la clasificación descriptiva. Los estados de las 150 condiciones (141 `invalid_patch`,
+7 `not_resolved`, 2 `resolved`), los parches y los resultados originales no se han modificado. El desglose
+33/80 del registro anterior corresponde al criterio original y no se ha recalculado.
+
+Detalle, casos discrepantes y justificación: `docs/downstream-patch-diagnostics.md` (sección 2.1 y registro D-001).

@@ -1766,3 +1766,31 @@ Estas diferencias son descriptivas. El reducido número de patches aplicables
 (n=9), y especialmente de incidencias resueltas (n=2), impide establecer a
 partir de estos resultados una relación causal o una superioridad downstream
 estadísticamente sustentada entre las estrategias de recuperación.
+
+## Congelación definitiva del experimento
+
+Tras completar la evaluación de recuperación, la evaluación downstream y el
+análisis conjunto de ambos bloques, se da por finalizada y congelada la fase
+experimental.
+
+La configuración experimental definitiva queda formada por:
+
+- muestra final de 50 tareas de ContextBench;
+- estrategias de recuperación BM25, UniXcoder y RRF;
+- evaluación de recuperación con K=5, K=10 y K=20;
+- métricas de recuperación a nivel de fichero y líneas;
+- evaluación downstream con K=10;
+- 150 condiciones downstream definitivas (50 tareas × 3 estrategias);
+- protocolo Pass@1 con una única generación válida por condición;
+- mismo modelo, prompt y configuración de generación para las tres estrategias.
+
+A partir de este punto no se modifican la muestra, las estrategias de
+recuperación, los valores de K, las métricas, el modelo, el prompt ni el
+protocolo experimental en función de los resultados observados.
+
+Las tablas y figuras finales se generan de forma reproducible a partir de los
+resultados experimentales congelados.
+
+La fase experimental se considera cerrada. Cualquier posible mejora del
+pipeline o extensión del experimento se reserva para el apartado de
+limitaciones y trabajo futuro.

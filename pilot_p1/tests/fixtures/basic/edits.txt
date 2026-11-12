@@ -1,0 +1,9 @@
+FILE: pkg/mod.py
+<<<<<<< SEARCH
+def add(a, b):
+    return a + b
+=======
+def add(a, b):
+    """Suma."""
+    return a + b
+>>>>>>> REPLACE

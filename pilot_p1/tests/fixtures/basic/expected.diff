@@ -1,0 +1,11 @@
+diff --git a/pkg/mod.py b/pkg/mod.py
+--- a/pkg/mod.py
++++ b/pkg/mod.py
+@@ -2,6 +2,7 @@
+ 
+ 
+ def add(a, b):
++    """Suma."""
+     return a + b
+ 
+ 

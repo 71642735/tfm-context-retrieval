@@ -1839,3 +1839,36 @@ limitaciones: `docs/downstream-patch-diagnostics.md` (secciones 12-14).
 Se decide **preparar y documentar** el protocolo P1 de un piloto de formato de edición (`docs/downstream-patch-diagnostics.md`,
 sección 15). **Esta entrada no autoriza ejecutar el piloto**: el experimento no está aprobado, no se ha generado nada y no se
 ha modificado el generador. Los resultados originales no cambian. La ejecución requiere una aprobación explícita posterior.
+
+
+---
+
+## Primera fase técnica de P1 (2026-11-12): conversor SEARCH/REPLACE → diff
+
+**Esto es una validación técnica, no una ejecución del piloto P1** (D-005 sigue sin aprobar). No se hicieron generaciones con
+el LLM, llamadas a la API, evaluaciones funcionales, checkout ni fetch; los resultados originales no cambian.
+
+- **Objetivo:** comprobar, antes de gastar ninguna generación, que el mecanismo del formato de edición alternativo funciona:
+  convertir bloques SEARCH/REPLACE literales en un diff de forma determinista.
+- **Implementación:** paquete independiente `pilot_p1/` (parser estricto `edit_format.py`, aplicador `applier.py`, pruebas y
+  `README.md`). Solo lee los repositorios (`git ls-tree` / `git cat-file`), trabaja en copias temporales, exige coincidencia
+  única, rechaza rutas inseguras, ambigüedades, solapamientos y operaciones inconsistentes, y genera un diff reproducible.
+- **Validación inicial:** 93 pruebas locales correctas, cada caso aceptado contrastado con `git apply` real. Contraste con
+  parches conocidos: 19 de los 150 originales pasan `git apply --check` sobre los ficheros del `base_commit` (8 ya
+  aplicables en el experimento y 11 recuperables bajo condiciones alternativas); el aplicador los acepta todos con resultado
+  idéntico al de Git. No contradice los 9 parches que llegaron a evaluación: son condiciones distintas (el original usa
+  `-p1` y el árbol real; el contraste admite `-p0` y blobs en LF) y los 19 no son tareas resueltas. Ampliado a altas de
+  fichero, el contraste cubre 20 (los 9 evaluados más los 11 recuperables).
+- **Problemas detectados en la revisión y correcciones:** el parámetro `workdir` podía sobrescribir ficheros (sustituido por
+  copias en un subdirectorio nuevo y aislado, con rutas peligrosas rechazadas); un fallo de Git se confundía con "fichero
+  inexistente" (ahora se informa como error del entorno, no del modelo); `rstrip()` ignoraba más blancos de los previstos
+  (solo espacios y tabuladores); sin límites de tiempo (60 s por llamada a Git); fixtures expuestos a `core.autocrlf`
+  (protegidos con un `.gitattributes` propio dentro de `pilot_p1/`); casos límite de creación de ficheros.
+- **Resultado final:** 139 pruebas correctas (0 fallos, 0 omitidas). Limitaciones pendientes: no cambia el salto final de
+  fichero, sin renombrados ni borrados de fichero, y **no verificado en Linux/Docker** (diff generado con `difflib`,
+  aceptación por el evaluador real).
+- **Integridad:** antes y después, SHA-256 idénticos en los 605 ficheros versionados, los 450 de `logs/downstream` (150
+  parches), `results/` y HEAD e índice de los 21 repositorios.
+
+Detalle técnico y reproducción: `pilot_p1/README.md`. Siguen pendientes (no autorizados) los prompts, el normalizador, la
+selección de tareas, las 72 generaciones y la evaluación funcional.

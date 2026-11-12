@@ -408,6 +408,14 @@ base reproducida (150/150), matriz ejecutada una vez y documentada.
 **Estado: análisis de viabilidad y protocolo P1 documentados** en [`downstream-patch-diagnostics.md`](downstream-patch-diagnostics.md),
 sección 15. **El experimento NO está aprobado ni ejecutado**; esta nota no lo autoriza.
 
+- **Avance técnico (12/11/2026; no es ejecución del piloto):** la implementación técnica del conversor SEARCH/REPLACE → diff
+  (parser y aplicador, en `pilot_p1/`) está **realizada y validada localmente** (139 pruebas correctas, contraste con parches
+  ya conocidos e integridad del experimento original verificada; detalle en `pilot_p1/README.md` y `experiment-log.md`).
+  **Siguen pendientes** la preparación de los prompts, el normalizador, la selección y congelación de las 12 tareas y la
+  orquestación. **No se han ejecutado** las 72 generaciones ni la evaluación funcional, y no se ha verificado el conversor en
+  Linux/Docker. Continuar con el piloto completo sigue **pendiente de autorización y de viabilidad temporal** (nada
+  experimental antes de la entrega del 07/12/2026).
+
 - **Qué se propone (resumen):** un piloto pequeño del formato de edición alternativo que pidió el director: 12 tareas × 3
   estrategias = 36 condiciones, con cuatro brazos (originales `O0`, nueva generación con el prompt original `O1`, `O1`
   normalizado `O1n` y formato de edición `E1`), comparación primaria `E1` frente a `O1n`, una generación por condición y sin

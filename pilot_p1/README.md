@@ -1,9 +1,10 @@
-# pilot_p1 — Preparación técnica del piloto P1 (fases 1 y 2)
+# pilot_p1 — Preparación técnica del piloto P1 (fases 1, 2 y 3A)
 
-> **Ni la fase 1 ni la fase 2 son una ejecución experimental de P1.** No hay generaciones con LLM, ni llamadas a API, ni
+> **Ni la fase 1, ni la 2, ni la 3A son una ejecución experimental de P1.** No hay generaciones con LLM, ni llamadas a API, ni
 > evaluación funcional, ni se ha ejecutado el filtro experimental G. La fase 1 (commit `e4342dd`) validó el conversor
 > SEARCH/REPLACE → diff; la fase 2 prepara y valida los prompts O1/E1, el normalizador N y la selección
-> determinista de las 12 tareas. El protocolo P1 (D-005) sigue **sin aprobar**. Los resultados del experimento original
+> determinista de las 12 tareas; la fase 3A construye y prueba, **solo con un cliente falso y respuestas
+> sintéticas**, la orquestación aislada de las 72 generaciones. El protocolo P1 (D-005) sigue **sin aprobar**. Los resultados del experimento original
 > (150 parches, `results/`, `repos/`) no se han tocado.
 
 ## Objetivo
@@ -23,6 +24,10 @@ el aplicador. No dice nada sobre si el formato mejora los resultados.
 | `instructions_edit_v1.txt` | Fase 2: instrucciones E1 congeladas (SHA-256 fijado en `prompts.py`) |
 | `normalizer.py` | Fase 2: normalizador N de parches del brazo original |
 | `select_tasks.py`, `data/task_selection.json` | Fase 2: selección determinista de las 12 tareas y metadatos para reproducirla |
+| `orchestrator.py` | Fase 3A: orquestación aislada, reanudable y verificable de las 72 condiciones |
+| `client.py` | Fase 3A: interfaz de cliente inyectable (`GenerationClient`) y `FakeClient`; **no hay cliente real** |
+| `format_metrics.py` | Fase 3A: vallas Markdown externas/internas y parseabilidad, independientes del parser |
+| `decision.py` | Fase 3A: regla de decisión del protocolo con condiciones excluidas por infraestructura |
 | `tests/` | Pruebas (`unittest`), fixtures y contraste con parches conocidos |
 | `.gitattributes` | `* -text` para `instructions_edit_v1.txt` y `data/` (sin conversión de finales de línea) |
 | `tests/fixtures/.gitattributes` | `* -text`: impide que `core.autocrlf` convierta los fixtures (solo afecta a esa carpeta) |
@@ -293,6 +298,152 @@ hash distinto rechazados).
 7. **Falta para la orquestación de las 72 generaciones:** módulo de generación (O1 y E1 por condición, consecutivos) con
    directorios de salida nuevos y lista blanca de rutas, reintentos solo para 429/503 y registro de modelo, fecha y hashes;
    filtro G y evaluación; control de integridad antes y después; y la aprobación del protocolo.
+
+---
+
+# Fase 3A: orquestación aislada de las 72 generaciones (solo simulacros)
+
+**No se ha conectado ninguna API ni se ha ejecutado ninguna generación real.** Todo lo de esta fase se probó con un cliente
+falso y respuestas sintéticas; los registros de esos simulacros llevan `synthetic: true`, viven en directorios `simulacro_*` y
+nunca pueden confundirse con resultados experimentales. Aplica el protocolo congelado (`fb589c1`) sin cambiarlo.
+
+## Arquitectura (`orchestrator.py`)
+
+1. **Selección:** solo `data/task_selection.json` (recalculada y comprobada contra `6dbd0c9f9365690c`). 12 tareas × 3 métodos ×
+   2 brazos = **72 condiciones**; para cada par (tarea, método) se ejecutan consecutivamente `O1` y luego `E1`.
+   `cond_id = c<índice>-<sha8 de la tarea>-<método>-<brazo>`; `pair_id` es lo mismo sin el brazo.
+2. **Prompts:** `prompts.py` (`build_o1`, `build_e1`) a partir de los `prompt.txt` originales (solo lectura). Antes de cualquier
+   llamada se comprueba, para cada par, que O1 y E1 comparten issue, parte compartida, orden de fragmentos y K = 10; si no, se
+   aborta.
+3. **Cliente inyectable** (`client.py`): `GenerationClient.generate(prompt, model, max_output_tokens, thinking_level) →
+   ClientResponse`. Solo existe `FakeClient`. El orquestador rechaza (`RealClientNotAllowed`) cualquier cliente sin
+   `is_synthetic = True`; el cliente real será de la fase 3B, con autorización expresa.
+4. **Etapas separadas**, cada una en su propio fichero: *generación* (`response.txt` + `generation.json`), *formato*
+   (`format_metrics.json`), *conversión* de `E1` (`conversion.json`, `diff.patch`), *normalización* de `O1` (`normalization.json`,
+   `o1.patch`, `o1n.patch`), *aplicabilidad* (filtro G) y *resolución funcional*: estas dos últimas **no existen todavía** y
+   figuran como `pending_phase_3B`. `o1.patch` es la respuesta con el mismo tratamiento del generador original (`strip()` + salto
+   final) y `o1n.patch` el resultado de N sobre ella; la respuesta original no se modifica nunca.
+5. **Parámetros registrados** (manifiesto y `generation.json`): modelo `gemini-3.5-flash-lite`, 4096 tokens, razonamiento `minimal`,
+   hasta 3 intentos de API (429/503, esperas de 10·n s como el original), fecha, versión del protocolo
+   (`P1-frozen-fb589c1`), hashes de cada prompt, de las instrucciones O1 y E1 y de la selección.
+
+## Esquema de directorios y registros
+
+```
+<salida>/simulacro_*/                  (o p1_run_* en una ejecución real)
+  RUN_MANIFEST.json                    escrito una vez: protocolo, modelo, selección, 72 condiciones con hashes de prompt/contexto
+  events.jsonl                         solo anadir; cada linea lleva el SHA-256 de la anterior (cadena)
+  RUN.lock                             existe solo mientras se ejecuta
+  conditions/<cond_id>/
+    prompt.txt                         bytes exactos enviados (sin traducción de saltos de línea)
+    response.txt                       respuesta original, byte a byte
+    generation.json | generation_failed.json   sello (hashes, intentos, tokens, estado) o fallo de infraestructura
+    format_metrics.json                vallas externas / internas y parseabilidad
+    O1: normalization.json, o1.patch, o1n.patch      E1: conversion.json, diff.patch
+```
+
+Todo fichero se crea **una sola vez** (`write_new`: temporal + enlace exclusivo; si existe, `OverwriteError`). Eventos:
+`run_started`, `prompt_written`, `api_attempt_started/failed`, `api_response_received` (con el hash de la respuesta y el uso),
+`generation_sealed`, `stage_written`, `apply_infra_retry`, `condition_not_evaluable`, `run_resumed`, `interrupted_retry`.
+
+## Aislamiento
+
+`validate_output_dir` se ejecuta **antes de escribir**: la ruta debe ser absoluta; llamarse `simulacro_*` (sintético) o `p1_run_*`
+(real); no ser el proyecto ni un ancestro; **dentro del proyecto solo se admite `pilot_p1_runs/<ejecución>`**; se prohíbe
+`src/`, `repos/`, `results/`, `logs/`, `diagnostics/`, `docs/`, `external/`, `pilot_p1/` y cualquier árbol git; si existe, debe estar
+vacía o ser una ejecución de P1 (con manifiesto). Los `run_id` empiezan por `p1-` (`p1-sim-…`), por lo que no reutilizan los de
+la evaluación original. Del experimento original solo se lee (`prompt.txt`, `final_tasks.csv`, repositorios con `git ls-tree` /
+`cat-file`). Las pruebas escriben solo en directorios temporales fuera del proyecto.
+
+## Reanudación
+
+`run()` es reanudable: si el directorio existe, **verifica antes de continuar** (manifiesto y su hash, cadena de eventos, hash de
+cada prompt/respuesta/derivado frente a su sello, ficheros o directorios inesperados) y compara el manifiesto con la
+configuración actual; cualquier incoherencia lanza `IntegrityError` y no se toca nada. Después, para cada condición:
+- generación **sellada** → no se vuelve a llamar al modelo; solo se completan las etapas derivadas que falten (deterministas);
+- `generation_failed.json` → condición ya declarada no evaluable; no se reintenta sola;
+- `response.txt` sin sellar (caída entre ambos pasos) → se sella desde el evento `api_response_received` si el hash coincide;
+- llamada iniciada sin respuesta guardada (caída durante la llamada) → `InterruptedConditionError`: **decisión manual** (un
+  `on_interrupted="retry"` explícito vuelve a llamar y lo deja registrado), porque repetirla podría duplicar una generación;
+- un bloqueo `RUN.lock` huérfano impide arrancar otra ejecución hasta que alguien lo revise.
+`verify(recompute=True)` además recalcula las métricas de formato y la normalización y las compara con lo guardado. Un `*.tmp` de
+una escritura interrumpida se avisa (warning) pero no bloquea.
+
+## Política de reintentos y de errores
+
+| Tipo | Ejemplos | Qué se hace | Cómo se registra |
+|---|---|---|---|
+| **Error de la salida del modelo** | `parse_error`, `search_not_found`, `ambiguous_match`, respuesta vacía… | **No se reintenta**; es el resultado de la condición | `category: model_output_error` |
+| **Error de infraestructura recuperado** | git falla y luego funciona | Se reaplica **la misma respuesta**, hasta 3 intentos totales (`MAX_APPLY_ATTEMPTS`), sin regenerar | `attempts`, `recovered_after_retry`, evento `apply_infra_retry` |
+| **Condición no evaluable por infraestructura** | `environment_error` persistente tras 3 intentos; API 429/503 agotada o error permanente | Se registra y **no se reintenta sola** | `category: infrastructure_not_evaluable`, evento `condition_not_evaluable`; el **par** queda excluido |
+
+`summary()` informa por separado de errores del modelo, errores de infraestructura (intentos fallidos, reintentos, recuperados),
+condiciones no evaluables y pares excluidos. **Decisión con exclusiones** (`decision.py`): un par con un brazo no evaluable se
+excluye de la comparación pareada; **los umbrales no se reescalan** (se siguen midiendo sobre 36); si alguna forma de completar lo
+que falta cambiase la decisión, el resultado es `inconclusive_by_infrastructure`. Se prueba con recuentos sintéticos (aún no hay
+resultados del filtro G).
+
+## Métricas de vallas Markdown (`format_metrics.py`)
+
+Detección independiente del parser (solo marcadores de línea; no llama a `parse_edits` ni modifica la respuesta). Se registran **por
+separado**: (1) **vallas externas** que envuelven o acompañan la respuesta (líneas que empiezan por ``` fuera de los bloques; en `O1`,
+fuera de las líneas de contenido del diff); (2) **vallas internas**: secuencias ``` dentro del contenido de una edición (en `O1`, dentro
+de líneas `+`/`-`/espacio); (3) **parseabilidad real** con el parser existente (solo `E1`). También `wraps_response` y
+`fences_and_parseable` (vallas y parseable a la vez). Tres indicadores de vallas: **externas**, **internas** y su **unión**
+(`fences_union_present`), que cubre la métrica original del protocolo (`original_metric_a_present`, línea que empieza por ```):
+iguales cuando las vallas están al principio de línea; la unión solo es mayor con secuencias ``` a mitad de línea. La distinción es
+solo de registro y **no altera la parseabilidad ni los umbrales**.
+
+## Mejora neta y registro de victorias (`decision.py`)
+
+Interpretación fijada el 12/11/2026, **antes de cualquier generación experimental** (no es un ajuste posterior a resultados):
+«`E1` supera a `O1n` en ≥ 6 condiciones» = **mejora neta** = victorias de `E1` − victorias de `O1n` ≥ 6 (abandono si ≤ 2, con el resto de
+reglas del protocolo sin cambios). Victoria de `E1`: `E1` aplicable y `O1n` no; victoria de `O1n`: al revés; empate: ambos aplicables o
+ambos no aplicables. `evaluate()` devuelve siempre `pairwise` con victorias de cada brazo, empates (`ties_both_pass`,
+`ties_both_fail`), `n_paired` y `net_improvement`, en total y por estrategia. Documentado en el protocolo (15.4).
+
+## Pruebas y simulacros de la fase 3A
+
+**Estado final de 3A — suite completa: 303 pruebas, 303 superadas, 0 fallidas, 0 omitidas** (≈ 11 min): 208 de las fases 1 y 2 (siguen
+pasando) + 95 nuevas de la fase 3A: `test_format_metrics.py` 20, `test_decision.py` 20 y `test_orchestrator.py` 55 (condiciones 2,
+simulacro completo 10, reanudación 6, detección de corrupción 14, no sobrescritura 2, errores 8, aislamiento 7, carpeta de
+ejecuciones 3, interfaces 3). La fase 3A está **completada y commiteada**; la 3B (cliente real, filtro G, evaluación) no se ha empezado.
+
+**Simulacro de las 72 condiciones** (`FullSimulation`, prompts originales y repositorios reales en solo lectura, cliente falso,
+respuestas sintéticas derivadas del primer fragmento, con variantes que deben conservarse: vallas Markdown, espacios y saltos
+iniciales, CRLF):
+- 72 llamadas en el orden previsto (par `O1`→`E1` consecutivo), con modelo, 4096 tokens y `minimal`; cada prompt enviado coincide con el
+  registrado; ningún prompt se envía dos veces.
+- Contexto idéntico en los 36 pares (hashes de issue, parte compartida, orden y K = 10) y prompts distintos solo en las instrucciones.
+- Las 72 respuestas guardadas coinciden byte a byte con las devueltas por el cliente falso (también las que llevan vallas, CRLF o
+  saltos iniciales).
+- Conversión: 36 `E1` → `patch_ready`; normalización: 36 `O1` → `normalized`; 72 registros de formato; aplicabilidad y resolución
+  figuran como `pending_phase_3B`. Estos estados son consecuencia de la construcción sintética, **no un resultado**.
+- `verify(recompute=True)` correcto sin avisos; todos los registros llevan `synthetic: true`; cadena de eventos íntegra.
+- Resultados originales (`results/`, tamaños de `logs/downstream`) idénticos antes y después.
+
+**Otras comprobaciones simuladas:** reanudación tras ejecución parcial y tras caída (sin duplicados: cada prompt se envía una vez);
+recuperación de una respuesta guardada pero sin sellar; rechazo de la reanudación tras caída durante la llamada salvo `on_interrupted="retry"`;
+detección de respuesta, prompt, sello, derivados, diff, manifiesto o eventos alterados o truncados, ficheros y directorios
+inesperados, configuración incompatible y bloqueo huérfano; `write_new` no sobrescribe; errores 503/429 reintentados con esperas
+10 y 20 s, error permanente sin reintento, respuestas vacías o `None` como error del modelo; conversión con fallos de entorno
+recuperados en el tercer intento, persistentes (par excluido, no atribuido al modelo) y errores de salida sin reintento (una sola
+aplicación por condición); cliente real rechazado; rutas de salida prohibidas rechazadas sin crear nada; constantes del cliente
+iguales a las del generador original (leídas por AST) y ausencia de cualquier import de `google`.
+
+## Limitaciones y puntos pendientes para la fase 3B
+
+1. **Aplicabilidad (filtro G) y resolución funcional no implementadas**; `decision.py` solo está probada con recuentos sintéticos.
+2. **Ubicación de las salidas reales.** El protocolo 15.4 prevé `results/downstream_pilot_p1/` y `logs/downstream_pilot_p1/`, pero esta
+   fase prohíbe escribir en `results/` y `logs/`; el orquestador solo admite `pilot_p1_runs/<ejecución>`, **adoptado como ubicación
+   definitiva** (sustituye a las rutas previstas en el protocolo; documentado en 15.4) y añadido a `.gitignore`. Una prueba comprueba que
+   Git la ignora y que solo esa carpeta es escribible dentro del proyecto.
+3. ~~Definición de "supera en N condiciones"~~ **Resuelto**: mejora neta, documentada en el protocolo y registrada con victorias y empates.
+4. ~~Métrica de vallas~~ **Resuelto**: tres indicadores (externas, internas, unión), documentados en el protocolo.
+5. Una condición cuya **generación** falla por infraestructura queda excluida y no se reintenta; no hay todavía un mecanismo explícito
+   para reintentarla de forma autorizada.
+6. Un cliente real (Gemini) y su manejo de errores no existen; la lista de códigos reintentables se copia del generador original.
+7. Sin comprobar en Linux/Docker; `RUN.lock` huérfano y `*.tmp` requieren revisión manual.
 
 ---
 

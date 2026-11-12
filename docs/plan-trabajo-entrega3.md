@@ -422,6 +422,11 @@ sección 15. **El experimento NO está aprobado ni ejecutado**; esta nota no lo 
   72 generaciones ni los umbrales. **Pendiente antes de ejecutar:** orquestación, filtro G, integración de la evaluación,
   verificación en Linux/Docker, aprobación y congelación del protocolo en un commit propio.
 
+- **Fase técnica 3A completada (12/11/2026; sin ejecución):** orquestación aislada de las 72 generaciones probada con un cliente
+  falso y un simulacro sintético (303 pruebas técnicas en total, ninguna es un resultado experimental); salidas en
+  `pilot_p1_runs/` (ignorada por Git); mejora neta y vallas aclaradas en el protocolo. **Pendiente (fase 3B):** cliente real, filtro G,
+  evaluación funcional, verificación en Linux/Docker, aprobación y congelación del protocolo, y la ejecución; sin generaciones ni API
+  reales hasta autorización.
 - **Qué se propone (resumen):** un piloto pequeño del formato de edición alternativo que pidió el director: 12 tareas × 3
   estrategias = 36 condiciones, con cuatro brazos (originales `O0`, nueva generación con el prompt original `O1`, `O1`
   normalizado `O1n` y formato de edición `E1`), comparación primaria `E1` frente a `O1n`, una generación por condición y sin

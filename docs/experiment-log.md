@@ -1917,3 +1917,26 @@ Decisiones adoptadas (detalle en `docs/downstream-patch-diagnostics.md`, secció
 - **Sin cambios:** 12 tareas × 3 métodos × 2 brazos = 72 generaciones, umbrales de éxito, abandono e inconcluso, hash de selección
   `6dbd0c9f9365690c` y SHA-256 de E1 `3577b64d079143810dd018d805677146fe515bc49904d2862dded53f8db293be`. Las 208 pruebas técnicas
   de `pilot_p1/` no son resultados experimentales.
+
+
+---
+
+## Fase 3A de P1 (2026-11-12): orquestación aislada y simulacro sintético
+
+**Preparación técnica; no es una ejecución del piloto P1** (D-005 sigue sin aprobar). **No se realizó ninguna generación real, ni
+llamada a la API, ni filtro G, ni evaluación funcional**; los resultados originales no cambian.
+
+- **Orquestación** (`pilot_p1/orchestrator.py`, `client.py`): 72 condiciones (12 tareas × 3 métodos × 2 brazos) con cliente
+  inyectable y solo cliente falso; manifiesto, registro de eventos encadenado por hashes, ficheros de escritura única, respuestas
+  guardadas sin modificar, reanudación verificada sin duplicados y política de hasta 3 intentos solo ante `environment_error`
+  (misma respuesta, sin regenerar), con las condiciones no evaluables por infraestructura separadas e informadas.
+- **Aislamiento:** salidas solo en `pilot_p1_runs/<ejecución>/` (añadida a `.gitignore`), que sustituye a las rutas previstas en el
+  protocolo sin cambiar el diseño; prohibidas `src/`, `repos/`, `results/`, `logs/`, `diagnostics/` y `docs/`.
+- **Decisiones aclaradas antes de generar nada:** mejora neta = victorias de E1 − victorias de O1n (umbrales sin cambios; se registran
+  victorias, empates y neta); vallas Markdown en tres indicadores (externas, internas y unión, equivalente a la métrica original).
+- **Pruebas y simulacro:** 303 pruebas técnicas (208 previas + 95), todas superadas. El simulacro de 72 condiciones usó prompts
+  originales, respuestas sintéticas y registros marcados `synthetic: true`; sus estados no son resultados experimentales.
+- **Integridad:** SHA-256 idénticos en los 150 parches, `results/` y los 21 repositorios; hashes de E1 (`3577b64d…`) y de selección
+  (`6dbd0c9f9365690c`) sin cambios.
+
+Detalle: `pilot_p1/README.md` y `docs/downstream-patch-diagnostics.md` (15.4).

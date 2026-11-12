@@ -7,3 +7,5 @@ __pycache__/
 external/
 # salidas de nuevas ejecuciones de los scripts de diagnostico
 diagnostics/downstream-patches/output/
+# ejecuciones de P1 (reales o simuladas): nunca deben entrar en el repositorio
+pilot_p1_runs/

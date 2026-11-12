@@ -1295,6 +1295,11 @@ los errores transitorios de la API (429 y 503), como en el protocolo original, y
      solas una respuesta y no se retiran antes de analizarla. Las que estén dentro del contenido de un bloque forman parte del
      texto y cuentan también en (a) (no se distinguen: limitación declarada). Se informa de la intersección (con vallas y
      parseables) además de (a) y (b).
+   - *Tres indicadores de vallas (decisión del 12/11/2026):* **externas** (fuera de las ediciones), **internas** (secuencias ```
+     dentro del contenido de una edición) y su **unión**. La unión cubre la métrica original (a): coinciden siempre que las vallas
+     estén al principio de línea y la unión solo es mayor si hay secuencias ``` a mitad de línea dentro de una edición (el
+     registro conserva también la métrica original literal para trazabilidad). Esta distinción es solo de registro: **no altera
+     la parseabilidad (b) ni los umbrales de decisión**.
 5. *Plausibilidad (descriptiva, sin decidir con ella):* mismo fichero que la referencia.
 
 **Criterios de éxito y de abandono (fijados antes de ejecutar; reglas de decisión, no contrastes).** Con 36 condiciones por
@@ -1307,6 +1312,17 @@ brazo y una base esperable de unos 5 de 36 (13 %, la de los originales normaliza
   son parseables. Además, pausa si más del 25 % de los parches que pasan el filtro dan `infrastructure_error`.
 - **Inconcluyente** (resto): no ampliar; documentar y dejarlo como trabajo futuro.
 - La resolución funcional **no** tiene criterio de éxito ni de abandono: con tan pocos parches solo se describe.
+
+**Aclaración de la mejora neta (12/11/2026; previa a cualquier generación experimental, no es un ajuste posterior a los
+resultados; no cambia ningún umbral).** «`E1` supera a `O1n` en N condiciones» significa **mejora neta = victorias de `E1` −
+victorias de `O1n`**, medida sobre los pares evaluables, con estas definiciones: *victoria de `E1`* = par donde `E1` es aplicable y
+`O1n` no; *victoria de `O1n`* = par donde `O1n` es aplicable y `E1` no; *empate* = ambos aplicables o ambos no aplicables. Por tanto:
+éxito exige **mejora neta ≥ 6** (además de `E1` ≥ 10 de 36, diferencia no negativa en ninguna estrategia y positiva en al menos dos,
+y ≥ 80 % de salidas parseables); abandono si **mejora neta ≤ 2** (o `E1` < 6 de 36, o < 60 % parseables); el resto es inconcluyente.
+La «diferencia» por estrategia es la mejora neta de esa estrategia. Fundamento: la propia calibración del protocolo (desviación
+típica de «una diferencia pareada ≈ 3», 6 ≈ 2σ; «una diferencia de 5 o 6 condiciones es del orden del ruido»). Para transparencia se
+registran siempre, en total y por estrategia, las victorias de cada brazo, los empates (ambos aplicables / ninguno) y la mejora neta
+(`pilot_p1/decision.py`). El número de victorias de `E1` por sí solo **no** es el criterio.
 
 **Riesgos y limitaciones de una muestra pequeña.** 12 tareas y 36 condiciones: una diferencia de 5 o 6 condiciones es del orden del
 ruido; las condiciones de una tarea no son independientes; una sola muestra por condición (de ahí `O1`); el modelo remoto puede
@@ -1321,10 +1337,18 @@ Tabla 6); lista blanca de rutas de escritura, directorio de salida nuevo con ape
 los resultados y de los repositorios antes y después; un tag de Git sobre el commit de los resultados originales; congelar el
 protocolo (hash del prompt, lista de tareas, código del aplicador) en un commit propio antes de cualquier generación.
 
+**Aclaración sobre la ubicación de las salidas (12/11/2026).** Las salidas de P1, reales y simuladas, se escriben en
+`pilot_p1_runs/<ejecución>/` (`p1_run_*` las reales, `simulacro_*` las sintéticas), que **sustituye** a las rutas
+`results/downstream_pilot_p1/` y `logs/downstream_pilot_p1/` previstas inicialmente. La carpeta está en `.gitignore` y el
+orquestador no escribe en `src/`, `repos/`, `results/`, `logs/`, `diagnostics/` ni `docs/`. Es un cambio de ubicación para reforzar el
+aislamiento: el diseño experimental (brazos, condiciones, umbrales) no cambia, y el resto de la separación (campo `arm`, nunca en
+`downstream_results_final.jsonl`, apertura exclusiva, hashes antes y después, tag y commit de congelación) se mantiene.
+
 **Estado de la preparación técnica (12/11/2026).** Las fases técnicas 1 y 2 están realizadas localmente (`pilot_p1/`, commits
-`e4342dd` y `f9d0c8d`; 208 pruebas técnicas). Son pruebas de las herramientas, **no resultados experimentales**: **no se han
-realizado generaciones, llamadas a la API, filtro G ni evaluaciones funcionales**. Siguen pendientes la orquestación de las 72
-generaciones, el filtro G, la verificación en Linux/Docker, la aprobación y congelación del protocolo y la ejecución. Esta nota no
+`e4342dd` y `f9d0c8d`) y la fase 3A (orquestación aislada probada con un cliente falso y un simulacro sintético de 72 condiciones)
+está completada; en total 303 pruebas técnicas. Son pruebas de las herramientas, **no resultados experimentales**: **no se han
+realizado generaciones reales, llamadas a la API, filtro G ni evaluaciones funcionales**. Siguen pendientes la fase 3B (cliente
+real, filtro G y evaluación funcional), la verificación en Linux/Docker, la aprobación y congelación del protocolo y la ejecución. Esta nota no
 cambia el calendario ni la aprobación (el protocolo sigue siendo un borrador no aprobado).
 
 ### 15.5 Análisis secundario S1: recuperación mecánica de los 11 (propuesta)

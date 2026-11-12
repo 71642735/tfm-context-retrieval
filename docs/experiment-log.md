@@ -1997,3 +1997,179 @@ Registro de cómo se construyeron los datos sintéticos de los simulacros (detal
 
 **Tarea pendiente:** Valorar la incorporación de la validación sintética de P1 a la memoria final del TFM, diferenciándola de los
 resultados experimentales.
+
+
+---
+
+## Diagnóstico previo a la implementación de P1 — fase 3B.2 (2026-11-12)
+
+**Diagnóstico de solo lectura; no se ha implementado nada, no se ha ejecutado ninguna prueba, API, evaluador ni contenedor, y no se ha
+modificado ningún resultado original.** Las propuestas de esta entrada **no son decisiones aprobadas**. Cada punto se etiqueta como
+**[VERIFICADO]** (comprobado por inspección del código o de los ficheros), **[HIPÓTESIS]** (no comprobado) o **[PENDIENTE]** (por
+comprobar o decidir).
+
+**1. Estado de partida.** [VERIFICADO] La fase 3B.1 está terminada, revisada y registrada en el commit `81060e9`, con 364 pruebas
+automáticas superadas (0 fallidas, 0 omitidas) usando datos sintéticos y evaluadores simulados. P1 no se ha ejecutado con generaciones
+reales ni con el evaluador oficial; su protocolo sigue pendiente de aprobación definitiva.
+
+**2. Componentes pendientes para conectar P1 con un modelo real y con el evaluador oficial** (todos [PENDIENTES] de implementar):
+- adaptador aislado del evaluador oficial, que ejecute cada evaluador en un subproceso con directorio de trabajo, entorno y rutas
+  controlados dentro de la ejecución de P1;
+- cliente real de la API (hoy solo existe `FakeClient`; el generador original usa `google.genai.Client()` y `genai` está instalado en el
+  entorno), con lectura de la clave solo desde el entorno;
+- comprobaciones previas sin red (versiones, hashes, espacio, existencia de la clave sin mostrarla) y punto de entrada con modo de ensayo;
+- mecanismo de autorización explícita: hoy el orquestador rechaza toda ejecución real y toda ejecución con evaluador no sintético;
+- verificación en Linux/Docker de las 364 pruebas, de los hashes de los diffs y de los evaluadores.
+En esta sesión no está definida ninguna de las variables `GEMINI_API_KEY`/`GOOGLE_API_KEY` ([VERIFICADO], solo se comprobó su existencia);
+la disponibilidad del modelo y la cuota [PENDIENTE] de comprobar con una única llamada autorizada.
+
+**3. Riesgos detectados en los evaluadores existentes** [VERIFICADO por lectura de `src/downstream/evaluation.py`, `src/repo_manager.py`,
+`polybench_runner.py`, `probench_runner.py` y `swebench`]:
+- `prepare_repository` ejecuta `git clone`, `git fetch origin` y `git checkout --force` sobre `repos/` (operaciones destructivas sobre
+  los repositorios de trabajo y uso de la red);
+- descargas: datasets de Hugging Face, `podman pull`, clones de PolyBench y, en Pro, imágenes de Docker Hub (`--dockerhub_username`);
+- contenedores creados y eliminados a la fuerza;
+- escritura en `logs/`: `swebench.run_instance` usa `logs/run_evaluation/` relativo al directorio de trabajo, y `evaluate_patch` fija
+  `run_id = downstream-<método>`, que colisiona entre tareas, entre brazos de P1 y con los originales;
+- `probench_runner.py` **modifica en sitio** `external/SWE-bench_Pro/swe_bench_pro_eval.py` (adaptación de saltos de línea), y
+  `external/SWE-bench_Pro` ya tiene modificaciones locales sin commitear (ese fichero y un `run_script.sh`): las versiones de los
+  evaluadores deben fijarse por hash para que sean reproducibles;
+- el evaluador original lee el parche con `read_text()`, que convierte CRLF en LF y rompería un diff sobre un fichero con CRLF nativo
+  (el adaptador debe leer bytes);
+- parche global temporal de `Path.write_text` y de `swe_run.cleanup_container`.
+[PENDIENTE] Estudiar sin ejecutar `poly_bench_evaluation` y los comandos de aplicación de parches de cada evaluador.
+
+**4. Filtro G frente a la aplicación por el evaluador.** [VERIFICADO] G aplica `git apply --check -p1` sobre una copia temporal parcial
+y coincide con un árbol completo en los 8 casos probados; no detecta conflictos de fichero y directorio porque tampoco los detecta
+`git apply --check`. [HIPÓTESIS] Los evaluadores aplican los parches con otros comandos (SWE-bench podría recurrir a `patch` con
+tolerancia), por lo que un parche aprobado por G podría ser rechazado por el evaluador y al revés; la equivalencia no está probada.
+[PENDIENTE] Medir esa discrepancia y decidir cómo se registra («aprobado por G pero rechazado por el evaluador» frente a `not_resolved`).
+No se propone cambiar G.
+
+**5. Efecto de `response.strip() + "\n"` sobre O1.** [VERIFICADO] El generador original guarda la respuesta con ese tratamiento y
+`O1`/`O1n` lo heredan; puede truncar un hunk cuando elimina una línea necesaria para su estructura. [VERIFICADO] De los 150 parches
+originales solo se guardó el parche ya recortado, no la respuesta cruda, por lo que el efecto **no se puede medir retroactivamente** y no
+se altera el experimento original. [HIPÓTESIS] Se podría guardar además la respuesta cruda de O1 y calcular G sobre ella como análisis de
+sensibilidad, sin cambiar el criterio primario. **No se ha aprobado ninguna modificación metodológica**: queda por decidir si el brazo
+primario usa el parche recortado (fidelidad al original) o el crudo.
+
+**6. Decisiones pendientes de aprobación** (ninguna tomada): aprobación definitiva y congelación del protocolo, y tag de los resultados
+originales; tratamiento de `strip()`; estado y contabilidad de un parche aprobado por G y rechazado por el evaluador; adaptaciones
+permitidas de los evaluadores y fijación de sus versiones; parámetros de generación y qué hacer si cambia la versión del modelo;
+presupuesto y condiciones de parada (incluida la pausa si más del 25 % de las evaluaciones fallan por infraestructura); conservación y
+archivo de los resultados reales (`pilot_p1_runs/` está ignorada por Git); y calendario (nada experimental antes de la entrega del
+07/12/2026, según el protocolo).
+Para orientar el presupuesto, [VERIFICADO] los 150 `result.json` originales dan una entrada media de ≈ 6.700 tokens (máximo ≈ 34.900) y una
+salida con razonamiento media de ≈ 370 (máximo 4.095).
+
+**7. Próximo paso.** Preparación técnica y pruebas sintéticas (comprobaciones previas, adaptador de evaluación probado con ejecutables
+falsos, cliente de API probado con la API simulada, puerta de autorización y verificación en Linux/Docker), **sin ejecutar el piloto real**.
+La ejecución experimental (llamada mínima de comprobación, 72 generaciones, G sobre salidas reales y evaluación funcional real) requiere
+autorización expresa y las decisiones del punto 6.
+
+
+---
+
+## Decisión metodológica provisional sobre `response.strip()` (2026-11-12)
+
+**Decisión provisional, pendiente de aprobación definitiva del protocolo.** Todavía **no se ha ejecutado ninguna generación real** ni
+se ha aprobado definitivamente el protocolo; no se ha implementado ningún cambio de código. El diagnóstico previo de 3B.2 (entrada anterior)
+describe el problema; esta entrada registra la decisión sobre el tratamiento de `strip()` para `O1`.
+
+- **Alternativas consideradas:** **A** mantener `response.strip() + "\n"` como primario (fiel al original, pero hereda un artefacto de la
+  tubería que podría sesgar a favor de `E1`); **B** usar la respuesta cruda como primario (más justa para `O1n`, pero rompe «`O1` sin
+  tocar», la comparabilidad con `O0` y redefine la línea base); **C** mantener el original como primario y añadir un análisis secundario
+  de sensibilidad con la respuesta cruda.
+- **Elección provisional: C.** Conserva el protocolo y la fidelidad al experimento original, y permite cuantificar cuánto depende la
+  comparación de `strip()`. La decisión primaria y sus umbrales no cambian; el análisis con la respuesta cruda es descriptivo y, si la conclusión cambia
+  entre ambos procesamientos, se informará de esa dependencia. No se alteran `O0` ni los 150 parches originales. La aclaración está en
+  `docs/downstream-patch-diagnostics.md` (15.4) como **propuesta pendiente de aprobación definitiva**.
+- **Hallazgo exploratorio:** en una lectura en memoria de los 150 parches originales (sin modificarlos), 14 tienen el último hunk
+  truncado justo al final del texto con el mismo faltante en el contador antiguo y en el nuevo (de 1 a 3 líneas), un patrón **compatible**
+  con el truncamiento por `strip()`. **No demuestra que `strip()` sea la causa**: también encajaría un contador mal escrito por el modelo, y
+  la respuesta cruda original no se guardó, de modo que no se puede comprobar. Otros 3 parches se truncan en mitad del texto (no explicable por
+  `strip()`) y 7 muestran un faltante asimétrico u otro patrón.
+- **Pendiente:** aprobación definitiva del protocolo (incluida esta aclaración), implementación técnica y pruebas sintéticas del análisis
+  secundario, y el resto de decisiones listadas en el diagnóstico previo de 3B.2.
+
+
+---
+
+## Decisión metodológica provisional: parches aprobados por G y rechazados por el evaluador (2026-11-13)
+
+**Decisión provisional, pendiente de aprobación definitiva del protocolo.** Todavía no se ha ejecutado ninguna generación real, ni el
+evaluador oficial, ni se ha implementado ningún cambio de código. El texto metodológico completo está en
+`docs/downstream-patch-diagnostics.md` (15.4, «Aclaración metodológica propuesta: parches aprobados por G y rechazados al aplicarse en el
+evaluador oficial»); aquí solo se registra la decisión cronológicamente.
+
+- **Propuesta:** alternativa **E**: mantener G como criterio primario y clasificar aparte, de forma descriptiva, los parches aprobados por G que
+  fallan al aplicarse dentro del evaluador (`evaluator_apply_failed`) y los casos sin evidencia suficiente para distinguir un fallo de
+  aplicación de un resultado funcional negativo (`apply_undetermined`), junto con `resolved`, `not_resolved` y
+  `not_evaluable_infrastructure`. No cambia G, la comparación primaria ni los umbrales.
+- **Por qué:** [VERIFICADO] los evaluadores aplican los parches con comandos distintos de G (SWE-bench con una cadena tolerante, PolyBench con
+  `--ignore-whitespace --reject` y `patch`, Pro con `git apply -v`), el evaluador original convierte CRLF en LF al leer el parche y, en
+  SWE-bench, un fallo de aplicación termina clasificado como `infrastructure_error`. [HIPÓTESIS] En Pro, un fallo de aplicación podría quedar
+  indistinguible de un fallo de pruebas.
+- **Alternativas descartadas:** A (contarlos como `not_resolved`: mezcla causas y puede sesgar entre brazos), B (tratarlos como infraestructura:
+  atribuye a la infraestructura algo que puede ser del parche), D (reclasificarlos como no aplicables: cambia el criterio primario). C (estado
+  propio) se consideró insuficiente por sí sola, porque no cubre los casos sin evidencia.
+- **Informe previsto:** desglose por brazo y estrategia; los indeterminados, bajo los dos escenarios extremos, sin reintento automático.
+- **[PENDIENTE] de verificar:** la discrepancia real entre G y la aplicación del evaluador en Linux/Docker, y la evidencia que dejan realmente
+  PolyBench (`patch_applied`, que el ejecutor del proyecto hoy no lee) y Pro (salida de `git apply -v`); implementación y pruebas sintéticas;
+  aprobación definitiva del protocolo.
+
+
+---
+
+## Decisión provisional sobre el aislamiento de los evaluadores oficiales (2026-11-13)
+
+**Decisión provisional, pendiente de aprobación definitiva; no autoriza implementar, descargar dependencias ni ejecutar evaluadores.**
+**No se ha ejecutado ningún evaluador real de P1**, ni se ha modificado código ni resultados originales. El texto completo está en
+`docs/downstream-patch-diagnostics.md` (15.4, «Aclaración metodológica propuesta: aislamiento de los evaluadores oficiales»).
+
+- **Alternativas estudiadas:** A ejecutar los evaluadores actuales; B copias independientes de repositorios y directorios; C adaptador aislado
+  (directorios, rutas, identificadores y comprobaciones de integridad controlados); D contención del entorno (Linux/Docker protegido).
+- **Decisión provisional: C + D**, complementarias: C evita colisiones, reutilización de informes y errores de rutas o bytes; D impide por el
+  sistema las escrituras y descargas que C no puede evitar dentro del evaluador. A se descartó (toca `repos/` y `logs/`, reutiliza informes y
+  modifica `external/`); B no basta (los evaluadores no usan `repos/`).
+- **Justificación [VERIFICADO por lectura del código]:** `swebench.run_instance` devuelve el informe ya existente para el mismo `run_id`, y los
+  `run_id` originales (`downstream-<método>`) existen en `logs/run_evaluation/`; SWE-bench Pro reescribe `external/SWE-bench_Pro` y ese
+  repositorio ya tiene cambios locales sin commitear; `logs/run_evaluation/`, `logs/polybench/` y `logs/probench/` no están versionados; los
+  evaluadores hacen descargas, crean y borran contenedores y escriben en rutas relativas al directorio de trabajo.
+- **Para Pro:** copia independiente fijada por hash, con adaptaciones explícitas y documentadas, sin modificar el original durante P1.
+- **Riesgos y verificaciones [PENDIENTE]:** el aislamiento **no está demostrado** en Linux/Docker; cachés, imágenes, red, `/tmp` de PolyBench
+  (hipótesis: fuera del directorio controlado en Windows), contenedores y versiones; qué cambió en los dos ficheros locales de Pro; y las pruebas
+  sintéticas y manifiestos de hashes previos, ampliados a los registros sin rastrear.
+- **Sigue requiriendo autorización expresa:** implementación, descargas, entorno Linux/Docker, versiones, copia de seguridad y la primera
+  ejecución real de cualquier evaluador.
+
+
+---
+
+## Decisiones autorizadas para orientar la implementación sintética de la fase 3B.2 (2026-11-13)
+
+**Se distinguen tres cosas:** (1) **autorización para implementar y probar de forma sintética** las cuatro decisiones siguientes (concedida);
+(2) **aprobación definitiva del protocolo P1** (pendiente); (3) **autorización para ejecutar evaluadores reales, API, descargas, contenedores o
+generaciones reales (no concedida)**. No se ha implementado nada todavía ni ejecutado ningún evaluador o API. Texto completo en
+`docs/downstream-patch-diagnostics.md` (15.4, «Decisiones autorizadas para orientar la implementación sintética de la fase 3B.2»).
+
+- **1. `response.strip()` — alternativa C.** *Problema:* `strip()` del generador original puede truncar un hunk (solo afecta a `O1`). *Alternativas:* A, B, C.
+  *Elección:* primario con `response.strip() + "\n"`; sensibilidad con el texto crudo exacto de la API (sin añadir ni quitar caracteres, codificación UTF-8 y
+  hash), normalizado con N y evaluado solo con G, sin segunda evaluación funcional ni cambio de la decisión primaria. *Motivos:* fidelidad y medición del sesgo.
+  *Limitaciones:* efecto no medible en los 150 originales; [HIPÓTESIS] un parche sin salto final podría tratarse distinto en git (se comprobará de forma sintética).
+  *Evidencia:* [VERIFICADO] `generation.py`; 14 de 150 originales con el último hunk truncado (patrón compatible, no prueba de causa). *Estado:* autorizada para
+  implementación sintética; aprobación definitiva pendiente.
+- **2. Estados funcionales — alternativa E.** *Problema:* un parche aprobado por G puede fallar al aplicarse en el evaluador. *Alternativas:* A–E. *Elección:* `resolved`,
+  `not_resolved`, `evaluator_apply_failed`, `apply_undetermined` y `not_evaluable` (valor técnico conservado por compatibilidad; equivale a
+  `not_evaluable_infrastructure`). Clasificar `applied` o `not_applied` exige evidencia suficiente; sin evidencia concluyente, `apply_undetermined`, salvo error de
+  infraestructura identificable. No afecta a G ni a los umbrales. *Motivos:* preserva G y no impone una clasificación sin evidencia. *Limitaciones:* [PENDIENTE] la
+  evidencia real de PolyBench y Pro; [ABIERTO] el criterio mínimo de «evidencia suficiente». *Evidencia:* [VERIFICADO] cadenas de aplicación distintas de G y
+  clasificación original de un fallo de aplicación de SWE-bench como infraestructura. *Estado:* autorizada para implementación sintética; aprobación definitiva pendiente.
+- **3. Aislamiento — alternativa C + D.** *Problema:* los evaluadores originales no están aislados de los originales. *Alternativas:* A–D. *Elección:* se autoriza diseñar
+  e implementar **C** mediante pruebas sintéticas; **D** (Linux/Docker protegido) sigue como requisito de seguridad **pendiente de validación real**; **no se considera
+  demostrado el aislamiento completo**. *Motivos:* complementarias. *Limitaciones:* D no se puede demostrar en Windows ni con datos sintéticos. *Evidencia:* [VERIFICADO]
+  reutilización de informes por `run_id`, cambios locales sin commitear en `external/SWE-bench_Pro`, registros originales sin versionar y efectos secundarios de los evaluadores.
+  *Estado:* C autorizada para implementación sintética; D y aprobación definitiva pendientes.
+- **4. Informe de la sensibilidad.** Informa de la aplicabilidad por brazo y de cualquier cambio de categoría de decisión, sin sustituir la decisión primaria; el veredicto
+  de G se reutiliza solo si el parche crudo normalizado es idéntico al primario, tras verificar la identidad. *Limitaciones:* descriptiva y solo G. *Estado:* autorizada
+  para implementación sintética; aprobación definitiva pendiente.

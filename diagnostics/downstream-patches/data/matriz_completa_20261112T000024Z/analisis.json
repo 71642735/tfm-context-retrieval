@@ -1,0 +1,161 @@
+{
+ "n": {
+  "parches": 150,
+  "invalid": 141,
+  "controles": 9,
+  "natural_p": 123
+ },
+ "controles": {
+  "c1_coinciden": 150,
+  "c1_discrepancias": 0,
+  "c3_violaciones": 0,
+  "c4": {
+   "n": 528,
+   "anomalias": 4
+  }
+ },
+ "aplican_p_natural": {
+  "CC": {
+   "invalid": 9,
+   "de": 123,
+   "controles": 9,
+   "no_evaluables": 0
+  },
+  "LC": {
+   "invalid": 11,
+   "de": 123,
+   "controles": 9,
+   "no_evaluables": 0
+  },
+  "CL": {
+   "invalid": 0,
+   "de": 123,
+   "controles": 1,
+   "no_evaluables": 0
+  },
+  "LL": {
+   "invalid": 11,
+   "de": 123,
+   "controles": 9,
+   "no_evaluables": 0
+  }
+ },
+ "aplican_p_forzado": {
+  "CC_p1": {
+   "invalid": 0,
+   "controles": 9
+  },
+  "LC_p1": {
+   "invalid": 0,
+   "controles": 9
+  },
+  "CL_p1": {
+   "invalid": 0,
+   "controles": 1
+  },
+  "LL_p1": {
+   "invalid": 0,
+   "controles": 9
+  },
+  "CC_p0": {
+   "invalid": 9,
+   "controles": 1
+  },
+  "LC_p0": {
+   "invalid": 11,
+   "controles": 1
+  },
+  "CL_p0": {
+   "invalid": 0,
+   "controles": 1
+  },
+  "LL_p0": {
+   "invalid": 11,
+   "controles": 1
+  }
+ },
+ "por_estrategia": {
+  "BM25": {
+   "invalid": 47,
+   "con_p_natural": 41,
+   "controles": 3
+  },
+  "UniXcoder": {
+   "invalid": 48,
+   "con_p_natural": 42,
+   "controles": 2
+  },
+  "RRF": {
+   "invalid": 46,
+   "con_p_natural": 40,
+   "controles": 4
+  }
+ },
+ "transiciones": {
+  "LL": {
+   "contexto_no_coincide->contexto_no_coincide": 24,
+   "corrupt_patch->corrupt_patch": 37,
+   "fichero_inexistente->contexto_no_coincide": 33,
+   "corrupt_patch->aplica": 1,
+   "fragmento_sin_cabecera->fragmento_sin_cabecera": 7,
+   "sin_diff_valido->sin_diff_valido": 7,
+   "fichero_inexistente->fichero_inexistente": 2,
+   "corrupt_patch->contexto_no_coincide": 2,
+   "fichero_inexistente->aplica": 10
+  },
+  "CC": {
+   "contexto_no_coincide->contexto_no_coincide": 24,
+   "corrupt_patch->corrupt_patch": 40,
+   "fichero_inexistente->contexto_no_coincide": 34,
+   "fragmento_sin_cabecera->fragmento_sin_cabecera": 7,
+   "sin_diff_valido->sin_diff_valido": 7,
+   "fichero_inexistente->fichero_inexistente": 2,
+   "fichero_inexistente->aplica": 9
+  },
+  "LC": {
+   "contexto_no_coincide->contexto_no_coincide": 24,
+   "corrupt_patch->corrupt_patch": 37,
+   "fichero_inexistente->contexto_no_coincide": 33,
+   "corrupt_patch->aplica": 1,
+   "fragmento_sin_cabecera->fragmento_sin_cabecera": 7,
+   "sin_diff_valido->sin_diff_valido": 7,
+   "fichero_inexistente->fichero_inexistente": 2,
+   "corrupt_patch->contexto_no_coincide": 2,
+   "fichero_inexistente->aplica": 10
+  },
+  "CL": {
+   "contexto_no_coincide->contexto_no_coincide": 24,
+   "corrupt_patch->corrupt_patch": 40,
+   "fichero_inexistente->contexto_no_coincide": 43,
+   "fragmento_sin_cabecera->fragmento_sin_cabecera": 7,
+   "sin_diff_valido->sin_diff_valido": 7,
+   "fichero_inexistente->fichero_inexistente": 2
+  }
+ },
+ "persisten_LL_natural": {
+  "contexto_no_coincide": 59,
+  "corrupt_patch": 37,
+  "aplica": 11,
+  "fragmento_sin_cabecera": 7,
+  "sin_diff_valido": 7,
+  "fichero_inexistente": 2
+ },
+ "never_apply": 130,
+ "corrupt": {
+  "n": 41,
+  "aplican_en_alguna_celda": 1
+ },
+ "no_evaluables": 0,
+ "indeterminados": [
+  "instance_qutebrowser__qutebrowser-3fd8e12949b bm25"
+ ],
+ "robustez": {
+  "celdas": 600,
+  "distinta_categoria": 0,
+  "distinto_mensaje": 0
+ },
+ "LL_p1": {
+  "invalid_que_aplican": 0,
+  "controles_que_no_aplican": 0
+ }
+}

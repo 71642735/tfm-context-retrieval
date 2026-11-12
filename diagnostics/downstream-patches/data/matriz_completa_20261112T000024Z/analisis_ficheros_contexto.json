@@ -1,0 +1,1219 @@
+{
+ "nota": "Exploratorio a nivel de fichero; no es a nivel de linea ni frente al gold context. Aplicabilidad no es resolucion.",
+ "origen": "matriz_completa_20261112T000024Z",
+ "n_96_contexto_o_corrupt_en_LL_con_p_natural": 96,
+ "estado_contexto_de_los_96": {
+  "ninguno en contexto": 41,
+  "todos en contexto": 50,
+  "parcial": 5
+ },
+ "al_menos_un_fichero_no_visto_en_los_96": 46,
+ "por_categoria_y_estado": {
+  "contexto_no_coincide|ninguno en contexto": 28,
+  "contexto_no_coincide|parcial": 4,
+  "contexto_no_coincide|todos en contexto": 27,
+  "corrupt_patch|ninguno en contexto": 13,
+  "corrupt_patch|parcial": 1,
+  "corrupt_patch|todos en contexto": 23
+ },
+ "n_11_que_aplican_en_LL_con_p_natural": 11,
+ "estado_contexto_de_los_11": {
+  "ninguno en contexto": 1,
+  "todos en contexto": 10
+ },
+ "estado_contexto_de_los_9_controles": {
+  "sin cabeceras": 1,
+  "todos en contexto": 8
+ },
+ "detalle_96": [
+  {
+   "task_id": "Significant-Gravitas__AutoGPT-4652",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "autogpt/commands/file_operations.py"
+   ]
+  },
+  {
+   "task_id": "astropy__astropy-13398",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "astropy/coordinates/builtin_frames/intermediate_rotation_transforms.py"
+   ]
+  },
+  {
+   "task_id": "astropy__astropy-13398",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "astropy/coordinates/builtin_frames/__init__.py",
+    "astropy/coordinates/builtin_frames/altaz.py",
+    "astropy/coordinates/builtin_frames/itrs.py"
+   ]
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "astropy/io/fits/connect.py"
+   ]
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "astropy/io/fits/connect.py"
+   ]
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "astropy/io/fits/connect.py"
+   ]
+  },
+  {
+   "task_id": "astropy__astropy-14598",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "astropy/io/fits/card.py"
+   ]
+  },
+  {
+   "task_id": "astropy__astropy-14598",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "astropy/io/fits/card.py"
+   ]
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "django/db/models/aggregates.py"
+   ]
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "django/db/models/aggregates.py"
+   ]
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "django/db/models/aggregates.py"
+   ]
+  },
+  {
+   "task_id": "django__django-14373",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "django/utils/dateformat.py"
+   ]
+  },
+  {
+   "task_id": "django__django-14373",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "django/utils/dateformat.py"
+   ]
+  },
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "parcial",
+   "ficheros_del_parche": [
+    "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py",
+    "src/transformers/models/encoder_decoder/modeling_tf_encoder_decoder.py",
+    "src/transformers/models/vision_encoder_decoder/modeling_tf_vision_encoder_decoder.py",
+    "src/transformers/models/vision_encoder_decoder/modeling_vision_encoder_decoder.py"
+   ]
+  },
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py"
+   ]
+  },
+  {
+   "task_id": "huggingface__transformers-29675",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/transformers/generation/configuration_utils.py"
+   ]
+  },
+  {
+   "task_id": "huggingface__transformers-29675",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/transformers/generation/configuration_utils.py"
+   ]
+  },
+  {
+   "task_id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/ansible/modules/async_wrapper.py"
+   ]
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/ansible/executor/process/worker.py"
+   ]
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/ansible/executor/process/worker.py"
+   ]
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "openlibrary/plugins/upstream/models.py"
+   ]
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "openlibrary/plugins/upstream/models.py"
+   ]
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "openlibrary/plugins/upstream/models.py"
+   ]
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "qutebrowser/config/configdata.py",
+    "qutebrowser/config/qtargs.py"
+   ]
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "qutebrowser/browser/webengine/webengineinit.py",
+    "qutebrowser/config/configdata.yml"
+   ]
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "parcial",
+   "ficheros_del_parche": [
+    "qutebrowser/commands/runners.py",
+    "qutebrowser/mainwindow/mainwindow.py",
+    "qutebrowser/mainwindow/statusbar/command.py",
+    "qutebrowser/misc/commands.py",
+    "qutebrowser/misc/utilcmds.py"
+   ]
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "qutebrowser/commands/runners.py"
+   ]
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "qutebrowser/config/configdata.py",
+    "qutebrowser/config/qtargs.py"
+   ]
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "parcial",
+   "ficheros_del_parche": [
+    "qutebrowser/config/configdata.yml",
+    "qutebrowser/config/qtargs.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "keras/models/model.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "keras/models/model.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "keras/models/model.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "keras/backend/jax/distribution_lib.py",
+    "keras/backend/jax/distribution_lib_test.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "keras/src/layers/layer.py",
+    "keras/src/utils/summary_utils.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "keras/src/models/model.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "keras/src/models/model.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "langchain/document_loaders/web_base.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "langchain/document_loaders/web_base.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "langchain/document_loaders/web_base.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "langchain/output_parsers/pydantic.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "langchain/output_parsers/pydantic.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "langchain/output_parsers/pydantic.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-5609",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "langchain/agents/chat/output_parser.py"
+   ]
+  },
+  {
+   "task_id": "langchain-ai__langchain-5609",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "langchain/agents/mrkl/output_parser.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/axes/_axes.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/tests/test_axes.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "parcial",
+   "ficheros_del_parche": [
+    "lib/matplotlib/axes/_base.py",
+    "lib/matplotlib/figure.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/artist.py",
+    "lib/matplotlib/axes/_base.py",
+    "lib/matplotlib/figure.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/axes/_base.py",
+    "lib/matplotlib/figure.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/axes/_axes.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/axes/_axes.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/axes/_axes.py"
+   ]
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "seaborn/_core/plot.py",
+    "seaborn/_core/scales.py"
+   ]
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "seaborn/_core/plot.py"
+   ]
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "seaborn/_core/plot.py",
+    "seaborn/_core/scales.py"
+   ]
+  },
+  {
+   "task_id": "pallets__flask-5014",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "src/flask/blueprints.py"
+   ]
+  },
+  {
+   "task_id": "pallets__flask-5014",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "src/flask/blueprints.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "requests/models.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-2931",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "requests/utils.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-2931",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "requests/utils.py"
+   ]
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "xarray/core/weighted.py"
+   ]
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "xarray/core/weighted.py"
+   ]
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "xarray/core/weighted.py"
+   ]
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "xarray/core/dataset.py"
+   ]
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "xarray/core/dataset.py"
+   ]
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "xarray/core/dataset.py"
+   ]
+  },
+  {
+   "task_id": "pylint-dev__pylint-4970",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "pylint/checkers/similar.py"
+   ]
+  },
+  {
+   "task_id": "pylint-dev__pylint-8898",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "pylint/config/argument.py"
+   ]
+  },
+  {
+   "task_id": "pylint-dev__pylint-8898",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "pylint/config/argument.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/unittest.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/unittest.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/unittest.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-5262",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/capture.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-5262",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/capture.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/pastebin.py",
+    "testing/test_pastebin.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/pastebin.py",
+    "testing/test_pastebin.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "parcial",
+   "ficheros_del_parche": [
+    "sklearn/pipeline.py",
+    "sklearn/tests/test_pipeline.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "sklearn/pipeline.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "sklearn/pipeline.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "sklearn/linear_model/logistic.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-26323",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "sklearn/compose/_column_transformer.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-26323",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "sklearn/compose/_column_transformer.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-8721",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sphinx/ext/viewcode.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-8721",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sphinx/ext/viewcode.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sphinx/util/inspect.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sphinx/ext/autodoc/__init__.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "sphinx/ext/autodoc/__init__.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sphinx/extension.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sphinx/extension.py"
+   ]
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sphinx/extension.py"
+   ]
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sympy/crypto/crypto.py"
+   ]
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sympy/crypto/crypto.py"
+   ]
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sympy/crypto/crypto.py"
+   ]
+  },
+  {
+   "task_id": "sympy__sympy-19637",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sympy/core/sympify.py"
+   ]
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-5933",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "yt_dlp/options.py"
+   ]
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-9862",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "yt_dlp/YoutubeDL.py"
+   ]
+  }
+ ],
+ "detalle_11": [
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "ninguno en contexto",
+   "ficheros_del_parche": [
+    "src/transformers/models/encoder_decoder/modeling_encoder_decoder.py"
+   ]
+  },
+  {
+   "task_id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/ansible/modules/async_wrapper.py"
+   ]
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/ansible/executor/process/worker.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "keras/backend/jax/distribution_lib.py",
+    "keras/backend/jax/distribution_lib_test.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "requests/models.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "requests/models.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "requests/models.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "semantic",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "requests/models.py"
+   ]
+  },
+  {
+   "task_id": "pylint-dev__pylint-4970",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "pylint/checkers/similar.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sklearn/linear_model/logistic.py"
+   ]
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-9862",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "yt_dlp/YoutubeDL.py"
+   ]
+  }
+ ],
+ "detalle_controles": [
+  {
+   "task_id": "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "estado_contexto": "sin cabeceras",
+   "ficheros_del_parche": []
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "openlibrary/plugins/upstream/tests/test_table_of_contents.py"
+   ]
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "semantic",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "keras/backend/jax/distribution_lib.py",
+    "keras/backend/jax/distribution_lib_test.py"
+   ]
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "lib/matplotlib/axes/_axes.py"
+   ]
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "bm25",
+   "categoria_LL": null,
+   "estado_original": "resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "requests/models.py"
+   ]
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "bm25",
+   "categoria_LL": null,
+   "estado_original": "resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "src/_pytest/pastebin.py",
+    "testing/test_pastebin.py"
+   ]
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "bm25",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sklearn/linear_model/logistic.py"
+   ]
+  },
+  {
+   "task_id": "sympy__sympy-17655",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sympy/geometry/point.py"
+   ]
+  },
+  {
+   "task_id": "sympy__sympy-17655",
+   "estrategia": "semantic",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "estado_contexto": "todos en contexto",
+   "ficheros_del_parche": [
+    "sympy/geometry/point.py"
+   ]
+  }
+ ]
+}

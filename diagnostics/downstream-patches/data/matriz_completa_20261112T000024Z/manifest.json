@@ -1,0 +1,1183 @@
+{
+ "script": "eol_prefix_matrix.py",
+ "version": "1.2",
+ "args": {
+  "run": true,
+  "pilot": false,
+  "only_baseline": false,
+  "no_robustness": false,
+  "tmp_root": null
+ },
+ "utc": "2026-11-12T00:00:46.287763+00:00",
+ "python": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
+ "plataforma": "Windows-11-10.0.26200-SP0",
+ "git": "git version 2.52.0.windows.1",
+ "manifest_esquema": 2,
+ "nota_esquema": "Esquema 2 (2026-11-12). Los manifiestos del piloto y de la linea base de 150 (esquema 1) listaban por error el .git/config del proyecto en config_git_aislada(usada); solo era un fallo de registro: git apply se ejecuta en un directorio temporal fuera de cualquier repositorio.",
+ "config_git_sistema_y_usuario_reales(no usada)": [
+  "file:~/AppData/Local/Programs/Git/etc/gitconfig\tcore.autocrlf true",
+  "file:~/AppData/Local/Programs/Git/etc/gitconfig\tcore.symlinks false",
+  "file:~/.gitconfig\tcore.longpaths true"
+ ],
+ "config_git_aislada(visible_para_git_apply)": [],
+ "config_efectiva_matriz_principal": {
+  "core.autocrlf": "true",
+  "como": "-c core.autocrlf=true en cada git apply",
+  "celdas": "matriz principal (arboles CRLF y LF)"
+ },
+ "config_efectiva_replica_robustez": {
+  "core.autocrlf": "false",
+  "como": "-c core.autocrlf=false en cada git apply",
+  "celdas": "replica de robustez (solo arboles LF)"
+ },
+ "diferencias_con_el_entorno_original": [
+  "Arbol parcial: solo los ficheros candidatos de las cabeceras del parche (el original aplico sobre el repo completo).",
+  "Ejecucion fuera de un repositorio: sin indice ni .gitattributes del arbol de trabajo; los atributos se leen con `git check-attr --source <base_commit>`.",
+  "Configuracion de Git aislada (sin config global ni de sistema reales) con core.autocrlf fijado en -c; el original uso la configuracion real de la maquina.",
+  "Localizacion fijada a LC_ALL=C para mensajes de Git deterministas.",
+  "Los finales de linea del arbol se EMULAN con la regla de autocrlf/.gitattributes validada 39/39; no hay checkout real.",
+  "Linux/Docker NO se reproduce: el arbol LF es una condicion de SENSIBILIDAD, no una equivalencia demostrada con el entorno de los evaluadores oficiales.",
+  "La version de Git del original no esta registrada; solo se registra la version actual."
+ ],
+ "interpretacion": [
+  "Los resultados originales no se modifican.",
+  "Normalizar un parche no demuestra que el modelo resuelva la tarea.",
+  "Que git apply --check funcione en la reconstruccion no garantiza que el evaluador oficial lo acepte.",
+  "LF sobre LF es una prueba de sensibilidad, no una reproduccion demostrada de Linux/Docker."
+ ],
+ "seleccion": [
+  {
+   "task_id": "Significant-Gravitas__AutoGPT-4652",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "Significant-Gravitas__AutoGPT-4652",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "Significant-Gravitas__AutoGPT-4652",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "astropy__astropy-13398",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "astropy__astropy-13398",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "astropy__astropy-13398",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "astropy__astropy-14598",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "astropy__astropy-14598",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "astropy__astropy-14598",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "django__django-14373",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "django__django-14373",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "django__django-14373",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "huggingface__transformers-29675",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "huggingface__transformers-29675",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "huggingface__transformers-29675",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "langchain-ai__langchain-5609",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "langchain-ai__langchain-5609",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "langchain-ai__langchain-5609",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pallets__flask-5014",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pallets__flask-5014",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pallets__flask-5014",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "psf__requests-2931",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "psf__requests-2931",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "psf__requests-2931",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pylint-dev__pylint-4970",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pylint-dev__pylint-4970",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pylint-dev__pylint-4970",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pylint-dev__pylint-8898",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pylint-dev__pylint-8898",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pylint-dev__pylint-8898",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5262",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5262",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5262",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-26323",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-26323",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-26323",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-8721",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-8721",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-8721",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "sympy__sympy-17655",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "sympy__sympy-19637",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "sympy__sympy-19637",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "sympy__sympy-19637",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-4841",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-4841",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-4841",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-5933",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-5933",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-5933",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-9862",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-9862",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-9862",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "semantic"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "bm25"
+  },
+  {
+   "task_id": "sympy__sympy-17655",
+   "estrategia": "hybrid"
+  },
+  {
+   "task_id": "sympy__sympy-17655",
+   "estrategia": "semantic"
+  }
+ ],
+ "integridad_antes": {
+  "patches": {
+   "logs\\downstream\\Significant-Gravitas__AutoGPT-4652\\bm25\\patch.diff": "6116d4f696869503f50149dab09c341397f5805663e5654fd89b7329ca2b94b7",
+   "logs\\downstream\\Significant-Gravitas__AutoGPT-4652\\hybrid\\patch.diff": "2e91821f3486fb52f91e01c9870ef9905dd47676629a1f76c627ca2585cffac2",
+   "logs\\downstream\\Significant-Gravitas__AutoGPT-4652\\semantic\\patch.diff": "ced0185526663fb10b6110fd7296d852d82e2e31f90cc4d1648b6749b81265b1",
+   "logs\\downstream\\astropy__astropy-13398\\bm25\\patch.diff": "b8ff316daa1ce5540a8e9ce113771d06b24720e4c0b462d124be8fcf6d1cd833",
+   "logs\\downstream\\astropy__astropy-13398\\hybrid\\patch.diff": "2eed2d9cac44ab239589de7a804a5abb7b4d086adf20fa075cc247c0e5d9973b",
+   "logs\\downstream\\astropy__astropy-13398\\semantic\\patch.diff": "870cd01d139f906660060ba20b1718d8e1a3656281d2e262b2b41e5faa1f641b",
+   "logs\\downstream\\astropy__astropy-14309\\bm25\\patch.diff": "bad3a1695d7e7b81437e3c514645a11bc24535c89324ff57f25037efe76da810",
+   "logs\\downstream\\astropy__astropy-14309\\hybrid\\patch.diff": "35dcbdc3b2e50a3a9d412c4f29be365d523c0f4ff0bd0b8e621912c4c05abe47",
+   "logs\\downstream\\astropy__astropy-14309\\semantic\\patch.diff": "6bdbffde3675abe9ba70b218c624d3ab11335674dd403d37d23213b5e338898a",
+   "logs\\downstream\\astropy__astropy-14598\\bm25\\patch.diff": "62c6ac87b6a71bc8104a962c6bf73e02123a11394354ebb48e9536547c7e6e25",
+   "logs\\downstream\\astropy__astropy-14598\\hybrid\\patch.diff": "0bec16499c3a31079cf6941af7b2e82a1d77d4c9b3c85022395a3616714dc072",
+   "logs\\downstream\\astropy__astropy-14598\\semantic\\patch.diff": "79bab546247a95e366e53314ea830b86bb80907773ebb9baff923630210af18e",
+   "logs\\downstream\\django__django-10880\\bm25\\patch.diff": "96bf06a17cf5ab6ce667727b05c83b299fb26be725dba9cbc28362e6d0381ef8",
+   "logs\\downstream\\django__django-10880\\hybrid\\patch.diff": "1eeab359328cab2c51272584a37cd673305e5651044eb3b3c424fb17f8da40c0",
+   "logs\\downstream\\django__django-10880\\semantic\\patch.diff": "0c319b9ba63325894c3c07e422385798ffbed4af7fabe7391db8d0ffd36dd580",
+   "logs\\downstream\\django__django-14373\\bm25\\patch.diff": "5f36a53cb847a9c9b178b90445f7e6f4fdc9f8860383c3a51f368e727b937586",
+   "logs\\downstream\\django__django-14373\\hybrid\\patch.diff": "5f36a53cb847a9c9b178b90445f7e6f4fdc9f8860383c3a51f368e727b937586",
+   "logs\\downstream\\django__django-14373\\semantic\\patch.diff": "f95d4f02dbbdb809c38cbfdfd393c53159a850114872085162b66a3b3728e8da",
+   "logs\\downstream\\huggingface__transformers-26752\\bm25\\patch.diff": "3830c731b7da52a3c76d7a99ca38b9986ae8c31195a0d55cb8a38456ef1af385",
+   "logs\\downstream\\huggingface__transformers-26752\\hybrid\\patch.diff": "315b0f8e7d4f386143bd8527dfadc69a9e9524703c8487c9f550202b9271bfb8",
+   "logs\\downstream\\huggingface__transformers-26752\\semantic\\patch.diff": "e6d9dce59ea613d191a2dac77e8f670f49a2f6668c4a66d0dd59b1a78f6a7c6f",
+   "logs\\downstream\\huggingface__transformers-29675\\bm25\\patch.diff": "3f0099e03b83db5a30dc049108c1522c54828a0351378d23bb44be4197d1184d",
+   "logs\\downstream\\huggingface__transformers-29675\\hybrid\\patch.diff": "fca06916dac58251f194a6bfdecbe36b30faae419c81539ac20d57d3fcee531c",
+   "logs\\downstream\\huggingface__transformers-29675\\semantic\\patch.diff": "3a02dc3af0a2b3e65df2060998f42ff51e44c70c6c9c31cb2b118b50a081cc75",
+   "logs\\downstream\\instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86\\bm25\\patch.diff": "7ac003606ef98954a1facc386f05648e1237a98248e2c5bf46bf8f57fe9be215",
+   "logs\\downstream\\instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86\\hybrid\\patch.diff": "9b20423bf19777e2a0a62cabe538f9cd933581a5c7362d8d9bbfb07de40e37f4",
+   "logs\\downstream\\instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86\\semantic\\patch.diff": "378d3771736c6328298e688459a60268579946be73d296ebb2a8daa5c6f0ed19",
+   "logs\\downstream\\instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a\\bm25\\patch.diff": "5b79d4ef904f42ac0a69e83ed1923f8722b68fa1904ab6fa3dbcb372e0b3b6e1",
+   "logs\\downstream\\instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a\\hybrid\\patch.diff": "f188481bc3d1ef48b5c70514e2462a938315634e29da9894b72e980c795f7cc0",
+   "logs\\downstream\\instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a\\semantic\\patch.diff": "cdb03f1398f57a1a95ea087d3ccb6963d16edfc4037d407258bb9363a29f974c",
+   "logs\\downstream\\instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2\\bm25\\patch.diff": "163d3b1f6f0347527cc37ae3aa154b7de13c7ca506aa8e658478df6bb2d6bcaf",
+   "logs\\downstream\\instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2\\hybrid\\patch.diff": "a09eeaf28bc5f6e3b06370581411991b7d901a8ae0d57fb554b4ce54e32b9d91",
+   "logs\\downstream\\instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2\\semantic\\patch.diff": "b5f3bae333677c6f2f5f640c0efea9d39d54018d55a69f04c5356de302db97ec",
+   "logs\\downstream\\instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86\\bm25\\patch.diff": "c3b9dc3d99163d47d434d4a35cb54bf97fd6a237fe231ba44d6b4994af2a137f",
+   "logs\\downstream\\instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86\\hybrid\\patch.diff": "9dbce3a974fee76f1794d1b88cd5c0d38c0e04f001e1e9e8cfc4741f802c235f",
+   "logs\\downstream\\instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86\\semantic\\patch.diff": "bb1163e03d246417d63dd5434390ed80107d1f4914d848a41343b96203cd6192",
+   "logs\\downstream\\instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4\\bm25\\patch.diff": "4f655de5fa3d61d8cf79b57e611246fe4321b4a8d44e056ebf180cc5a59d5ccd",
+   "logs\\downstream\\instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4\\hybrid\\patch.diff": "1d039f28d935eaf7fd2b07cfb01f6a225bb266b73fb92753b702dc74cfc65b8a",
+   "logs\\downstream\\instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4\\semantic\\patch.diff": "19d0289c78ab5ba70473412fec9f78b95a82d66e8b9ada9f50c5a0d30c7a3552",
+   "logs\\downstream\\instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb\\bm25\\patch.diff": "d7bf10530860515233bb5b46151c8a7f5337e956dd668aaf9d8e9f01155bd244",
+   "logs\\downstream\\instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb\\hybrid\\patch.diff": "bbf1a31ab9339888d72c241a4d2f39d0c002d8e1c39493548fab901629d9396d",
+   "logs\\downstream\\instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb\\semantic\\patch.diff": "87386ee58bcb315de02b1df4c5446098e79983c1ea861539fbb059ba363b64af",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\bm25\\patch.diff": "fbb04b5c34d1518c2b7ef0d4b0d049748e4097bd8dc3ed5fa8e97cfcde9267c1",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\hybrid\\patch.diff": "b6af6f72d5be5746c1692fd27fd23d67c5f8a60fd74ae14135a3fedd067648ab",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\semantic\\patch.diff": "7335e19b38a6b42862a0d8c51f5878d878a880296c9a801ad86e5439c9a8e3a9",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba\\bm25\\patch.diff": "a0b566c3236d70018ae9cfb545e78cbe685655ccea743a77a31f46a17541ece8",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba\\hybrid\\patch.diff": "831121b72133927580d9d4b5b163bacd85c6bd3cccad21554064f6b941cecd84",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba\\semantic\\patch.diff": "11a14572f412decc7d3ea1298159f624502661b2ab8c00fc050a27d33b377c4e",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\bm25\\patch.diff": "c3a5bec4ddfb71265fd452a40c9e754bda7133e5f1ad484319fdbb9b795df75b",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\hybrid\\patch.diff": "d7d4fa22ad1261ded0d9496bb9db6f533442f002dea71699ba01b6fdae59b51a",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\semantic\\patch.diff": "d78753eede1de518bda11a44d788905f1751ad9706065940a99c431f27fc6c01",
+   "logs\\downstream\\keras-team__keras-18871\\bm25\\patch.diff": "6fa438dc7d855e3e7927010b12ce795729df3d43c96882328fe014ca6a87d580",
+   "logs\\downstream\\keras-team__keras-18871\\hybrid\\patch.diff": "660070a87b5d91ef5f09caa4a457b390d23cf6a55a6f2dc4806a6c9c3ebdad62",
+   "logs\\downstream\\keras-team__keras-18871\\semantic\\patch.diff": "41a597847ea430520c2e1a997b7efdfd6bc5312f3c1000bfed236f292809626c",
+   "logs\\downstream\\keras-team__keras-19201\\bm25\\patch.diff": "146d73882bb80a2b11b0906f7de564e193502819f44f92031d5d239bd1e08f0f",
+   "logs\\downstream\\keras-team__keras-19201\\hybrid\\patch.diff": "cb092108eecd21134af9a532c92b2cfa087d658880c6e2568456ffa0458da49a",
+   "logs\\downstream\\keras-team__keras-19201\\semantic\\patch.diff": "373bdabcca19f006f64bf3663fa4eab0c7fd3606134bbc752c759829b6e6b8c5",
+   "logs\\downstream\\keras-team__keras-19863\\bm25\\patch.diff": "e64d591cc3380aacdcd311592cbc0a691d7b2ce679a5d323e5755a8113de1799",
+   "logs\\downstream\\keras-team__keras-19863\\hybrid\\patch.diff": "bc0a248993869620b16953402d26b0f174c1bf0347b0bb185b648af61baa4c68",
+   "logs\\downstream\\keras-team__keras-19863\\semantic\\patch.diff": "5d91ae465f9eaed91e76dedcb2d2c6db6749064383339a2ec9ee8fc65e298a1c",
+   "logs\\downstream\\langchain-ai__langchain-4579\\bm25\\patch.diff": "372e47cc337c42a8cbd2c2e495ea106a41149e63d0ea0310a487652b13c76030",
+   "logs\\downstream\\langchain-ai__langchain-4579\\hybrid\\patch.diff": "4aba85da41e489e9146595d65b43cd6be34e69c211da15f86b6969d12ca2f3a2",
+   "logs\\downstream\\langchain-ai__langchain-4579\\semantic\\patch.diff": "c054b628360de984c16dd95ba454e2ae276dd173ed91254a302d7b236922072d",
+   "logs\\downstream\\langchain-ai__langchain-4646\\bm25\\patch.diff": "0732a0700885caf6cde4bea57f6c77471ae10c1fe66cf61866cf655ea0ff1dbc",
+   "logs\\downstream\\langchain-ai__langchain-4646\\hybrid\\patch.diff": "6fb2230a5919886484ddcd800d30d3e7bedbda61174a8f71771807cce94cd690",
+   "logs\\downstream\\langchain-ai__langchain-4646\\semantic\\patch.diff": "3c0500f50a0b3db2006862b2be67cbc137f9525b154ccedaad61088b245516fb",
+   "logs\\downstream\\langchain-ai__langchain-5609\\bm25\\patch.diff": "e7236dd2560a207541b57e97548c2c4b4fcc3cd3b5e2974365e6f81dc44c883b",
+   "logs\\downstream\\langchain-ai__langchain-5609\\hybrid\\patch.diff": "f678fdb6162c1353e0ecbd47e2c89b906831904e76b4c3c3c6e66833db1cb0d8",
+   "logs\\downstream\\langchain-ai__langchain-5609\\semantic\\patch.diff": "dd546b5a49e53405a5ed9ef37ec9de00dc061118c0edca670e7e8d3d17e88f52",
+   "logs\\downstream\\matplotlib__matplotlib-24177\\bm25\\patch.diff": "ec9713328780341030f1d4e6e79fe61188cddb41515a9ea2ba75fb7891fd07d2",
+   "logs\\downstream\\matplotlib__matplotlib-24177\\hybrid\\patch.diff": "b2a3e92200fdb28eaadb6756ec6bc53d43ecfcdff63261c904132591d4342e04",
+   "logs\\downstream\\matplotlib__matplotlib-24177\\semantic\\patch.diff": "2dc5cb9f35aecfc01259174f36e3c238bf88cba60f7a2098f98fa6b8cee69f4d",
+   "logs\\downstream\\matplotlib__matplotlib-24627\\bm25\\patch.diff": "f1f5515d51ca4e7823e7e08e6c46f4c580169ca4af1a7de245756cc05971790c",
+   "logs\\downstream\\matplotlib__matplotlib-24627\\hybrid\\patch.diff": "d70611ef00feeb869d5a6cca5d13061f6642ac72dcd5dfa28fb415547da6ca68",
+   "logs\\downstream\\matplotlib__matplotlib-24627\\semantic\\patch.diff": "41dc369d669f2702134296beca1e1a73fd171a46485f8c3a532a8345063ca926",
+   "logs\\downstream\\matplotlib__matplotlib-26208\\bm25\\patch.diff": "dc808ef27f216a9eb7595f74a6ab7091846912d78d8a0cbd565a43ebb83e9792",
+   "logs\\downstream\\matplotlib__matplotlib-26208\\hybrid\\patch.diff": "50562541acd39bec949fd27426b48400f1e6ecd27285ae93a0a80daf1e3d09ae",
+   "logs\\downstream\\matplotlib__matplotlib-26208\\semantic\\patch.diff": "fb68c2a71cfd09d8b01f6c7dd25f5d83fa12ea2b6b306db3b6e39ba1c8ff2ecc",
+   "logs\\downstream\\mwaskom__seaborn-3069\\bm25\\patch.diff": "fc95240fb2f1ef2327c914cae42cdaa36623a1ca9e7b399b97a0499ecb8edb2b",
+   "logs\\downstream\\mwaskom__seaborn-3069\\hybrid\\patch.diff": "3fb5d1e2ce9f9ceb687062975ef7f6435dbff5531cb168e5020eee00ae4c08f7",
+   "logs\\downstream\\mwaskom__seaborn-3069\\semantic\\patch.diff": "22f7f04ed8d76895eb21def69215c15f0752b0e362d1a03c9eab7d44f5313deb",
+   "logs\\downstream\\pallets__flask-5014\\bm25\\patch.diff": "638711f8e95a0c981f52c06d8c027071b4670c8005bfc6a8df667fe824347381",
+   "logs\\downstream\\pallets__flask-5014\\hybrid\\patch.diff": "22b02def618bf32216f9fe319a72b8042336c9615d89f95b3555eb4dcc8d899e",
+   "logs\\downstream\\pallets__flask-5014\\semantic\\patch.diff": "d3fc528e5eed1b0e5d1c06ba7d1e37f313031c70a9c4fd1c7ae57a5e1805832c",
+   "logs\\downstream\\psf__requests-1142\\bm25\\patch.diff": "9a7dd1c31289591878323df8a49731f2055b25ff83b568eada29be9ac855eb29",
+   "logs\\downstream\\psf__requests-1142\\hybrid\\patch.diff": "fa02bb181298be52fc964946dfcf2d4455c0618772c111613d8984601b9b7258",
+   "logs\\downstream\\psf__requests-1142\\semantic\\patch.diff": "aa76b28b539594964acf4a7091689565eae0c6bf88ef27853d10897bfffe16cc",
+   "logs\\downstream\\psf__requests-2931\\bm25\\patch.diff": "4f16ad6eef5f6e26dcee4089f17fc1c4f96577df4a40664520851cc3a172ee28",
+   "logs\\downstream\\psf__requests-2931\\hybrid\\patch.diff": "0165f7ac209ae426a41ecf675661cbe448946c1abc9f03dc267222b16dfe0792",
+   "logs\\downstream\\psf__requests-2931\\semantic\\patch.diff": "e3d457411dabe69261c7d12f95331fc8d009d0582abf9c828ecc52556c30a4d1",
+   "logs\\downstream\\psf__requests-5414\\bm25\\patch.diff": "7f8e61ac747c7d7848b261fa39e885ee04a41bdd7eced904a010f49f16cf4963",
+   "logs\\downstream\\psf__requests-5414\\hybrid\\patch.diff": "30c850c82679b349f12e96d1f8851705f8b835b3e6c80d2796bb2aafac7369cb",
+   "logs\\downstream\\psf__requests-5414\\semantic\\patch.diff": "5b5f74c8004aecd40700aaad1c42db5c3b8d0e94ddbeb846818f98b69184a28a",
+   "logs\\downstream\\pydata__xarray-4075\\bm25\\patch.diff": "348959175ee599fef393b0325c80bc06e4d650217c90b43314c413c5fdc3b5f5",
+   "logs\\downstream\\pydata__xarray-4075\\hybrid\\patch.diff": "8b9d2b7791a03d8ac6a58a7f1859c56da7d2f7a95d3ccb55a911fce1f69875eb",
+   "logs\\downstream\\pydata__xarray-4075\\semantic\\patch.diff": "745eee0eb23a2798b78f6c12d7e547d6ff123eb944561d40c90fa11d62ff31eb",
+   "logs\\downstream\\pydata__xarray-6992\\bm25\\patch.diff": "9ad96c8243be4a21f00c20b3dc5a1fe29a4d3f1fefeffac7b2566391cfa84d38",
+   "logs\\downstream\\pydata__xarray-6992\\hybrid\\patch.diff": "acdca361eee25df6c632b1432aba246609496c30ab1b553e7153165a2f480079",
+   "logs\\downstream\\pydata__xarray-6992\\semantic\\patch.diff": "65214df814b1546b7d81a388875240bb1aef2dbe064e55fc9458757c23ab9628",
+   "logs\\downstream\\pylint-dev__pylint-4970\\bm25\\patch.diff": "4cbbd57069a44aecd0a8c20e9c1f86c49d8bd0332e2cf012f006047f42a547b6",
+   "logs\\downstream\\pylint-dev__pylint-4970\\hybrid\\patch.diff": "cb16911f18479911d3c71e2bdb5ce8587ae0f699be33dae9298b6df57a0684ec",
+   "logs\\downstream\\pylint-dev__pylint-4970\\semantic\\patch.diff": "d62c5bd333387587d57087f5bda442d37d073ff15e366d1c84ae0b09aa2853ca",
+   "logs\\downstream\\pylint-dev__pylint-8898\\bm25\\patch.diff": "19322723ada01df0dfcb908b64e3dccc8c98919b0359ef23eb9cc0253f68f2fd",
+   "logs\\downstream\\pylint-dev__pylint-8898\\hybrid\\patch.diff": "4e8e742d27bea78a26c1b8462d5f978c18b0168594187f45307835cd41e8aaed",
+   "logs\\downstream\\pylint-dev__pylint-8898\\semantic\\patch.diff": "efb25a9788b089f7990ef5e025571ea1df8493a9ddfd77c2bd124a37b18f71d0",
+   "logs\\downstream\\pytest-dev__pytest-10081\\bm25\\patch.diff": "d31671651df5a68461ad8722145010af2e3e2c70bc22acc2c71ef9aec727e360",
+   "logs\\downstream\\pytest-dev__pytest-10081\\hybrid\\patch.diff": "fc694736a4c147425e4ae9b5cd7377ec2846faa317ebdc6e137639b1e9403c35",
+   "logs\\downstream\\pytest-dev__pytest-10081\\semantic\\patch.diff": "952b686caa85de6efbbd04b0aed585604ab4226c3bb5be40b06a590d16b6f5c1",
+   "logs\\downstream\\pytest-dev__pytest-5262\\bm25\\patch.diff": "be2cd52f0656f2992af6c7fa2dce8538cc6f370a298099e51919c838c781da16",
+   "logs\\downstream\\pytest-dev__pytest-5262\\hybrid\\patch.diff": "c6d9144cbe6fe3a379f3aade2cc5161e72ab5caf54bd1bb7b2eddf82d8ba4094",
+   "logs\\downstream\\pytest-dev__pytest-5262\\semantic\\patch.diff": "45209425c1a8745727bc4b5323c91403e62ae8d3369ef45350c35b9abd25ba96",
+   "logs\\downstream\\pytest-dev__pytest-5809\\bm25\\patch.diff": "e1586692926cd1e880ff560d9cd727cf3406e4cd53b86a793d54f1b3c29613a1",
+   "logs\\downstream\\pytest-dev__pytest-5809\\hybrid\\patch.diff": "7334f9e96be9120650a141ad9077950ab62b503e1318698576d42026ef93b003",
+   "logs\\downstream\\pytest-dev__pytest-5809\\semantic\\patch.diff": "bc59c7cfa6fcc23cbbd8ba49ee4b489fb14d90a3beeddee55eab28d87c4eda92",
+   "logs\\downstream\\scikit-learn__scikit-learn-13439\\bm25\\patch.diff": "038b63c9de04dd49fe389b254184d41dd8f4d9b087843be8ed27bbddd8de1ff5",
+   "logs\\downstream\\scikit-learn__scikit-learn-13439\\hybrid\\patch.diff": "df6f052be1b6142aeb6e11c740298952cf348321ee77134a85c8a3a873fd37e5",
+   "logs\\downstream\\scikit-learn__scikit-learn-13439\\semantic\\patch.diff": "984b83ad456d3e0198720825d53292aae4b62a78ece73ec6bf11579e8a7b6ffa",
+   "logs\\downstream\\scikit-learn__scikit-learn-14087\\bm25\\patch.diff": "18dcbf60a107f86d41fac5b9e68f84e91d144ea648751227fafe19ed3ee8a50f",
+   "logs\\downstream\\scikit-learn__scikit-learn-14087\\hybrid\\patch.diff": "1b76c8a7670b3746fe6155d67ea8af0937cd1306e4914ff809b2512a48a100d3",
+   "logs\\downstream\\scikit-learn__scikit-learn-14087\\semantic\\patch.diff": "b8846aea65cc51919d6b0469d44e459370dd4ae50be3ba1b13931ba151684963",
+   "logs\\downstream\\scikit-learn__scikit-learn-26323\\bm25\\patch.diff": "625f24393598b30a8396234502aa995a803071357ac5d18ae54956d1b40f0f18",
+   "logs\\downstream\\scikit-learn__scikit-learn-26323\\hybrid\\patch.diff": "33b1a14ed9e82529645dd6acdfff2944cb013e2f4f6f1188ba24413c0d158f79",
+   "logs\\downstream\\scikit-learn__scikit-learn-26323\\semantic\\patch.diff": "6af67bad726344a314900e31883bfbd30a84f8952c09fb58c9297ab7308674d2",
+   "logs\\downstream\\sphinx-doc__sphinx-8721\\bm25\\patch.diff": "331028c7141e72f218d8c38cb69b519ea69dd1799a3f603cd7eafb698a01554d",
+   "logs\\downstream\\sphinx-doc__sphinx-8721\\hybrid\\patch.diff": "d95d2a25d8dabee2a302619afd8c029adfe6e25a5a73d6094835160a0d172c9f",
+   "logs\\downstream\\sphinx-doc__sphinx-8721\\semantic\\patch.diff": "785c114801903424af8707174206440188188f8af225726282a523d1e5236ad9",
+   "logs\\downstream\\sphinx-doc__sphinx-9461\\bm25\\patch.diff": "99079d9f888872a7ee5aaf4d6f3ac0669843d5ad79097039c353eee555c4102e",
+   "logs\\downstream\\sphinx-doc__sphinx-9461\\hybrid\\patch.diff": "8a36c206df2b6446ae9ef48125e8c7749ce388481271dcf6afcaf54fad9aaeeb",
+   "logs\\downstream\\sphinx-doc__sphinx-9461\\semantic\\patch.diff": "29f90be4944601dd2b60701f2dd968e44a97df6adb2c673601f9f16ad08adf02",
+   "logs\\downstream\\sphinx-doc__sphinx-9711\\bm25\\patch.diff": "88df3453e1df876db4df89622a689b09566163461c235036a59dc8ab31443bff",
+   "logs\\downstream\\sphinx-doc__sphinx-9711\\hybrid\\patch.diff": "55a3c6e64ac45d860dce809a5c236f933d9f51f5ed36d292bf5e7c79d219862e",
+   "logs\\downstream\\sphinx-doc__sphinx-9711\\semantic\\patch.diff": "68a54eb1d8ae331d29ba90420bef97d1f75a139640326b3d682f510e083aa51b",
+   "logs\\downstream\\sympy__sympy-16886\\bm25\\patch.diff": "7ce06efc21cf7c30b172340c2feff54f501b1a063a3830e38ff5466536dba55c",
+   "logs\\downstream\\sympy__sympy-16886\\hybrid\\patch.diff": "43ab2ce2aa4332090c7898a8fab7b3bea719f806432bc98dd25285be6917f794",
+   "logs\\downstream\\sympy__sympy-16886\\semantic\\patch.diff": "06cce876caf83ee3a6e882b9706d4695fd0298b6ae8b387d459dc9330bf50a0c",
+   "logs\\downstream\\sympy__sympy-17655\\bm25\\patch.diff": "d179907b2d07d8a0825a990f0d2d5d0b20fdafe1984e0889c55106287f992f93",
+   "logs\\downstream\\sympy__sympy-17655\\hybrid\\patch.diff": "601166d112ec6602dfa2f6e65900299d1bd77c3ded9e997697ec2fa94ea72592",
+   "logs\\downstream\\sympy__sympy-17655\\semantic\\patch.diff": "eb18d3b0032dd390980c22e3cab5bc1da4be64d187eb980a6cd6a390cfb747b9",
+   "logs\\downstream\\sympy__sympy-19637\\bm25\\patch.diff": "7a46865ec7a93e12866f7330a0c0db58f0808d54e8c4a6b9999daabdc6de42fa",
+   "logs\\downstream\\sympy__sympy-19637\\hybrid\\patch.diff": "073f7926898c738405b6054a358ec09a43b96ec0933327c2e0219ae9a05f419d",
+   "logs\\downstream\\sympy__sympy-19637\\semantic\\patch.diff": "073f7926898c738405b6054a358ec09a43b96ec0933327c2e0219ae9a05f419d",
+   "logs\\downstream\\yt-dlp__yt-dlp-4841\\bm25\\patch.diff": "872d143c4eb18e4dc6a1a081e6248069b0eadcb97db158c8a5d7a04ad27ed673",
+   "logs\\downstream\\yt-dlp__yt-dlp-4841\\hybrid\\patch.diff": "89fc4cbabfd4f6d543879a2073b16e5ecfb74af75fbc4583476ea6508f37f020",
+   "logs\\downstream\\yt-dlp__yt-dlp-4841\\semantic\\patch.diff": "61e8ec70ed762b8a4060a3baa850d77ef4b77e0b1741cf4f418c8a5159026bf7",
+   "logs\\downstream\\yt-dlp__yt-dlp-5933\\bm25\\patch.diff": "6c00f8b0db97d8a6ff4d89a21291a94714e171981d5bc55a4c49e93056bc0d00",
+   "logs\\downstream\\yt-dlp__yt-dlp-5933\\hybrid\\patch.diff": "a65e449287793ec80454f1c3f264ed69c248ad34276f946cc8a150e658fd4f3c",
+   "logs\\downstream\\yt-dlp__yt-dlp-5933\\semantic\\patch.diff": "2dfde919b45bc82cb3fe9163c06524c37fa03a91f357b763eed2f2e1ffd66fb0",
+   "logs\\downstream\\yt-dlp__yt-dlp-9862\\bm25\\patch.diff": "9b9a4d44513b946337a548dcb72b772621008369de7ae2c68ce2a9ea6ebd4695",
+   "logs\\downstream\\yt-dlp__yt-dlp-9862\\hybrid\\patch.diff": "335962054c01524a421ad8ea85f1becf9b541773a71fd6ce3d556e70dcc87308",
+   "logs\\downstream\\yt-dlp__yt-dlp-9862\\semantic\\patch.diff": "6aa3a795f7e37cf60b6454f05a528c2216517ef460d9a101ef46c8fc0a173002"
+  },
+  "results_jsonl": "52ca6d51dedeb2b1b39521717ade76a0b7913d10712cd4c01c95709e34d1c30d",
+  "final_tasks_csv": "d3fe07da57d48177e66616ef799e9245293d4a7d179443f194bf1c03b2a10667",
+  "repos": {
+   "Significant-Gravitas__AutoGPT": {
+    "HEAD": "9150f32f8b8602395534795ddd2d930a1684e419",
+    "index_sha256": "615a418195664fe465038073dc4905002bfadd46df0e277089a6d12aea6b6e43"
+   },
+   "ansible__ansible": {
+    "HEAD": "3684b4824d367f866d038c5373f975503580d49e",
+    "index_sha256": "1b144ee16eb229f9f93678e3a9ccb14f4dde86381cb60fbcdbc332700ab843ca"
+   },
+   "astropy__astropy": {
+    "HEAD": "cdb66059a2feb44ee49021874605ba90801f9986",
+    "index_sha256": "7629955bc414d5f8c4ea54b0ed78ac38d54b7263555a6190b4ef2ea9b8cfc8bd"
+   },
+   "django__django": {
+    "HEAD": "b1a4b1f0bdf05adbd3dc4dde14228e68da54c1a3",
+    "index_sha256": "52cd331b4d467a653a59e494831166f494db7c422f3a8f594c9f263530463674"
+   },
+   "huggingface__transformers": {
+    "HEAD": "3bc65505fc0801e3d9ff741ec725fb0cb4d863d6",
+    "index_sha256": "078b4fda21980f2c8df251e95b34c670e24295461da77944a3c9c9887d656b69"
+   },
+   "internetarchive__openlibrary": {
+    "HEAD": "73e4b70aa3adafbbf44e7942b5bf9efabce70447",
+    "index_sha256": "11ed0b7612ebf762cefbaecac3162ffea23d4c3f84013121ec03ec25ae04db8d"
+   },
+   "keras-team__keras": {
+    "HEAD": "10252a9e7d68c6818423deee1c4c8549038e4171",
+    "index_sha256": "0945e7a755f9a3a24b5969664d591a9ebf9d4f6709514dcf4ea360933513c252"
+   },
+   "langchain-ai__langchain": {
+    "HEAD": "928cdd57a4531e606f7ca7e34c0b96736ffcce49",
+    "index_sha256": "f25fe6b684d04bb6ece2a994c6e3ac995ed365acdd84a45787798c0d5c40dd4a"
+   },
+   "matplotlib__matplotlib": {
+    "HEAD": "f0f133943d3e4f1e2e665291fe1c8f658a84cc09",
+    "index_sha256": "946d2a15dfeaa62781a8d88b777a305ee420daccf897ee639d3f2f0f7b90eb0d"
+   },
+   "mwaskom__seaborn": {
+    "HEAD": "54cab15bdacfaa05a88fbc5502a5b322d99f148e",
+    "index_sha256": "4157649ed9a7e2900c5221bb87af053b07df2dcf7580ed62bdb8079d7073562f"
+   },
+   "pallets__flask": {
+    "HEAD": "7ee9ceb71e868944a46e1ff00b506772a53a4f1d",
+    "index_sha256": "e0f75db71f9094c03387ecb887938a6a588cc6b0811d5661fe97e222bd50cb10"
+   },
+   "psf__requests": {
+    "HEAD": "5f7a3a74aab1625c2bb65f643197ee885e3da576",
+    "index_sha256": "86b41f402609ea5591dc01d64a05ee099b05693ee22a71154a5927e654aaaa6a"
+   },
+   "pydata__xarray": {
+    "HEAD": "45c0a114e2b7b27b83c9618bc05b36afac82183c",
+    "index_sha256": "444ef0ec9c46b3c8db6cd6f468510878825ff130c9dade562dcd7e448e0fe31d"
+   },
+   "pylint-dev__pylint": {
+    "HEAD": "40cc2ffd7887959157aaf469e09585ec2be7f528",
+    "index_sha256": "436e49d797382009c6eaa25dd4f60d61888f02f6ceb2e7a9e0bee682d4031ff8"
+   },
+   "pytest-dev__pytest": {
+    "HEAD": "58e6a09db49f34886ff13f3b7520dd0bcd7063cd",
+    "index_sha256": "2d9ea63104be1b8d4ed63cf1b9233a6a92d2842665c0d6dc4d6603125d264ebb"
+   },
+   "qutebrowser__qutebrowser": {
+    "HEAD": "744cd94469de77f52905bebb123597c040ac07b6",
+    "index_sha256": "637a846fef8c149ce4a39348077983080479b8ec34f96f878ceb2a696d1a892b"
+   },
+   "scikit-learn__scikit-learn": {
+    "HEAD": "a5743ed36fbd3fbc8e351bdab16561fbfca7dfa1",
+    "index_sha256": "d6b0fd5461924e8627f2cb60c072684ebd5ae7372c57e05bc7634d8c436b667d"
+   },
+   "sphinx-doc__sphinx": {
+    "HEAD": "81a4fd973d4cfcb25d01a7b0be62cdb28f82406d",
+    "index_sha256": "64b2a4b7cad0689b572f742c50b32224611da1fcd50daa44712aca7b2ab0c7f7"
+   },
+   "sympy__sympy": {
+    "HEAD": "f5e965947af2410ded92cfad987aaf45262ea434",
+    "index_sha256": "335652841503092f334add6b8acadd9a28ef57397b27b6d6500aaf15bed14053"
+   },
+   "yt-dlp__yt-dlp": {
+    "HEAD": "f079514957401f49db30ec4cd25f8c8246b0c1de",
+    "index_sha256": "f9de35899efe0e55fbddcae0e10e49eabf27e27a0d656ccf04161e13833c7692"
+   }
+  }
+ },
+ "integridad_despues": {
+  "patches": {
+   "logs\\downstream\\Significant-Gravitas__AutoGPT-4652\\bm25\\patch.diff": "6116d4f696869503f50149dab09c341397f5805663e5654fd89b7329ca2b94b7",
+   "logs\\downstream\\Significant-Gravitas__AutoGPT-4652\\hybrid\\patch.diff": "2e91821f3486fb52f91e01c9870ef9905dd47676629a1f76c627ca2585cffac2",
+   "logs\\downstream\\Significant-Gravitas__AutoGPT-4652\\semantic\\patch.diff": "ced0185526663fb10b6110fd7296d852d82e2e31f90cc4d1648b6749b81265b1",
+   "logs\\downstream\\astropy__astropy-13398\\bm25\\patch.diff": "b8ff316daa1ce5540a8e9ce113771d06b24720e4c0b462d124be8fcf6d1cd833",
+   "logs\\downstream\\astropy__astropy-13398\\hybrid\\patch.diff": "2eed2d9cac44ab239589de7a804a5abb7b4d086adf20fa075cc247c0e5d9973b",
+   "logs\\downstream\\astropy__astropy-13398\\semantic\\patch.diff": "870cd01d139f906660060ba20b1718d8e1a3656281d2e262b2b41e5faa1f641b",
+   "logs\\downstream\\astropy__astropy-14309\\bm25\\patch.diff": "bad3a1695d7e7b81437e3c514645a11bc24535c89324ff57f25037efe76da810",
+   "logs\\downstream\\astropy__astropy-14309\\hybrid\\patch.diff": "35dcbdc3b2e50a3a9d412c4f29be365d523c0f4ff0bd0b8e621912c4c05abe47",
+   "logs\\downstream\\astropy__astropy-14309\\semantic\\patch.diff": "6bdbffde3675abe9ba70b218c624d3ab11335674dd403d37d23213b5e338898a",
+   "logs\\downstream\\astropy__astropy-14598\\bm25\\patch.diff": "62c6ac87b6a71bc8104a962c6bf73e02123a11394354ebb48e9536547c7e6e25",
+   "logs\\downstream\\astropy__astropy-14598\\hybrid\\patch.diff": "0bec16499c3a31079cf6941af7b2e82a1d77d4c9b3c85022395a3616714dc072",
+   "logs\\downstream\\astropy__astropy-14598\\semantic\\patch.diff": "79bab546247a95e366e53314ea830b86bb80907773ebb9baff923630210af18e",
+   "logs\\downstream\\django__django-10880\\bm25\\patch.diff": "96bf06a17cf5ab6ce667727b05c83b299fb26be725dba9cbc28362e6d0381ef8",
+   "logs\\downstream\\django__django-10880\\hybrid\\patch.diff": "1eeab359328cab2c51272584a37cd673305e5651044eb3b3c424fb17f8da40c0",
+   "logs\\downstream\\django__django-10880\\semantic\\patch.diff": "0c319b9ba63325894c3c07e422385798ffbed4af7fabe7391db8d0ffd36dd580",
+   "logs\\downstream\\django__django-14373\\bm25\\patch.diff": "5f36a53cb847a9c9b178b90445f7e6f4fdc9f8860383c3a51f368e727b937586",
+   "logs\\downstream\\django__django-14373\\hybrid\\patch.diff": "5f36a53cb847a9c9b178b90445f7e6f4fdc9f8860383c3a51f368e727b937586",
+   "logs\\downstream\\django__django-14373\\semantic\\patch.diff": "f95d4f02dbbdb809c38cbfdfd393c53159a850114872085162b66a3b3728e8da",
+   "logs\\downstream\\huggingface__transformers-26752\\bm25\\patch.diff": "3830c731b7da52a3c76d7a99ca38b9986ae8c31195a0d55cb8a38456ef1af385",
+   "logs\\downstream\\huggingface__transformers-26752\\hybrid\\patch.diff": "315b0f8e7d4f386143bd8527dfadc69a9e9524703c8487c9f550202b9271bfb8",
+   "logs\\downstream\\huggingface__transformers-26752\\semantic\\patch.diff": "e6d9dce59ea613d191a2dac77e8f670f49a2f6668c4a66d0dd59b1a78f6a7c6f",
+   "logs\\downstream\\huggingface__transformers-29675\\bm25\\patch.diff": "3f0099e03b83db5a30dc049108c1522c54828a0351378d23bb44be4197d1184d",
+   "logs\\downstream\\huggingface__transformers-29675\\hybrid\\patch.diff": "fca06916dac58251f194a6bfdecbe36b30faae419c81539ac20d57d3fcee531c",
+   "logs\\downstream\\huggingface__transformers-29675\\semantic\\patch.diff": "3a02dc3af0a2b3e65df2060998f42ff51e44c70c6c9c31cb2b118b50a081cc75",
+   "logs\\downstream\\instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86\\bm25\\patch.diff": "7ac003606ef98954a1facc386f05648e1237a98248e2c5bf46bf8f57fe9be215",
+   "logs\\downstream\\instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86\\hybrid\\patch.diff": "9b20423bf19777e2a0a62cabe538f9cd933581a5c7362d8d9bbfb07de40e37f4",
+   "logs\\downstream\\instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86\\semantic\\patch.diff": "378d3771736c6328298e688459a60268579946be73d296ebb2a8daa5c6f0ed19",
+   "logs\\downstream\\instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a\\bm25\\patch.diff": "5b79d4ef904f42ac0a69e83ed1923f8722b68fa1904ab6fa3dbcb372e0b3b6e1",
+   "logs\\downstream\\instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a\\hybrid\\patch.diff": "f188481bc3d1ef48b5c70514e2462a938315634e29da9894b72e980c795f7cc0",
+   "logs\\downstream\\instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a\\semantic\\patch.diff": "cdb03f1398f57a1a95ea087d3ccb6963d16edfc4037d407258bb9363a29f974c",
+   "logs\\downstream\\instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2\\bm25\\patch.diff": "163d3b1f6f0347527cc37ae3aa154b7de13c7ca506aa8e658478df6bb2d6bcaf",
+   "logs\\downstream\\instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2\\hybrid\\patch.diff": "a09eeaf28bc5f6e3b06370581411991b7d901a8ae0d57fb554b4ce54e32b9d91",
+   "logs\\downstream\\instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2\\semantic\\patch.diff": "b5f3bae333677c6f2f5f640c0efea9d39d54018d55a69f04c5356de302db97ec",
+   "logs\\downstream\\instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86\\bm25\\patch.diff": "c3b9dc3d99163d47d434d4a35cb54bf97fd6a237fe231ba44d6b4994af2a137f",
+   "logs\\downstream\\instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86\\hybrid\\patch.diff": "9dbce3a974fee76f1794d1b88cd5c0d38c0e04f001e1e9e8cfc4741f802c235f",
+   "logs\\downstream\\instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86\\semantic\\patch.diff": "bb1163e03d246417d63dd5434390ed80107d1f4914d848a41343b96203cd6192",
+   "logs\\downstream\\instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4\\bm25\\patch.diff": "4f655de5fa3d61d8cf79b57e611246fe4321b4a8d44e056ebf180cc5a59d5ccd",
+   "logs\\downstream\\instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4\\hybrid\\patch.diff": "1d039f28d935eaf7fd2b07cfb01f6a225bb266b73fb92753b702dc74cfc65b8a",
+   "logs\\downstream\\instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4\\semantic\\patch.diff": "19d0289c78ab5ba70473412fec9f78b95a82d66e8b9ada9f50c5a0d30c7a3552",
+   "logs\\downstream\\instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb\\bm25\\patch.diff": "d7bf10530860515233bb5b46151c8a7f5337e956dd668aaf9d8e9f01155bd244",
+   "logs\\downstream\\instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb\\hybrid\\patch.diff": "bbf1a31ab9339888d72c241a4d2f39d0c002d8e1c39493548fab901629d9396d",
+   "logs\\downstream\\instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb\\semantic\\patch.diff": "87386ee58bcb315de02b1df4c5446098e79983c1ea861539fbb059ba363b64af",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\bm25\\patch.diff": "fbb04b5c34d1518c2b7ef0d4b0d049748e4097bd8dc3ed5fa8e97cfcde9267c1",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\hybrid\\patch.diff": "b6af6f72d5be5746c1692fd27fd23d67c5f8a60fd74ae14135a3fedd067648ab",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\semantic\\patch.diff": "7335e19b38a6b42862a0d8c51f5878d878a880296c9a801ad86e5439c9a8e3a9",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba\\bm25\\patch.diff": "a0b566c3236d70018ae9cfb545e78cbe685655ccea743a77a31f46a17541ece8",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba\\hybrid\\patch.diff": "831121b72133927580d9d4b5b163bacd85c6bd3cccad21554064f6b941cecd84",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba\\semantic\\patch.diff": "11a14572f412decc7d3ea1298159f624502661b2ab8c00fc050a27d33b377c4e",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\bm25\\patch.diff": "c3a5bec4ddfb71265fd452a40c9e754bda7133e5f1ad484319fdbb9b795df75b",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\hybrid\\patch.diff": "d7d4fa22ad1261ded0d9496bb9db6f533442f002dea71699ba01b6fdae59b51a",
+   "logs\\downstream\\instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d\\semantic\\patch.diff": "d78753eede1de518bda11a44d788905f1751ad9706065940a99c431f27fc6c01",
+   "logs\\downstream\\keras-team__keras-18871\\bm25\\patch.diff": "6fa438dc7d855e3e7927010b12ce795729df3d43c96882328fe014ca6a87d580",
+   "logs\\downstream\\keras-team__keras-18871\\hybrid\\patch.diff": "660070a87b5d91ef5f09caa4a457b390d23cf6a55a6f2dc4806a6c9c3ebdad62",
+   "logs\\downstream\\keras-team__keras-18871\\semantic\\patch.diff": "41a597847ea430520c2e1a997b7efdfd6bc5312f3c1000bfed236f292809626c",
+   "logs\\downstream\\keras-team__keras-19201\\bm25\\patch.diff": "146d73882bb80a2b11b0906f7de564e193502819f44f92031d5d239bd1e08f0f",
+   "logs\\downstream\\keras-team__keras-19201\\hybrid\\patch.diff": "cb092108eecd21134af9a532c92b2cfa087d658880c6e2568456ffa0458da49a",
+   "logs\\downstream\\keras-team__keras-19201\\semantic\\patch.diff": "373bdabcca19f006f64bf3663fa4eab0c7fd3606134bbc752c759829b6e6b8c5",
+   "logs\\downstream\\keras-team__keras-19863\\bm25\\patch.diff": "e64d591cc3380aacdcd311592cbc0a691d7b2ce679a5d323e5755a8113de1799",
+   "logs\\downstream\\keras-team__keras-19863\\hybrid\\patch.diff": "bc0a248993869620b16953402d26b0f174c1bf0347b0bb185b648af61baa4c68",
+   "logs\\downstream\\keras-team__keras-19863\\semantic\\patch.diff": "5d91ae465f9eaed91e76dedcb2d2c6db6749064383339a2ec9ee8fc65e298a1c",
+   "logs\\downstream\\langchain-ai__langchain-4579\\bm25\\patch.diff": "372e47cc337c42a8cbd2c2e495ea106a41149e63d0ea0310a487652b13c76030",
+   "logs\\downstream\\langchain-ai__langchain-4579\\hybrid\\patch.diff": "4aba85da41e489e9146595d65b43cd6be34e69c211da15f86b6969d12ca2f3a2",
+   "logs\\downstream\\langchain-ai__langchain-4579\\semantic\\patch.diff": "c054b628360de984c16dd95ba454e2ae276dd173ed91254a302d7b236922072d",
+   "logs\\downstream\\langchain-ai__langchain-4646\\bm25\\patch.diff": "0732a0700885caf6cde4bea57f6c77471ae10c1fe66cf61866cf655ea0ff1dbc",
+   "logs\\downstream\\langchain-ai__langchain-4646\\hybrid\\patch.diff": "6fb2230a5919886484ddcd800d30d3e7bedbda61174a8f71771807cce94cd690",
+   "logs\\downstream\\langchain-ai__langchain-4646\\semantic\\patch.diff": "3c0500f50a0b3db2006862b2be67cbc137f9525b154ccedaad61088b245516fb",
+   "logs\\downstream\\langchain-ai__langchain-5609\\bm25\\patch.diff": "e7236dd2560a207541b57e97548c2c4b4fcc3cd3b5e2974365e6f81dc44c883b",
+   "logs\\downstream\\langchain-ai__langchain-5609\\hybrid\\patch.diff": "f678fdb6162c1353e0ecbd47e2c89b906831904e76b4c3c3c6e66833db1cb0d8",
+   "logs\\downstream\\langchain-ai__langchain-5609\\semantic\\patch.diff": "dd546b5a49e53405a5ed9ef37ec9de00dc061118c0edca670e7e8d3d17e88f52",
+   "logs\\downstream\\matplotlib__matplotlib-24177\\bm25\\patch.diff": "ec9713328780341030f1d4e6e79fe61188cddb41515a9ea2ba75fb7891fd07d2",
+   "logs\\downstream\\matplotlib__matplotlib-24177\\hybrid\\patch.diff": "b2a3e92200fdb28eaadb6756ec6bc53d43ecfcdff63261c904132591d4342e04",
+   "logs\\downstream\\matplotlib__matplotlib-24177\\semantic\\patch.diff": "2dc5cb9f35aecfc01259174f36e3c238bf88cba60f7a2098f98fa6b8cee69f4d",
+   "logs\\downstream\\matplotlib__matplotlib-24627\\bm25\\patch.diff": "f1f5515d51ca4e7823e7e08e6c46f4c580169ca4af1a7de245756cc05971790c",
+   "logs\\downstream\\matplotlib__matplotlib-24627\\hybrid\\patch.diff": "d70611ef00feeb869d5a6cca5d13061f6642ac72dcd5dfa28fb415547da6ca68",
+   "logs\\downstream\\matplotlib__matplotlib-24627\\semantic\\patch.diff": "41dc369d669f2702134296beca1e1a73fd171a46485f8c3a532a8345063ca926",
+   "logs\\downstream\\matplotlib__matplotlib-26208\\bm25\\patch.diff": "dc808ef27f216a9eb7595f74a6ab7091846912d78d8a0cbd565a43ebb83e9792",
+   "logs\\downstream\\matplotlib__matplotlib-26208\\hybrid\\patch.diff": "50562541acd39bec949fd27426b48400f1e6ecd27285ae93a0a80daf1e3d09ae",
+   "logs\\downstream\\matplotlib__matplotlib-26208\\semantic\\patch.diff": "fb68c2a71cfd09d8b01f6c7dd25f5d83fa12ea2b6b306db3b6e39ba1c8ff2ecc",
+   "logs\\downstream\\mwaskom__seaborn-3069\\bm25\\patch.diff": "fc95240fb2f1ef2327c914cae42cdaa36623a1ca9e7b399b97a0499ecb8edb2b",
+   "logs\\downstream\\mwaskom__seaborn-3069\\hybrid\\patch.diff": "3fb5d1e2ce9f9ceb687062975ef7f6435dbff5531cb168e5020eee00ae4c08f7",
+   "logs\\downstream\\mwaskom__seaborn-3069\\semantic\\patch.diff": "22f7f04ed8d76895eb21def69215c15f0752b0e362d1a03c9eab7d44f5313deb",
+   "logs\\downstream\\pallets__flask-5014\\bm25\\patch.diff": "638711f8e95a0c981f52c06d8c027071b4670c8005bfc6a8df667fe824347381",
+   "logs\\downstream\\pallets__flask-5014\\hybrid\\patch.diff": "22b02def618bf32216f9fe319a72b8042336c9615d89f95b3555eb4dcc8d899e",
+   "logs\\downstream\\pallets__flask-5014\\semantic\\patch.diff": "d3fc528e5eed1b0e5d1c06ba7d1e37f313031c70a9c4fd1c7ae57a5e1805832c",
+   "logs\\downstream\\psf__requests-1142\\bm25\\patch.diff": "9a7dd1c31289591878323df8a49731f2055b25ff83b568eada29be9ac855eb29",
+   "logs\\downstream\\psf__requests-1142\\hybrid\\patch.diff": "fa02bb181298be52fc964946dfcf2d4455c0618772c111613d8984601b9b7258",
+   "logs\\downstream\\psf__requests-1142\\semantic\\patch.diff": "aa76b28b539594964acf4a7091689565eae0c6bf88ef27853d10897bfffe16cc",
+   "logs\\downstream\\psf__requests-2931\\bm25\\patch.diff": "4f16ad6eef5f6e26dcee4089f17fc1c4f96577df4a40664520851cc3a172ee28",
+   "logs\\downstream\\psf__requests-2931\\hybrid\\patch.diff": "0165f7ac209ae426a41ecf675661cbe448946c1abc9f03dc267222b16dfe0792",
+   "logs\\downstream\\psf__requests-2931\\semantic\\patch.diff": "e3d457411dabe69261c7d12f95331fc8d009d0582abf9c828ecc52556c30a4d1",
+   "logs\\downstream\\psf__requests-5414\\bm25\\patch.diff": "7f8e61ac747c7d7848b261fa39e885ee04a41bdd7eced904a010f49f16cf4963",
+   "logs\\downstream\\psf__requests-5414\\hybrid\\patch.diff": "30c850c82679b349f12e96d1f8851705f8b835b3e6c80d2796bb2aafac7369cb",
+   "logs\\downstream\\psf__requests-5414\\semantic\\patch.diff": "5b5f74c8004aecd40700aaad1c42db5c3b8d0e94ddbeb846818f98b69184a28a",
+   "logs\\downstream\\pydata__xarray-4075\\bm25\\patch.diff": "348959175ee599fef393b0325c80bc06e4d650217c90b43314c413c5fdc3b5f5",
+   "logs\\downstream\\pydata__xarray-4075\\hybrid\\patch.diff": "8b9d2b7791a03d8ac6a58a7f1859c56da7d2f7a95d3ccb55a911fce1f69875eb",
+   "logs\\downstream\\pydata__xarray-4075\\semantic\\patch.diff": "745eee0eb23a2798b78f6c12d7e547d6ff123eb944561d40c90fa11d62ff31eb",
+   "logs\\downstream\\pydata__xarray-6992\\bm25\\patch.diff": "9ad96c8243be4a21f00c20b3dc5a1fe29a4d3f1fefeffac7b2566391cfa84d38",
+   "logs\\downstream\\pydata__xarray-6992\\hybrid\\patch.diff": "acdca361eee25df6c632b1432aba246609496c30ab1b553e7153165a2f480079",
+   "logs\\downstream\\pydata__xarray-6992\\semantic\\patch.diff": "65214df814b1546b7d81a388875240bb1aef2dbe064e55fc9458757c23ab9628",
+   "logs\\downstream\\pylint-dev__pylint-4970\\bm25\\patch.diff": "4cbbd57069a44aecd0a8c20e9c1f86c49d8bd0332e2cf012f006047f42a547b6",
+   "logs\\downstream\\pylint-dev__pylint-4970\\hybrid\\patch.diff": "cb16911f18479911d3c71e2bdb5ce8587ae0f699be33dae9298b6df57a0684ec",
+   "logs\\downstream\\pylint-dev__pylint-4970\\semantic\\patch.diff": "d62c5bd333387587d57087f5bda442d37d073ff15e366d1c84ae0b09aa2853ca",
+   "logs\\downstream\\pylint-dev__pylint-8898\\bm25\\patch.diff": "19322723ada01df0dfcb908b64e3dccc8c98919b0359ef23eb9cc0253f68f2fd",
+   "logs\\downstream\\pylint-dev__pylint-8898\\hybrid\\patch.diff": "4e8e742d27bea78a26c1b8462d5f978c18b0168594187f45307835cd41e8aaed",
+   "logs\\downstream\\pylint-dev__pylint-8898\\semantic\\patch.diff": "efb25a9788b089f7990ef5e025571ea1df8493a9ddfd77c2bd124a37b18f71d0",
+   "logs\\downstream\\pytest-dev__pytest-10081\\bm25\\patch.diff": "d31671651df5a68461ad8722145010af2e3e2c70bc22acc2c71ef9aec727e360",
+   "logs\\downstream\\pytest-dev__pytest-10081\\hybrid\\patch.diff": "fc694736a4c147425e4ae9b5cd7377ec2846faa317ebdc6e137639b1e9403c35",
+   "logs\\downstream\\pytest-dev__pytest-10081\\semantic\\patch.diff": "952b686caa85de6efbbd04b0aed585604ab4226c3bb5be40b06a590d16b6f5c1",
+   "logs\\downstream\\pytest-dev__pytest-5262\\bm25\\patch.diff": "be2cd52f0656f2992af6c7fa2dce8538cc6f370a298099e51919c838c781da16",
+   "logs\\downstream\\pytest-dev__pytest-5262\\hybrid\\patch.diff": "c6d9144cbe6fe3a379f3aade2cc5161e72ab5caf54bd1bb7b2eddf82d8ba4094",
+   "logs\\downstream\\pytest-dev__pytest-5262\\semantic\\patch.diff": "45209425c1a8745727bc4b5323c91403e62ae8d3369ef45350c35b9abd25ba96",
+   "logs\\downstream\\pytest-dev__pytest-5809\\bm25\\patch.diff": "e1586692926cd1e880ff560d9cd727cf3406e4cd53b86a793d54f1b3c29613a1",
+   "logs\\downstream\\pytest-dev__pytest-5809\\hybrid\\patch.diff": "7334f9e96be9120650a141ad9077950ab62b503e1318698576d42026ef93b003",
+   "logs\\downstream\\pytest-dev__pytest-5809\\semantic\\patch.diff": "bc59c7cfa6fcc23cbbd8ba49ee4b489fb14d90a3beeddee55eab28d87c4eda92",
+   "logs\\downstream\\scikit-learn__scikit-learn-13439\\bm25\\patch.diff": "038b63c9de04dd49fe389b254184d41dd8f4d9b087843be8ed27bbddd8de1ff5",
+   "logs\\downstream\\scikit-learn__scikit-learn-13439\\hybrid\\patch.diff": "df6f052be1b6142aeb6e11c740298952cf348321ee77134a85c8a3a873fd37e5",
+   "logs\\downstream\\scikit-learn__scikit-learn-13439\\semantic\\patch.diff": "984b83ad456d3e0198720825d53292aae4b62a78ece73ec6bf11579e8a7b6ffa",
+   "logs\\downstream\\scikit-learn__scikit-learn-14087\\bm25\\patch.diff": "18dcbf60a107f86d41fac5b9e68f84e91d144ea648751227fafe19ed3ee8a50f",
+   "logs\\downstream\\scikit-learn__scikit-learn-14087\\hybrid\\patch.diff": "1b76c8a7670b3746fe6155d67ea8af0937cd1306e4914ff809b2512a48a100d3",
+   "logs\\downstream\\scikit-learn__scikit-learn-14087\\semantic\\patch.diff": "b8846aea65cc51919d6b0469d44e459370dd4ae50be3ba1b13931ba151684963",
+   "logs\\downstream\\scikit-learn__scikit-learn-26323\\bm25\\patch.diff": "625f24393598b30a8396234502aa995a803071357ac5d18ae54956d1b40f0f18",
+   "logs\\downstream\\scikit-learn__scikit-learn-26323\\hybrid\\patch.diff": "33b1a14ed9e82529645dd6acdfff2944cb013e2f4f6f1188ba24413c0d158f79",
+   "logs\\downstream\\scikit-learn__scikit-learn-26323\\semantic\\patch.diff": "6af67bad726344a314900e31883bfbd30a84f8952c09fb58c9297ab7308674d2",
+   "logs\\downstream\\sphinx-doc__sphinx-8721\\bm25\\patch.diff": "331028c7141e72f218d8c38cb69b519ea69dd1799a3f603cd7eafb698a01554d",
+   "logs\\downstream\\sphinx-doc__sphinx-8721\\hybrid\\patch.diff": "d95d2a25d8dabee2a302619afd8c029adfe6e25a5a73d6094835160a0d172c9f",
+   "logs\\downstream\\sphinx-doc__sphinx-8721\\semantic\\patch.diff": "785c114801903424af8707174206440188188f8af225726282a523d1e5236ad9",
+   "logs\\downstream\\sphinx-doc__sphinx-9461\\bm25\\patch.diff": "99079d9f888872a7ee5aaf4d6f3ac0669843d5ad79097039c353eee555c4102e",
+   "logs\\downstream\\sphinx-doc__sphinx-9461\\hybrid\\patch.diff": "8a36c206df2b6446ae9ef48125e8c7749ce388481271dcf6afcaf54fad9aaeeb",
+   "logs\\downstream\\sphinx-doc__sphinx-9461\\semantic\\patch.diff": "29f90be4944601dd2b60701f2dd968e44a97df6adb2c673601f9f16ad08adf02",
+   "logs\\downstream\\sphinx-doc__sphinx-9711\\bm25\\patch.diff": "88df3453e1df876db4df89622a689b09566163461c235036a59dc8ab31443bff",
+   "logs\\downstream\\sphinx-doc__sphinx-9711\\hybrid\\patch.diff": "55a3c6e64ac45d860dce809a5c236f933d9f51f5ed36d292bf5e7c79d219862e",
+   "logs\\downstream\\sphinx-doc__sphinx-9711\\semantic\\patch.diff": "68a54eb1d8ae331d29ba90420bef97d1f75a139640326b3d682f510e083aa51b",
+   "logs\\downstream\\sympy__sympy-16886\\bm25\\patch.diff": "7ce06efc21cf7c30b172340c2feff54f501b1a063a3830e38ff5466536dba55c",
+   "logs\\downstream\\sympy__sympy-16886\\hybrid\\patch.diff": "43ab2ce2aa4332090c7898a8fab7b3bea719f806432bc98dd25285be6917f794",
+   "logs\\downstream\\sympy__sympy-16886\\semantic\\patch.diff": "06cce876caf83ee3a6e882b9706d4695fd0298b6ae8b387d459dc9330bf50a0c",
+   "logs\\downstream\\sympy__sympy-17655\\bm25\\patch.diff": "d179907b2d07d8a0825a990f0d2d5d0b20fdafe1984e0889c55106287f992f93",
+   "logs\\downstream\\sympy__sympy-17655\\hybrid\\patch.diff": "601166d112ec6602dfa2f6e65900299d1bd77c3ded9e997697ec2fa94ea72592",
+   "logs\\downstream\\sympy__sympy-17655\\semantic\\patch.diff": "eb18d3b0032dd390980c22e3cab5bc1da4be64d187eb980a6cd6a390cfb747b9",
+   "logs\\downstream\\sympy__sympy-19637\\bm25\\patch.diff": "7a46865ec7a93e12866f7330a0c0db58f0808d54e8c4a6b9999daabdc6de42fa",
+   "logs\\downstream\\sympy__sympy-19637\\hybrid\\patch.diff": "073f7926898c738405b6054a358ec09a43b96ec0933327c2e0219ae9a05f419d",
+   "logs\\downstream\\sympy__sympy-19637\\semantic\\patch.diff": "073f7926898c738405b6054a358ec09a43b96ec0933327c2e0219ae9a05f419d",
+   "logs\\downstream\\yt-dlp__yt-dlp-4841\\bm25\\patch.diff": "872d143c4eb18e4dc6a1a081e6248069b0eadcb97db158c8a5d7a04ad27ed673",
+   "logs\\downstream\\yt-dlp__yt-dlp-4841\\hybrid\\patch.diff": "89fc4cbabfd4f6d543879a2073b16e5ecfb74af75fbc4583476ea6508f37f020",
+   "logs\\downstream\\yt-dlp__yt-dlp-4841\\semantic\\patch.diff": "61e8ec70ed762b8a4060a3baa850d77ef4b77e0b1741cf4f418c8a5159026bf7",
+   "logs\\downstream\\yt-dlp__yt-dlp-5933\\bm25\\patch.diff": "6c00f8b0db97d8a6ff4d89a21291a94714e171981d5bc55a4c49e93056bc0d00",
+   "logs\\downstream\\yt-dlp__yt-dlp-5933\\hybrid\\patch.diff": "a65e449287793ec80454f1c3f264ed69c248ad34276f946cc8a150e658fd4f3c",
+   "logs\\downstream\\yt-dlp__yt-dlp-5933\\semantic\\patch.diff": "2dfde919b45bc82cb3fe9163c06524c37fa03a91f357b763eed2f2e1ffd66fb0",
+   "logs\\downstream\\yt-dlp__yt-dlp-9862\\bm25\\patch.diff": "9b9a4d44513b946337a548dcb72b772621008369de7ae2c68ce2a9ea6ebd4695",
+   "logs\\downstream\\yt-dlp__yt-dlp-9862\\hybrid\\patch.diff": "335962054c01524a421ad8ea85f1becf9b541773a71fd6ce3d556e70dcc87308",
+   "logs\\downstream\\yt-dlp__yt-dlp-9862\\semantic\\patch.diff": "6aa3a795f7e37cf60b6454f05a528c2216517ef460d9a101ef46c8fc0a173002"
+  },
+  "results_jsonl": "52ca6d51dedeb2b1b39521717ade76a0b7913d10712cd4c01c95709e34d1c30d",
+  "final_tasks_csv": "d3fe07da57d48177e66616ef799e9245293d4a7d179443f194bf1c03b2a10667",
+  "repos": {
+   "Significant-Gravitas__AutoGPT": {
+    "HEAD": "9150f32f8b8602395534795ddd2d930a1684e419",
+    "index_sha256": "615a418195664fe465038073dc4905002bfadd46df0e277089a6d12aea6b6e43"
+   },
+   "ansible__ansible": {
+    "HEAD": "3684b4824d367f866d038c5373f975503580d49e",
+    "index_sha256": "1b144ee16eb229f9f93678e3a9ccb14f4dde86381cb60fbcdbc332700ab843ca"
+   },
+   "astropy__astropy": {
+    "HEAD": "cdb66059a2feb44ee49021874605ba90801f9986",
+    "index_sha256": "7629955bc414d5f8c4ea54b0ed78ac38d54b7263555a6190b4ef2ea9b8cfc8bd"
+   },
+   "django__django": {
+    "HEAD": "b1a4b1f0bdf05adbd3dc4dde14228e68da54c1a3",
+    "index_sha256": "52cd331b4d467a653a59e494831166f494db7c422f3a8f594c9f263530463674"
+   },
+   "huggingface__transformers": {
+    "HEAD": "3bc65505fc0801e3d9ff741ec725fb0cb4d863d6",
+    "index_sha256": "078b4fda21980f2c8df251e95b34c670e24295461da77944a3c9c9887d656b69"
+   },
+   "internetarchive__openlibrary": {
+    "HEAD": "73e4b70aa3adafbbf44e7942b5bf9efabce70447",
+    "index_sha256": "11ed0b7612ebf762cefbaecac3162ffea23d4c3f84013121ec03ec25ae04db8d"
+   },
+   "keras-team__keras": {
+    "HEAD": "10252a9e7d68c6818423deee1c4c8549038e4171",
+    "index_sha256": "0945e7a755f9a3a24b5969664d591a9ebf9d4f6709514dcf4ea360933513c252"
+   },
+   "langchain-ai__langchain": {
+    "HEAD": "928cdd57a4531e606f7ca7e34c0b96736ffcce49",
+    "index_sha256": "f25fe6b684d04bb6ece2a994c6e3ac995ed365acdd84a45787798c0d5c40dd4a"
+   },
+   "matplotlib__matplotlib": {
+    "HEAD": "f0f133943d3e4f1e2e665291fe1c8f658a84cc09",
+    "index_sha256": "946d2a15dfeaa62781a8d88b777a305ee420daccf897ee639d3f2f0f7b90eb0d"
+   },
+   "mwaskom__seaborn": {
+    "HEAD": "54cab15bdacfaa05a88fbc5502a5b322d99f148e",
+    "index_sha256": "4157649ed9a7e2900c5221bb87af053b07df2dcf7580ed62bdb8079d7073562f"
+   },
+   "pallets__flask": {
+    "HEAD": "7ee9ceb71e868944a46e1ff00b506772a53a4f1d",
+    "index_sha256": "e0f75db71f9094c03387ecb887938a6a588cc6b0811d5661fe97e222bd50cb10"
+   },
+   "psf__requests": {
+    "HEAD": "5f7a3a74aab1625c2bb65f643197ee885e3da576",
+    "index_sha256": "86b41f402609ea5591dc01d64a05ee099b05693ee22a71154a5927e654aaaa6a"
+   },
+   "pydata__xarray": {
+    "HEAD": "45c0a114e2b7b27b83c9618bc05b36afac82183c",
+    "index_sha256": "444ef0ec9c46b3c8db6cd6f468510878825ff130c9dade562dcd7e448e0fe31d"
+   },
+   "pylint-dev__pylint": {
+    "HEAD": "40cc2ffd7887959157aaf469e09585ec2be7f528",
+    "index_sha256": "436e49d797382009c6eaa25dd4f60d61888f02f6ceb2e7a9e0bee682d4031ff8"
+   },
+   "pytest-dev__pytest": {
+    "HEAD": "58e6a09db49f34886ff13f3b7520dd0bcd7063cd",
+    "index_sha256": "2d9ea63104be1b8d4ed63cf1b9233a6a92d2842665c0d6dc4d6603125d264ebb"
+   },
+   "qutebrowser__qutebrowser": {
+    "HEAD": "744cd94469de77f52905bebb123597c040ac07b6",
+    "index_sha256": "637a846fef8c149ce4a39348077983080479b8ec34f96f878ceb2a696d1a892b"
+   },
+   "scikit-learn__scikit-learn": {
+    "HEAD": "a5743ed36fbd3fbc8e351bdab16561fbfca7dfa1",
+    "index_sha256": "d6b0fd5461924e8627f2cb60c072684ebd5ae7372c57e05bc7634d8c436b667d"
+   },
+   "sphinx-doc__sphinx": {
+    "HEAD": "81a4fd973d4cfcb25d01a7b0be62cdb28f82406d",
+    "index_sha256": "64b2a4b7cad0689b572f742c50b32224611da1fcd50daa44712aca7b2ab0c7f7"
+   },
+   "sympy__sympy": {
+    "HEAD": "f5e965947af2410ded92cfad987aaf45262ea434",
+    "index_sha256": "335652841503092f334add6b8acadd9a28ef57397b27b6d6500aaf15bed14053"
+   },
+   "yt-dlp__yt-dlp": {
+    "HEAD": "f079514957401f49db30ec4cd25f8c8246b0c1de",
+    "index_sha256": "f9de35899efe0e55fbddcae0e10e49eabf27e27a0d656ccf04161e13833c7692"
+   }
+  }
+ },
+ "integridad_sin_cambios": true,
+ "codigo_salida": 0,
+ "controles": {
+  "control_1_linea_base": {
+   "parches": 150,
+   "coinciden": 150,
+   "discrepancias": [],
+   "criterio": "resultado y mensaje de `git apply --check` originales, no el estado final del evaluador"
+  },
+  "control_2_aplicables_pasan_en_linea_base": {
+   "n": 9,
+   "fallan": []
+  },
+  "control_3_sin_diff_fallan_en_todas_las_celdas": {
+   "violaciones": []
+  },
+  "control_4_celdas_cruzadas_de_p": {
+   "n": 528,
+   "aplican_(anomalia)": [
+    [
+     "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+     "hybrid",
+     "CRLF",
+     "CRLF",
+     0
+    ],
+    [
+     "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+     "hybrid",
+     "LF",
+     "CRLF",
+     0
+    ],
+    [
+     "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+     "hybrid",
+     "CRLF",
+     "LF",
+     0
+    ],
+    [
+     "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+     "hybrid",
+     "LF",
+     "LF",
+     0
+    ]
+   ],
+   "categorias": {
+    "corrupt_patch": 154,
+    "fragmento_sin_cabecera": 28,
+    "fichero_inexistente": 314,
+    "sin_diff_valido": 28,
+    "aplica": 4
+   }
+  }
+ }
+}

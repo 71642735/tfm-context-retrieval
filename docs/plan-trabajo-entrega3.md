@@ -262,3 +262,143 @@ El trabajo se considerará preparado para la tercera entrega cuando:
 **Estado inicial:** pendiente de comenzar.
 
 **Primera tarea:** analizar los fallos de aplicación de los parches generados por el LLM.
+
+---
+
+## Seguimiento del diagnóstico downstream — noviembre 2026
+
+**Última actualización:** 12/11/2026. Los detalles técnicos están en
+[`downstream-patch-diagnostics.md`](downstream-patch-diagnostics.md) (secciones 2.1, 11 y 12); aquí solo se
+resume el estado para retomar el trabajo.
+
+### Objetivo
+
+Investigar los 141 parches `invalid_patch` para **distinguir errores de generación del modelo, de formato del
+parche y del entorno de evaluación**, sin modificar los resultados originales. Es un medio para justificar
+limitaciones o mejoras (Fase 2 de este plan), no un fin en sí mismo.
+
+### Estado
+
+- **Diagnóstico inicial documentado** y guardado en el commit local `4fa7f48` (clasificación por causa, prefijos,
+  `-p0`, reconstrucciones temporales, LF/CRLF, validación 39/39, decisión D-001 sobre 117 frente a 113).
+- **Script de matriz LF/CRLF × `-p` implementado, pendiente de ejecución real:**
+  `diagnostics/downstream-patches/scripts/eol_prefix_matrix.py` (v1.0). Revisado solo de forma estática; solo se ha
+  ejecutado el **modo plan** del piloto (7 parches, 84 comprobaciones previstas), que no ejecuta ninguna
+  comprobación de aplicabilidad.
+- La sección 12 del diagnóstico, el script y esta nota **no están commiteados** a fecha de esta actualización.
+
+### Hallazgos confirmados
+
+- Los 141 `invalid_patch` se reparten en 45 fichero inexistente, 41 parche corrupto, 24 sin diff, 24 contexto que no
+  coincide y 7 fragmento sin cabecera.
+- **117 de 141** tienen estructura de parche reconocible por Git (112 con cabeceras completas, 5 con cabecera
+  defectuosa) y **24** no contienen diff. Esta cifra **sustituye al 113** de la sección 3 de este plan (se conserva
+  el texto original como registro histórico).
+- 94 parches no llevan prefijos `a/` `b/` (criterio sobre las líneas `---`); con `-p1`, Git elimina el primer
+  componente de la ruta, lo que explica 44 de los 45 "fichero inexistente". Los 9 parches aplicables sí llevan
+  prefijos.
+- Con `-p0`, parche CRLF y árbol CRLF (reconstrucción validada 39/39), pasan `git apply --check` 9 de los 94.
+- Los 150 `patch.diff` están guardados con finales de línea CRLF y el equipo tiene `core.autocrlf=true`.
+
+### Limitaciones (lo que no se puede afirmar)
+
+- **No hay equivalencia demostrada con el entorno oficial Linux/Docker.** La lectura del código de los evaluadores es
+  una inspección, no una ejecución; un árbol LF es solo una prueba de sensibilidad.
+- Que `git apply --check` funcione tras normalizar no implica que el evaluador acepte el parche ni que resuelva la
+  incidencia.
+- **Siguen siendo hipótesis, no resultados:** que el CRLF proceda de `write_text`; que explique parte de los fallos de
+  contexto; que los 24 sin diff sean fallos de recuperación; que un formato de edición alternativo mejore la
+  aplicabilidad.
+
+### Próximos pasos
+
+1. Revisar el plan del piloto (selección, reparto de comprobaciones y casos especiales).
+2. Ejecutar el piloto (`--pilot --run`) **solo con autorización**.
+3. Validar la línea base: debe reproducir el resultado original de `git apply --check`; si no, el script se detiene
+   y se genera un informe de discrepancias.
+4. Si procede, ejecutar la matriz completa una sola vez (1 200 celdas principales y 600 de robustez).
+5. Documentar los resultados en el diagnóstico y en las preguntas de defensa, y decidir qué entra en la memoria.
+
+### Decisiones pendientes
+
+- Autorizar la ejecución del piloto y, después, la de la matriz completa.
+- Cómo tratar el parche mixto `qutebrowser-3fd8e129…` (bm25), que el script clasifica como indeterminado.
+- Si la Fase 2 de este plan (formato de edición alternativo del LLM) se ejecuta o se documenta como línea futura.
+- Qué cifras (117 y 24) se trasladan a la sección 6.5 de la memoria.
+- Cuándo commitear la documentación y el script.
+
+### Criterio propuesto para cerrar la investigación (a confirmar)
+
+Cerrar cuando se cumpla **una** de estas condiciones, sin añadir celdas, evaluadores ni réplicas:
+
+1. La línea base se reproduce, la matriz completa se ejecuta una vez y los resultados quedan documentados con sus
+   limitaciones.
+2. La línea base no se reproduce: se documenta el informe de discrepancias como limitación, con a lo sumo un ajuste
+   justificado y un único reintento.
+3. Se llega al **15/11** sin resultados: se documenta el estado y las limitaciones y se continúa con el resto del plan.
+
+### Fechas y prioridad
+
+- **Próxima entrega:** 07/12/2026. **Predepósito:** 03/02/2027.
+- **Prioridad:** proteger el tiempo de revisión del Word (reestructuración, teoría y formato entre el 26/11 y el
+  06/12) y **no ampliar innecesariamente el experimento**. Plazo máximo para el diagnóstico: 15/11, antes de la
+  semana sin disponibilidad (16–22/11).
+
+### Actualización del 12/11/2026
+
+Esta actualización **no sustituye** el texto anterior del apartado; solo lo pone al día. Detalles y tablas en
+[`downstream-patch-diagnostics.md`](downstream-patch-diagnostics.md), sección 13.
+
+- **Piloto ejecutado** (7 parches, 84 comprobaciones): línea base reproducida en 7/7, sin discrepancias ni casos no
+  evaluables, integridad intacta. Son resultados diagnósticos del piloto y no se extrapolan a los 150.
+- **Línea base completa validada:** 150 de 150 reproducen el resultado original de `git apply --check`, sin
+  discrepancias; integridad intacta (parches, resultados, 20 repositorios e índices). La matriz completa y la réplica
+  de robustez **no** se han ejecutado.
+- **Hallazgo por inspección de código** (no ejecutado en los evaluadores): los evaluadores reciben el parche leído con
+  `read_text`, es decir, con finales de línea LF, mientras que el filtro previo usaba el fichero CRLF. Por eso
+  `invalid_patch` equivale a "no aplicable según el filtro del TFM", no a "rechazado por el evaluador".
+- **Incidencia menor** en el registro del `manifest.json` (muestra la configuración del repositorio principal): no
+  afecta a los resultados; corrección mínima propuesta y pendiente de autorización.
+- **Pendiente:** autorización para la matriz completa (1 200 celdas principales y 600 de robustez), una única vez.
+- **Fechas:** próxima entrega **07/12/2026**; predepósito **03/02/2027**. El plazo propuesto para cerrar el
+  diagnóstico sigue siendo el 15/11. La prioridad se mantiene: proteger el tiempo de revisión del Word y no ampliar
+  innecesariamente el experimento.
+
+- **Estado de la tarea "corrección del manifest" (12/11/2026):** realizada en la versión 1.1 del script; pendiente de
+  validación en la próxima ejecución real. No afecta a los resultados ya documentados. La matriz completa sigue
+  pendiente de autorización.
+
+### Actualización del 12/11/2026 (matriz completa)
+
+Detalles y tablas en [`downstream-patch-diagnostics.md`](downstream-patch-diagnostics.md), sección 14. Lo anterior se
+conserva como registro histórico.
+
+- **Estado:** matriz completa ejecutada **una vez** (1 200 celdas principales y 600 de robustez) tras validar la línea base
+  de 150 (150/150). Sin celdas no evaluables, integridad intacta. Es aplicabilidad (`git apply --check`), no resolución.
+- **Resultado principal:** con el `-p` natural de cada parche aplican 11 de 123 (8,9 %) en la mejor celda (LL) y 9 en el
+  filtro original reconstruido (CC); con `-p1`, como los evaluadores, **0 de 141** en cualquier combinación CRLF/LF. Los
+  fallos restantes son sobre todo de contenido del diff (78 %: contexto o `corrupt`).
+- **Cierre propuesto, pendiente de aprobación:** el criterio 1 de cierre se cumple; no ejecutar más celdas ni evaluadores.
+  Llevar a la memoria una subsección breve de diagnóstico y las limitaciones.
+- **Siguientes pasos:** (1) decidir el cierre; (2) actualizar las preguntas de defensa; (3) incorporar el diagnóstico a la
+  memoria sin ampliar el experimento; (4) decidir si se aborda la Fase 2 (formato de edición alternativo) o se deja como
+  trabajo futuro; (5) commitear documentación y scripts.
+- **Fechas y prioridad:** próxima entrega **07/12/2026**; predepósito **03/02/2027**. Proteger el tiempo de revisión del Word.
+
+### Cierre del diagnóstico experimental (12/11/2026)
+
+Tras una revisión de consistencia de solo lectura (detalle en [`downstream-patch-diagnostics.md`](downstream-patch-diagnostics.md),
+sección 14.14), **el diagnóstico experimental queda cerrado** (D-004). Cumple el criterio 1 de cierre de este apartado: línea
+base reproducida (150/150), matriz ejecutada una vez y documentada.
+
+- **Comprobado:** los 11 parches que aplican en LL son exactamente los que aplican en alguna celda y 130 de 141 no aplican en
+  ninguna; denominadores y porcentajes coherentes (141 = 30 + 93 + 17 + 1; 123 = 30 + 93); las sumas por estrategia cuadran.
+- **Precisiones introducidas:** los 96 fallos de contexto o `corrupt` ya no se describen como "de contenido del diff": su origen
+  no está determinado (modelo, prompt, formato, recuperación; en 46 de los 96 el parche edita ficheros que el modelo no vio,
+  dato exploratorio); no se interpretan diferencias entre estrategias como significativas; se distingue siempre entre pasar
+  `git apply --check`, aceptación del evaluador y resolución funcional. Lo escrito arriba ("contenido del diff") queda
+  sustituido por esta precisión.
+- **Siguiente:** incorporar el diagnóstico a la memoria según la lista de cambios de 14.14 (el Word no se ha modificado),
+  sin ampliar el experimento; decidir si la Fase 2 de este plan (formato de edición alternativo) se hace o queda como trabajo
+  futuro; actualizar `defensa-tfm-preguntas.md` (hecho, sección 7) y commitear.
+- **Fechas:** próxima entrega **07/12/2026**; predepósito **03/02/2027**. Prioridad: proteger el tiempo de revisión del Word.

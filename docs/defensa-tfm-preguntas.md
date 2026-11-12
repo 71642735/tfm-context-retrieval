@@ -26,7 +26,11 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 | Causas de los 141 | 45 fichero inexistente, 41 parche corrupto, 24 sin diff, 24 contexto no coincide, 7 fragmento sin cabecera | `diagnostics/.../invalid_patches_classification.csv` |
 | `invalid_patch` con estructura de parche reconocible por Git | 117 de 141 (83 %): 112 con cabeceras completas y 5 con cabecera defectuosa. Sin diff: 24 (17 %) | Diagnóstico, sec. 2.1 y D-001 |
 | Parches sin prefijo `a/` `b/` | 94 de los 141 (los 9 aplicables sí lo llevan) | Diagnóstico, sec. 3 |
-| Recuperados con `git apply --check -p0` | 9 de 94 | Diagnóstico, sec. 7 |
+| Recuperados con `git apply --check -p0` (reconstrucción CRLF, observación previa) | 9 de 94 | Diagnóstico, sec. 7 |
+| Matriz completa, `-p` natural, de 123 `invalid_patch` | Filtro original reconstruido (CC): 9 · parche LF y árbol CRLF (LC): 11 · parche CRLF y árbol LF (CL): 0 · parche LF y árbol LF (LL): 11 | Diagnóstico, sec. 14.2 |
+| Matriz completa, `-p1` (el de los evaluadores) | 0 de 141 aplican en las cuatro combinaciones CRLF/LF; los 9 controles aplican en CC, LC y LL | Diagnóstico, sec. 14.4 |
+| No aplican en ninguna de las 8 celdas | 130 de 141 (92,2 %) | Diagnóstico, sec. 14.14 |
+| Contexto o corrupt en LL (`-p` natural) | 96 de 123 (78 %; 68 % de los 141); en 46 de los 96 el parche edita ficheros que no estaban en el contexto recuperado (dato exploratorio) | Diagnóstico, sec. 14.6 |
 | Parches guardados con CRLF | 150 de 150 | Diagnóstico, sec. 7 |
 | F1 a nivel de fichero, K = 5 | BM25 0,2578 · RRF 0,2505 · UniXcoder 0,1673 | Memoria, Tablas 3-5 |
 
@@ -45,14 +49,15 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > a artefactos de mi entorno Windows) la he empezado a separar y lo explico a continuación.
 
 ### 1.2 ¿Es un problema del modelo o de su pipeline?
-🟡 **PARCIAL**
+🟡 **PARCIAL** (actualizada el 2026-11-12 tras la matriz completa)
 
-> Ambos influyen. Del lado del pipeline he confirmado dos factores: el prompt solo pide "un unified diff", sin
-> ninguna convención de rutas, y los 150 parches están guardados con finales de línea CRLF por escribir en
-> modo texto en Windows. Del lado del modelo, 24 respuestas son rechazos en texto (el modelo dice que el
-> contexto no contiene el código necesario) y 72 son diffs mal formados (41 corruptos, 24 con contexto que no
-> coincide y 7 sin cabecera); los 45 restantes apuntan a un fichero inexistente, en 44 casos por la ruta sin prefijo. **No he cuantificado** cuánto del fallo total es atribuible a cada lado; esa
-> prueba (normalizar a LF y repetir la comprobación) está pendiente.
+> No puedo repartirlo con precisión y por eso no atribuyo los fallos solo al modelo. Hechos: el prompt solo pide
+> "un unified diff", sin convención de rutas; los 150 parches se guardaron con CRLF; y el modelo solo ve
+> fragmentos de funciones, sin acceso al repositorio. Tras la matriz completa, las rutas y el CRLF explican poco: con
+> rutas normalizadas pasan la comprobación 11 de los 141 y el CRLF cambia el resultado en 2. El resto (130 de 141 no
+> pasan en ninguna condición) son diffs sin estructura válida, con conteos de hunk incoherentes o con contexto que no
+> coincide. De los 96 con contexto o corrupt, **46 editan ficheros que el modelo no vio**. Puede haber influido el
+> modelo, el prompt, el formato de salida o la recuperación: **no está determinado**.
 
 ### 1.3 ¿Qué son los 24 casos en los que no hay diff?
 ✅ **RESPALDADA** (qué son) · ⏳ (por qué)
@@ -161,12 +166,14 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > primer directorio real (por ejemplo `src/` en `src/_pytest/pastebin.py`) y busca un fichero que no existe.
 
 ### 3.2 ¿Cuántos fallos se deben a ese problema?
-✅ **RESPALDADA** (como dato) · 🟡 (como causa total)
+✅ **RESPALDADA** (actualizada el 2026-11-12)
 
-> 94 de los 141 parches no llevan prefijos, y 44 de ellos fallan con "fichero inexistente". Pero al repetir la
-> comprobación con `-p0` (rutas tal cual), **solo 9 de los 94 pasan**. El resto sigue fallando por contenido:
-> 36 corruptos, 34 con contexto que no coincide, 7 sin cabecera, 7 sin diff y 1 fichero inexistente. Por tanto
-> el prefijo explica una parte pequeña (menos del 10 %) y no el grueso de los fallos.
+> 94 de los 141 parches no llevan prefijos `a/` `b/` (93 con `-p` natural y 1 mixto), y 44 de los 45 "fichero
+> inexistente" son de ese grupo. Con las rutas normalizadas (`-p0` en esos casos) y la comprobación estricta, pasan
+> **9 (filtro original reconstruido) a 11 (parche LF y árbol LF) de los 123** con `-p` natural, es decir, el 6-8 % de
+> los 141. Elimina 43 de los 45 errores de "fichero inexistente", pero 33 de ellos pasan a fallar por contexto. Por
+> tanto el prefijo explica una parte pequeña. Y como todos los evaluadores usan `-p1`, `-p0` es una lente de
+> diagnóstico, no un comportamiento del evaluador.
 
 ### 3.3 ¿Por qué los parches aplicables llevan prefijo y los otros no?
 🟡 **PARCIAL**
@@ -176,13 +183,14 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > la ruta tal cual aparece en el contexto, pero **no he analizado por qué elige una u otra**.
 
 ### 3.4 ¿Qué pasa con LF y CRLF?
-✅ **RESPALDADA** (hechos) · 🟡 (efecto)
+✅ **RESPALDADA** (actualizada el 2026-11-12)
 
-> Hay dos hechos. Primero, `core.autocrlf=true` en mi Git global: los ficheros del repositorio se escriben
-> con CRLF en el árbol de trabajo aunque estén en LF en el commit. Segundo, los 150 `patch.diff` están
-> guardados con CRLF. Que esto afecte a la aplicabilidad es plausible, y lo vi: ciertos parches pasan contra
-> ficheros CRLF y no contra LF. Pero **no he cuantificado cuántos de los 141 fallos son artefacto del
-> guardado en Windows**.
+> Dos hechos: `core.autocrlf=true` en mi Git global, de modo que el árbol de trabajo está en CRLF, y los 150
+> `patch.diff` guardados con CRLF. Lo he cuantificado con la matriz: con `-p1`, **ninguno** de los 141 cambia de
+> resultado al usar parche LF y árbol LF; con su `-p` natural, el CRLF cambia si el parche pasa la comprobación en solo
+> 2 de 123 (y la categoría de error en otros 2). Sí importa en un caso concreto: un parche CRLF contra un árbol LF
+> falla (8 de los 9 controles fallan en esa combinación), pero según el código los evaluadores reciben el parche leído con
+> `read_text`, es decir, en LF.
 
 ### 3.5 ¿Por qué se guardaron los parches con CRLF?
 ⏳ **PENDIENTE**
@@ -191,13 +199,13 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > los archivos, pero no he reproducido la causa de forma controlada.
 
 ### 3.6 ¿Su comprobación de aplicabilidad es equivalente a la del evaluador oficial?
-🟡 **PARCIAL**
+🟡 **PARCIAL** (actualizada el 2026-11-12)
 
-> No necesariamente. Mi comprobación se hizo en Windows con árboles de trabajo en CRLF; los evaluadores
-> oficiales corren en contenedores Linux con LF. Los 9 parches aplicables sí pasaron por el evaluador
-> oficial, así que esos resultados son sólidos. Para los 141 restantes, el estado `invalid_patch` es correcto
-> **según el criterio que apliqué**, pero no he demostrado que el evaluador oficial los hubiera rechazado en
-> todos los casos. Es una limitación que declaro.
+> No es equivalente y no lo afirmo. Mi filtro usaba el parche CRLF, el árbol de Windows y `git apply --check`
+> estricto. Según el código, los evaluadores reciben el parche en LF, corren en Linux y usan `-p1`; Verified y
+> PolyBench añaden alternativas más tolerantes (`--3way`, `--ignore-whitespace`, `patch --fuzz`) y Pro no. La celda
+> más parecida (parche LF, árbol LF, `-p1`) da el mismo resultado que mi filtro en los 150 parches: 9 aplican y 141 no.
+> Pero eso **no demuestra equivalencia**: no ejecuté los evaluadores ni modelé sus alternativas.
 
 ### 3.7 ¿Cómo garantiza la reproducibilidad?
 ✅ **RESPALDADA** (selección y registros) · 🟡 (entorno)
@@ -208,12 +216,13 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > depende de la configuración de Git y del sistema operativo, como acabo de ver con `autocrlf`.
 
 ### 3.8 ¿Cómo comprobó el efecto de LF/CRLF sin repetir el experimento?
-✅ **RESPALDADA**
+✅ **RESPALDADA** (actualizada el 2026-11-12)
 
-> Reconstruí en una carpeta temporal solo los ficheros que cada parche modifica, tomados del `base_commit`
-> con `git show`, aplicando las reglas de `autocrlf` y `.gitattributes`, y ejecuté únicamente `git apply
-> --check`. Validé el método con los 39 casos en los que podía comparar con el repositorio real: coinciden
-> los 39 en estado y en mensaje de error. No modifiqué repositorios, parches ni resultados.
+> Reconstruí en una carpeta temporal solo los ficheros que cada parche puede tocar, tomados del `base_commit` con
+> `git cat-file`, aplicando las reglas de `autocrlf` y `.gitattributes`, y ejecuté únicamente `git apply --check`.
+> Validé el método con 39 casos y después con la línea base de los 150 parches: reproduce 150 de 150 el resultado y el
+> mensaje originales. Luego ejecuté 1.200 comprobaciones de la matriz principal y 600 de la réplica, con hashes de los
+> parches, los resultados, los repositorios y sus índices antes y después, sin cambios.
 
 ---
 
@@ -243,11 +252,12 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > mi director me propuso mejorarlo antes de la entrega final.
 
 ### 4.4 ¿Los 141 `invalid_patch` están correctamente etiquetados?
-🟡 **PARCIAL**
+✅ **RESPALDADA** (el etiquetado) · 🟡 (su significado)
 
-> Lo están según el criterio de `git apply --check` que apliqué y con el mensaje de Git conservado. Lo que no
-> puedo afirmar todavía es que el evaluador oficial en Linux hubiera dado el mismo veredicto en todos. Por
-> eso la comprobación con parches normalizados a LF es el siguiente paso.
+> Sí: son reproducibles como resultado del filtro que apliqué (150 de 150 en la línea base, con el mensaje de Git
+> original). Lo que no puedo afirmar es que el evaluador oficial los hubiera rechazado, porque no modelé sus
+> alternativas de aplicación. Por eso describo `invalid_patch` como "no aplicable según el filtro del TFM", no como
+> "rechazado por el evaluador" ni como "error del modelo".
 
 ### 4.5 ¿Comprobó que no se contabilizaran errores de infraestructura como fallos del modelo?
 ✅ **RESPALDADA**
@@ -301,20 +311,20 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > dejó la segunda fase con poca información, y por eso mi director sugiere abordarla.
 
 ### 5.5 ¿Cómo mejoraría la evaluación con el LLM?
-🟡 **PARCIAL** (la línea) · ⏳ (su efecto)
+🟡 **PARCIAL** (la línea) · ⏳ (su efecto) (actualizada el 2026-11-12)
 
-> Una opción es pedir al modelo un formato de edición más robusto, como bloques de búsqueda y reemplazo o la
-> función completa reescrita, y que el pipeline construya el parche. Se aplicaría igual a las tres
-> estrategias y se justificaría como corrección del formato de salida, no del modelo. Los datos apuntan en
-> esa dirección porque la mayoría de los fallos restantes son de contenido del diff (corruptos y contexto),
-> pero **no he probado** que mejore el resultado.
+> Una opción es pedir un formato de edición más robusto, como bloques de búsqueda y reemplazo o la función completa
+> reescrita, y que el pipeline construya el parche, aplicado igual a las tres estrategias. Es una **hipótesis**: de
+> los 96 fallos de contexto o corrupt, en 50 el modelo vio todos los ficheros que modificó (ahí un formato de edición
+> podría ayudar), pero en 46 editó ficheros que no vio, y eso apunta más a la recuperación y al procedimiento. No lo he
+> probado y lo dejo como trabajo futuro.
 
 ### 5.6 ¿Cambiaría cómo se guardan los parches?
-⏳ **PENDIENTE**
+🟡 **PARCIAL** (actualizada el 2026-11-12)
 
-> Sí, si se repite el experimento: guardar con finales de línea LF explícitos y normalizar antes de aplicar.
-> Cualquier cambio se aplicaría igual a las tres estrategias y se documentaría como corrección del
-> protocolo, no del resultado.
+> Sí, si se repite el experimento: guardar con finales de línea LF explícitos y normalizar prefijos. La matriz indica
+> que el efecto del CRLF es pequeño (2 de 123), pero es una corrección barata que elimina una fuente de discrepancia
+> entre el filtro y los evaluadores. Se documentaría como corrección del protocolo, no del resultado.
 
 ### 5.7 ¿Por qué no hizo ajuste de hiperparámetros?
 ✅ **RESPALDADA**
@@ -364,9 +374,77 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 🟡 **PARCIAL**
 
 > 1. Una prueba de significación pareada (Wilcoxon o bootstrap) sobre el F1 por tarea.
-> 2. Repetir la comprobación de aplicabilidad en entorno LF y comprobar cómo aplican los evaluadores oficiales.
+> 2. Medir cuántos de los 141 aceptaría un evaluador tolerante (alternativas de Verified y PolyBench) y ejecutarlo en Linux/Docker.
 > 3. Rediseñar el formato de salida del modelo y repetir la fase LLM igual para las tres estrategias.
 > 4. Después, ampliar tareas, modelos y valores de K.
+
+---
+
+## 7. Diagnóstico de aplicabilidad: conclusiones definitivas (2026-11-12)
+
+Diagnóstico **cerrado** el 2026-11-12 (Diagnóstico, secciones 14.14 y D-004). Todo lo de esta sección es aplicabilidad
+medida con `git apply --check` sobre una reconstrucción; **no** es aceptación del evaluador oficial ni resolución
+funcional. Los resultados originales no cambian.
+
+### 7.1 ¿Cuál es la conclusión definitiva del diagnóstico?
+✅ **RESPALDADA**
+
+> Los 141 `invalid_patch` son reproducibles como resultado del filtro que apliqué (150 de 150 en la línea base). Su
+> causa principal no es el entorno: ni las rutas ni el CRLF explican más de 11 de los 141 (7,8 %), y 130 no pasan la
+> comprobación en ninguna de las ocho condiciones. Lo que domina (96 de los 123 con `-p` natural) son parches cuyo
+> contexto o estructura no coinciden con el código, de origen no determinado. El resultado downstream original (141, 7,
+> 2) se mantiene.
+
+### 7.2 ¿Se debieron los 141 al CRLF o al entorno de Windows?
+✅ **RESPALDADA** (bajo comprobación estricta)
+
+> No. Con parche LF, árbol LF y `-p1` (la combinación más parecida al evaluador), 0 de los 141 pasan la comprobación;
+> el CRLF solo cambia el resultado en 2 de 123 cuando se usa el `-p` natural. Lo que sí muestra es que un parche CRLF
+> contra un árbol LF falla, pero los evaluadores reciben el parche en LF (inspección de código, no ejecutada).
+
+### 7.3 ¿Qué pasaría si se corrigieran los prefijos?
+✅ **RESPALDADA** (aplicabilidad) · ⏳ (resolución)
+
+> Con el `-p` natural de cada parche, pasarían la comprobación 11 de 123 (8,9 %) con parche LF, frente a 9 en el filtro
+> original reconstruido y 0 de 141 con `-p1`. Esos 11 no se han evaluado funcionalmente: no sé si resolverían la
+> incidencia ni si el evaluador los aceptaría.
+
+### 7.4 ¿De quién es la culpa de los 96 parches con contexto o estructura incorrectos?
+🟡 **PARCIAL**
+
+> No lo atribuyo automáticamente al modelo. Pudo influir el modelo, el prompt (solo pide un unified diff y el modelo ve
+> fragmentos), el formato de salida y el procedimiento (recuperación estática, sin acceso al repositorio). Como dato
+> exploratorio a nivel de fichero: en 46 de los 96 el parche edita al menos un fichero que no estaba en el contexto
+> recuperado; en 50 todos sus ficheros sí estaban. No lo he comprobado a nivel de línea ni frente al gold context.
+
+### 7.5 ¿Qué estrategia genera parches más aplicables?
+✅ **RESPALDADA** (que no se afirma)
+
+> Con el `-p` natural pasan la comprobación 4 de 41 (BM25), 1 de 42 (UniXcoder) y 6 de 40 (RRF). Son diferencias
+> descriptivas con recuentos pequeños y las mismas 50 tareas en las tres estrategias; no he hecho contraste
+> estadístico y no las presento como significativas.
+
+### 7.6 ¿Qué diferencia hay entre pasar la comprobación, ser aceptado por el evaluador y resolver la tarea?
+✅ **RESPALDADA**
+
+> Tres niveles. (1) Pasar `git apply --check` en mi reconstrucción: lo que he medido. (2) Que el evaluador oficial lo
+> acepte: depende de su procedimiento (Linux, `-p1`, alternativas de aplicación) que no ejecuté ni modelé. (3) Resolver:
+> que el parche, ya aplicado, haga pasar las pruebas de la tarea. Solo 2 de los 150 llegan a este nivel.
+
+### 7.7 ¿Por qué cerró el diagnóstico sin repetir la generación ni probar evaluadores tolerantes?
+🟡 **PARCIAL** (decisión de alcance)
+
+> Porque el objetivo era distinguir errores de generación de efectos del entorno, y eso ya está acotado: el entorno
+> explica poco. Probar evaluadores tolerantes o un formato de edición alternativo exige nuevas ejecuciones y
+> generaciones, fuera del plazo; los dejo como trabajo futuro justificado con estos datos.
+
+### 7.8 ¿Cómo garantiza que el diagnóstico no alteró los resultados originales?
+✅ **RESPALDADA**
+
+> Todo fue de solo lectura sobre los repositorios y los resultados: reconstrucción en un directorio temporal fuera de
+> cualquier repositorio, lista blanca de comandos de Git y comparación de hashes de los 150 parches, los resultados y
+> `HEAD` e índices de los 20 repositorios antes y después. Los manifiestos y registros históricos se conservan y las
+> correcciones quedan anotadas con fecha.
 
 ---
 
@@ -382,7 +460,8 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 
 - [ ] Si se repite la fase LLM o se cambia el formato de salida, reescribir las secciones 1, 2, 4.3 y 5.5.
 - [ ] Si se hace la prueba de significación, reescribir 4.2 y la conclusión 6.2.1.
-- [ ] Si se confirma el efecto de CRLF en el entorno oficial, reescribir 3.4, 3.5, 3.6 y 4.4.
+- [x] Efecto de CRLF y prefijos cuantificado con la matriz completa: 3.2, 3.4, 3.6, 3.8 y 4.4 actualizadas (2026-11-12). Pendiente: si se ejecutara el evaluador oficial o uno tolerante, reescribir 3.4, 3.6 y la sección 7.
+- [ ] Actualizar la sección 7 y la tabla de cifras si se corrige alguna cifra al incorporar el diagnóstico a la memoria.
 - [ ] Contrastar las cifras con la versión final de la memoria (los números cambiarán si se repite el experimento).
 - [ ] Comprobar si el director espera que la memoria final recoja estos hallazgos.
 - [ ] Actualizar la memoria (sección 6.5, "113 de los 141") a 117, con 24 sin diff, y mantener las preguntas 1.6 y 4.6 coherentes con lo que finalmente figure en ella.

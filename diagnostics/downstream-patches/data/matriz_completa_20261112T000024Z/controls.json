@@ -1,0 +1,55 @@
+{
+ "control_1_linea_base": {
+  "parches": 150,
+  "coinciden": 150,
+  "discrepancias": [],
+  "criterio": "resultado y mensaje de `git apply --check` originales, no el estado final del evaluador"
+ },
+ "control_2_aplicables_pasan_en_linea_base": {
+  "n": 9,
+  "fallan": []
+ },
+ "control_3_sin_diff_fallan_en_todas_las_celdas": {
+  "violaciones": []
+ },
+ "control_4_celdas_cruzadas_de_p": {
+  "n": 528,
+  "aplican_(anomalia)": [
+   [
+    "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+    "hybrid",
+    "CRLF",
+    "CRLF",
+    0
+   ],
+   [
+    "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+    "hybrid",
+    "LF",
+    "CRLF",
+    0
+   ],
+   [
+    "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+    "hybrid",
+    "CRLF",
+    "LF",
+    0
+   ],
+   [
+    "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+    "hybrid",
+    "LF",
+    "LF",
+    0
+   ]
+  ],
+  "categorias": {
+   "corrupt_patch": 154,
+   "fragmento_sin_cabecera": 28,
+   "fichero_inexistente": 314,
+   "sin_diff_valido": 28,
+   "aplica": 4
+  }
+ }
+}

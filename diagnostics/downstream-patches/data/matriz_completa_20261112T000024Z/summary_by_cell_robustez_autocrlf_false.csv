@@ -1,0 +1,13 @@
+matriz,parche_eol,arbol_eol,p,autocrlf,poblacion,n,aplican,aplica,contexto_no_coincide,corrupt_patch,fichero_inexistente,fragmento_sin_cabecera,sin_diff_valido
+robustez_autocrlf_false,CRLF,LF,0,false,invalid_originales,141,0,0,43,41,26,7,24
+robustez_autocrlf_false,CRLF,LF,0,false,invalid_p_natural,93,0,0,43,35,1,7,7
+robustez_autocrlf_false,CRLF,LF,0,false,aplicables_originales(control),9,1,1,0,0,8,0,0
+robustez_autocrlf_false,CRLF,LF,1,false,invalid_originales,141,0,0,24,41,45,7,24
+robustez_autocrlf_false,CRLF,LF,1,false,invalid_p_natural,30,0,0,24,5,1,0,0
+robustez_autocrlf_false,CRLF,LF,1,false,aplicables_originales(control),9,1,1,8,0,0,0,0
+robustez_autocrlf_false,LF,LF,0,false,invalid_originales,141,11,11,35,38,26,7,24
+robustez_autocrlf_false,LF,LF,0,false,invalid_p_natural,93,11,11,35,32,1,7,7
+robustez_autocrlf_false,LF,LF,0,false,aplicables_originales(control),9,1,1,0,0,8,0,0
+robustez_autocrlf_false,LF,LF,1,false,invalid_originales,141,0,0,24,38,48,7,24
+robustez_autocrlf_false,LF,LF,1,false,invalid_p_natural,30,0,0,24,5,1,0,0
+robustez_autocrlf_false,LF,LF,1,false,aplicables_originales(control),9,9,9,0,0,0,0,0

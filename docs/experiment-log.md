@@ -1818,3 +1818,15 @@ Es una corrección de la clasificación descriptiva. Los estados de las 150 cond
 33/80 del registro anterior corresponde al criterio original y no se ha recalculado.
 
 Detalle, casos discrepantes y justificación: `docs/downstream-patch-diagnostics.md` (sección 2.1 y registro D-001).
+
+
+---
+
+## Decisión metodológica D-004 (2026-11-12): alcance del diagnóstico de aplicabilidad
+
+Se añade, sin sustituir ni reinterpretar el resultado original, un diagnóstico de **aplicabilidad** de los parches (matriz de
+finales de línea del parche y del árbol × `-p`, con línea base de 150 reproducida y solo lectura). Decisión: el resultado
+downstream del experimento sigue siendo el original (141 `invalid_patch`, 7 `not_resolved`, 2 `resolved`); los `invalid_patch`
+se describen como "no aplicables según el filtro `git apply --check` del TFM", **no** como "rechazados por el evaluador
+oficial" ni como "errores del modelo". El diagnóstico se da por cerrado y no se repite la generación con el LLM. Detalle y
+limitaciones: `docs/downstream-patch-diagnostics.md` (secciones 12-14).

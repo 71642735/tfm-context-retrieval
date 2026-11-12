@@ -173,7 +173,10 @@ class FullSimulation(unittest.TestCase):
         s = self.orch.summary()
         self.assertEqual((s["stages"]["generation"], s["stages"]["format_metrics"], s["stages"]["conversion_E1"],
                           s["stages"]["normalization_O1"]), (72, 72, 36, 36))
-        self.assertEqual((s["stages"]["applicability"], s["stages"]["resolution"]), ("pending_phase_3B",) * 2)
+        self.assertEqual(s["stages"]["applicability"],                      # G aun no ejecutada: todo pendiente
+                         {"applicable": 0, "not_applicable": 0, "not_evaluable_infrastructure": 0, "pending": 72})
+        self.assertEqual(s["stages"]["functional"], {"resolved": 0, "not_resolved": 0, "not_evaluable": 0, "pending": 0,
+                                                     "not_applicable": 0})
         self.assertEqual(s["statuses"], {"E1:patch_ready": 36, "O1:normalized": 36})
         self.assertEqual((s["model_output_errors"], s["not_evaluable_conditions"], s["n_excluded_pairs"]), ({}, [], 0))
         self.assertEqual(s["infrastructure"], {"api_failures": 0, "apply_retries": 0, "recovered_after_retry": 0})

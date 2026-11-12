@@ -16,9 +16,15 @@ def synthetic_text(prompt: str) -> str:
     c = parts.chunks[0]
     lines = [l.rstrip("\r") for l in c.code.replace("\r\n", "\n").split("\n")][:6]
     if parts.instructions == P.O1_INSTRUCTIONS:
+        # el generador original guarda response.strip() + salto: un diff que acabe en una linea de contexto en blanco la pierde
+        # (hunk truncado = parche corrupto, tambien en el experimento original). Se evita aqui; ver test_stripping_*.
+        while len(lines) > 2 and not lines[-1].strip():
+            lines.pop()
         n = len(lines)
-        return (f"--- {c.file_path}\n+++ {c.file_path}\n@@ -{c.start_line},{n} +{c.start_line},{n + 1} @@\n"
-                + "".join(f" {l}\n" for l in lines) + f"+{SYNTH}\n")
+        k = (n - 1) // 2                          # se modifica una linea intermedia: contexto antes y despues (git lo exige)
+        body = ("".join(f" {l}\n" for l in lines[:k]) + f"-{lines[k]}\n+{lines[k]}\n+{SYNTH}\n"
+                + "".join(f" {l}\n" for l in lines[k + 1:]))
+        return (f"--- {c.file_path}\n+++ {c.file_path}\n@@ -{c.start_line},{n} +{c.start_line},{n + 1} @@\n" + body)
     return "\n".join([f"FILE: {c.file_path}", "<<<<<<< SEARCH", *lines, "=======", *lines, SYNTH, ">>>>>>> REPLACE"]) + "\n"
 
 

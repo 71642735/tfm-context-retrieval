@@ -13,6 +13,8 @@ Material de estudio para la exposición. Complementa el informe técnico
 
 **Cómo está organizado.**
 - **Banco de preguntas del tribunal (secciones 1 a 7):** preguntas con respuestas breves y orales, para la defensa.
+- **Preparación técnica del piloto P1 (sección 9):** cinco preguntas sobre el filtro G, la comparación justa entre `O1n` y `E1`, la
+  evaluación funcional y el hallazgo de `strip()`. El piloto **no se ha ejecutado**.
 - **Guía de estudio del diagnóstico downstream (sección 8):** explicaciones paso a paso para *entender* qué hicimos, por qué,
   cómo lo comprobamos y qué se puede defender. Termina con un resumen de un minuto, cinco ideas clave, un glosario y los
   errores que hay que evitar.
@@ -84,6 +86,8 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > parche corrupto, 24 sin diff, 24 contexto que no coincide y 7 fragmentos sin cabecera. Visto de otro modo, 117 de los
 > 141 (83 %) tienen estructura de parche que Git reconoce y 24 (17 %) no contienen diff. No es, por tanto, solo un
 > problema de formato: la causa última (modelo, prompt, formato de salida o recuperación) **no está determinada**.
+
+*Si la pregunta es «¿no invalida eso las conclusiones del experimento?»: ver la respuesta oral y la precisión en 4.3.*
 
 ### 1.2 ¿Es un problema del modelo o de su pipeline?
 🟡 **PARCIAL** (actualizada el 2026-11-12 tras la matriz completa)
@@ -302,12 +306,24 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > confianza por bootstrap. Hasta entonces afirmo que BM25 obtiene valores medios más altos, no que sea
 > significativamente mejor.
 
-### 4.3 ¿Se pueden fiar de la evaluación con el LLM?
-🟡 **PARCIAL**
+### 4.3 ¿Se pueden fiar de la evaluación con el LLM? ¿Por qué solamente 9 de los 150 parches llegaron a evaluarse funcionalmente? ¿No invalida eso las conclusiones del experimento?
+🟡 **PARCIAL** (ampliada el 2026-11-12)
 
 > Los 9 casos evaluados funcionalmente son fiables. Pero 141 de 150 condiciones no llegaron a esa evaluación,
 > así que la segunda parte aporta **muy poca información comparativa**. Lo reconozco en las limitaciones, y
 > mi director me propuso mejorarlo antes de la entrega final.
+
+**Respuesta oral.** «Detectamos esa limitación y realizamos un diagnóstico adicional reproducible. Ejecutamos 1.800
+comprobaciones de aplicabilidad y descubrimos que parte de los rechazos estaba relacionada con la interpretación de rutas y
+otros problemas de los parches. También identificamos dificultades relacionadas con el contenido recuperado.
+
+Esto nos permitió explicar mejor los resultados y sus limitaciones, aunque todavía no demuestra una mejora en la resolución
+funcional».
+
+**Precisión fundamental.** Los 141 rechazos **limitan las conclusiones sobre resolución funcional**, pero **no invalidan
+automáticamente** los resultados independientes de la evaluación de recuperación de contexto (cobertura, precisión y F1 de
+BM25, UniXcoder y RRF), que se calculan antes y con independencia del LLM (pregunta 4.1). Lo que sí queda sin respaldo es
+cualquier afirmación sobre qué estrategia ayuda más a *resolver* incidencias.
 
 ### 4.4 ¿Los 141 `invalid_patch` están correctamente etiquetados?
 ✅ **RESPALDADA** (el etiquetado) · 🟡 (su significado)
@@ -382,7 +398,8 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > citar, aplicar y resolver se explica en 7.4). El diagnóstico D-004 está **cerrado**; el protocolo del piloto P1 (D-005) y el
 > análisis secundario S1 son **propuestas**: **no están aprobados ni ejecutados**.
 
-*Para estudiarla con más detalle: guía de estudio, **P16** (sección 8.5).*
+*Para estudiarla con más detalle: guía de estudio, **P16** (sección 8.5). La preparación técnica del piloto (filtro G, comparación
+justa y evaluación funcional simulada) está en la sección 9.*
 
 ### 5.6 ¿Cambiaría cómo se guardan los parches?
 🟡 **PARCIAL** (actualizada el 2026-11-12)
@@ -954,6 +971,66 @@ aprobado».
 
 ---
 
+## 9. Piloto P1: preparación técnica de la comparación del formato de edición (2026-11-12)
+
+> **El piloto P1 no se ha ejecutado**: no hay generaciones nuevas, ni llamadas a la API, ni evaluación con el evaluador oficial. Lo que
+> sigue es la **preparación técnica**, verificada con datos sintéticos (364 pruebas superadas; no son resultados del piloto). Detalle y
+> reproducción: `pilot_p1/README.md`; protocolo: `downstream-patch-diagnostics.md`, sección 15.
+
+### 9.1 ¿Qué es el filtro G y cómo garantiza una comparación justa entre `O1n` y `E1`?
+✅ **RESPALDADA** (diseño y pruebas) · ⏳ (resultados sobre salidas reales)
+
+> G es la comprobación común de aplicabilidad: `git apply --check -p1` sobre una copia temporal de los ficheros que toca el parche, leídos
+> del `base_commit`. Es **la misma función** para los dos brazos (no recibe el brazo), el parche se pasa **byte a byte sin correcciones
+> adicionales**. El único retoque previo es el normalizador N, cuya **única operación de contenido** es añadir `a/` en las líneas `---` y
+> `b/` en las `+++` cuando faltan en todas las cabeceras y la correspondencia es inequívoca. N **conserva** los finales de línea de cada
+> línea (LF o CRLF) y las marcas de las cabeceras, **no los convierte**, y **no modifica ni repara los hunks** (contenido, contadores y
+> números de línea); ante cualquier duda deja el parche sin cambios. Se conservan por separado el parche original, el normalizado y el
+> convertido. Las pruebas comprueban que bytes iguales dan veredictos iguales y que un
+> parche con CRLF o sin prefijos se rechaza con la misma severidad en ambos. **Limitación:** G mide lo que mide `git apply --check`, no
+> si el parche resuelve la tarea ni equivale al evaluador oficial.
+
+### 9.2 ¿Qué compara exactamente `E1` frente a `O1n` y qué no puede demostrar?
+✅ **RESPALDADA** (la definición) · ⏳ (el resultado)
+
+> Compara, con el mismo modelo, contexto y estrategias de recuperación, cuántas condiciones producen un parche que pasa G con el formato
+> de edición (`E1`) frente al formato original con la normalización mecánica de rutas (`O1n`). La mejora se define de antemano como
+> **victorias de `E1` − victorias de `O1n`** (con los empates registrados). El piloto busca **estimar si el formato alternativo mejora
+> la aplicabilidad** frente al formato original normalizado, **bajo condiciones controladas** (mismo modelo, contexto y estrategias). No hay
+> todavía ningún resultado, **no atribuye causalidad**, no demuestra que mejore la recuperación ni que se resuelvan más tareas, y con 12
+> tareas es una prueba piloto, no un contraste de significación.
+
+*Ver también 5.5 y 7.6 (qué diferencia hay entre aplicar y resolver).*
+
+### 9.3 ¿Cómo se evaluaría funcionalmente en P1 y por qué no reutilizó el evaluador original?
+🟡 **PARCIAL** (la interfaz) · ⏳ (la evaluación real)
+
+> Solo se evalúan los parches que pasan G, mediante una interfaz con evaluadores intercambiables; hoy solo existe un evaluador **falso**.
+> El evaluador original no se reutiliza porque tiene efectos secundarios: hace `git fetch` y `git checkout --force` sobre los repositorios de
+> trabajo, usa la red y contenedores, escribe en `logs/` con un identificador de ejecución fijo y modifica globalmente `Path.write_text`.
+> En P1 todo se hace en directorios temporales, los artefactos no se sobrescriben y los registros sintéticos no se pueden mezclar con
+> los reales. El adaptador del evaluador oficial en un entorno aislado queda pendiente (fase 3B.2). La resolución funcional no tiene
+> criterio de éxito en el protocolo: solo se describe.
+
+### 9.4 ¿Qué es el hallazgo de `response.strip() + "\n"`?
+✅ **RESPALDADA** (el mecanismo, por código y prueba) · ⏳ (cuántos parches afecta)
+
+> El generador original guarda la respuesta con `strip()`, que elimina los espacios y saltos de línea de los extremos. Si lo que elimina
+> es necesario para la estructura de un hunk (por ejemplo, una línea de contexto en blanco que el contador del hunk sí incluye), el hunk
+> queda truncado y el parche, corrupto. **No implica que todos los diffs que terminan en una línea de contexto en blanco queden
+> corruptos**: depende de si esa línea cuenta en el hunk. Se conserva ese comportamiento para el brazo original y el normalizador
+> **no repara** el hunk, para no favorecerlo. **No he medido cuántos de los 150 parches originales se vieron afectados**; por eso no lo uso para explicar los 141
+> rechazos (ver 1.1 y 7.4), solo como limitación a tener en cuenta al interpretar `O1n`.
+
+### 9.5 ¿Las 364 pruebas son resultados del piloto?
+✅ **RESPALDADA**
+
+> No. Comprueban que las **herramientas** funcionan (aplicabilidad, aislamiento, reintentos, reanudación) con datos y evaluadores
+> sintéticos. Los veredictos del simulacro de 72 condiciones se deducen de cómo se construyeron esas respuestas. Los resultados del piloto
+> solo existirían tras generar con el modelo y evaluar, que no se ha hecho ni está autorizado.
+
+---
+
 ## Frases de seguridad para la defensa
 
 - *"Eso lo he comprobado y los datos están en el repositorio."* (solo para lo etiquetado ✅)
@@ -965,6 +1042,7 @@ aprobado».
 ## Antes de la defensa: revisar y actualizar
 
 - [ ] Si se repite la fase LLM o se cambia el formato de salida, reescribir las secciones 1, 2, 4.3 y 5.5.
+- [ ] Si se ejecuta el piloto P1 (generación real y evaluación), sustituir la sección 9 por sus resultados reales y revisar 5.5.
 - [ ] Si se hace la prueba de significación, reescribir 4.2 y la conclusión 6.2.1.
 - [x] Efecto de CRLF y prefijos cuantificado con la matriz completa: 3.2, 3.4, 3.6, 3.8 y 4.4 actualizadas (2026-11-12). Pendiente: si se ejecutara el evaluador oficial o uno tolerante, reescribir 3.4, 3.6 y la sección 7.
 - [ ] Actualizar la sección 7, la guía (sección 8) y la tabla de cifras si se corrige alguna cifra al incorporar el diagnóstico a la memoria.

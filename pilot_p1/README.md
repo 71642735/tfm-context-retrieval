@@ -1,7 +1,9 @@
-# pilot_p1 — Preparación técnica del piloto P1 (fases 1, 2 y 3A)
+# pilot_p1 — Preparación técnica del piloto P1 (fases 1, 2, 3A y 3B.1)
 
-> **Ni la fase 1, ni la 2, ni la 3A son una ejecución experimental de P1.** No hay generaciones con LLM, ni llamadas a API, ni
-> evaluación funcional, ni se ha ejecutado el filtro experimental G. La fase 1 (commit `e4342dd`) validó el conversor
+> **Ni la fase 1, ni la 2, ni la 3A, ni la 3B.1 son una ejecución experimental de P1.** No hay generaciones reales con el LLM ni
+> llamadas a la API. Las fases 3A y 3B.1 **sí han ejercitado** el filtro G y la evaluación funcional, pero solo con datos sintéticos y
+> evaluadores falsos (y, en solo lectura, con prompts y repositorios reales): **no se han ejecutado sobre generaciones reales del LLM ni
+> con el evaluador oficial**, y sus resultados no son resultados del piloto. La fase 1 (commit `e4342dd`) validó el conversor
 > SEARCH/REPLACE → diff; la fase 2 prepara y valida los prompts O1/E1, el normalizador N y la selección
 > determinista de las 12 tareas; la fase 3A construye y prueba, **solo con un cliente falso y respuestas
 > sintéticas**, la orquestación aislada de las 72 generaciones. El protocolo P1 (D-005) sigue **sin aprobar**. Los resultados del experimento original
@@ -28,6 +30,8 @@ el aplicador. No dice nada sobre si el formato mejora los resultados.
 | `client.py` | Fase 3A: interfaz de cliente inyectable (`GenerationClient`) y `FakeClient`; **no hay cliente real** |
 | `format_metrics.py` | Fase 3A: vallas Markdown externas/internas y parseabilidad, independientes del parser |
 | `decision.py` | Fase 3A: regla de decisión del protocolo con condiciones excluidas por infraestructura |
+| `gate.py` | Fase 3B.1: filtro común G (aplicabilidad) de `O1n` y `E1` |
+| `functional.py` | Fase 3B.1: interfaz de evaluación funcional y evaluador **falso** (no hay adaptador del evaluador oficial) |
 | `tests/` | Pruebas (`unittest`), fixtures y contraste con parches conocidos |
 | `.gitattributes` | `* -text` para `instructions_edit_v1.txt` y `data/` (sin conversión de finales de línea) |
 | `tests/fixtures/.gitattributes` | `* -text`: impide que `core.autocrlf` convierta los fixtures (solo afecta a esa carpeta) |
@@ -295,7 +299,8 @@ hash distinto rechazados).
 4. `O1n` no repara contadores ni cabeceras truncadas (limitación 1 del normalizador). Se mantiene.
 5. Los prompts nuevos deben guardarse con `serialize_prompt`/`write_bytes`; `write_text` volvería a traducir los saltos en Windows.
 6. Sigue sin verificarse nada en Linux/Docker y no se ha comprobado la disponibilidad de modelo y API (no se hacen llamadas).
-7. **Falta para la orquestación de las 72 generaciones:** módulo de generación (O1 y E1 por condición, consecutivos) con
+7. **Falta para la orquestación de las 72 generaciones** *(estado al cierre de la fase 2; la orquestación se implementó después en la 3A
+   y el filtro G y la integración de la evaluación funcional en la 3B.1)*: módulo de generación (O1 y E1 por condición, consecutivos) con
    directorios de salida nuevos y lista blanca de rutas, reintentos solo para 429/503 y registro de modelo, fecha y hashes;
    filtro G y evaluación; control de integridad antes y después; y la aprobación del protocolo.
 
@@ -306,6 +311,13 @@ hash distinto rechazados).
 **No se ha conectado ninguna API ni se ha ejecutado ninguna generación real.** Todo lo de esta fase se probó con un cliente
 falso y respuestas sintéticas; los registros de esos simulacros llevan `synthetic: true`, viven en directorios `simulacro_*` y
 nunca pueden confundirse con resultados experimentales. Aplica el protocolo congelado (`fb589c1`) sin cambiarlo.
+
+> **Nota de lectura (coherencia histórica).** Esta sección describe el estado **al cierre de la fase 3A** (commit `b87abb2`). Las frases
+> que presentan el filtro G y la evaluación funcional como «no existen todavía», «pendientes» o «no implementadas» (incluidos el valor
+> `pending_phase_3B` de los registros y la lista «Limitaciones y puntos pendientes para la fase 3B») son **históricas**: ambas piezas se
+> **implementaron después, en la fase 3B.1** (apartado siguiente), y se conservan aquí sin cambios como registro de lo que se verificó en 3A.
+> La fase 3B.1 está implementada y probada con datos sintéticos y revisada; P1 no se ha ejecutado con generaciones reales y su
+> protocolo sigue **pendiente de aprobación**.
 
 ## Arquitectura (`orchestrator.py`)
 
@@ -320,7 +332,7 @@ nunca pueden confundirse con resultados experimentales. Aplica el protocolo cong
    `is_synthetic = True`; el cliente real será de la fase 3B, con autorización expresa.
 4. **Etapas separadas**, cada una en su propio fichero: *generación* (`response.txt` + `generation.json`), *formato*
    (`format_metrics.json`), *conversión* de `E1` (`conversion.json`, `diff.patch`), *normalización* de `O1` (`normalization.json`,
-   `o1.patch`, `o1n.patch`), *aplicabilidad* (filtro G) y *resolución funcional*: estas dos últimas **no existen todavía** y
+   `o1.patch`, `o1n.patch`), *aplicabilidad* (filtro G) y *resolución funcional*: estas dos últimas **no existían al cierre de 3A** (se añadieron en 3B.1) y
    figuran como `pending_phase_3B`. `o1.patch` es la respuesta con el mismo tratamiento del generador original (`strip()` + salto
    final) y `o1n.patch` el resultado de N sobre ella; la respuesta original no se modifica nunca.
 5. **Parámetros registrados** (manifiesto y `generation.json`): modelo `gemini-3.5-flash-lite`, 4096 tokens, razonamiento `minimal`,
@@ -407,7 +419,8 @@ ambos no aplicables. `evaluate()` devuelve siempre `pairwise` con victorias de c
 **Estado final de 3A — suite completa: 303 pruebas, 303 superadas, 0 fallidas, 0 omitidas** (≈ 11 min): 208 de las fases 1 y 2 (siguen
 pasando) + 95 nuevas de la fase 3A: `test_format_metrics.py` 20, `test_decision.py` 20 y `test_orchestrator.py` 55 (condiciones 2,
 simulacro completo 10, reanudación 6, detección de corrupción 14, no sobrescritura 2, errores 8, aislamiento 7, carpeta de
-ejecuciones 3, interfaces 3). La fase 3A está **completada y commiteada**; la 3B (cliente real, filtro G, evaluación) no se ha empezado.
+ejecuciones 3, interfaces 3). La fase 3A está **completada y commiteada** (`b87abb2`); *al cierre de 3A* la 3B (cliente real, filtro G, evaluación) no se había empezado:
+el filtro G y la integración de la evaluación funcional se implementaron después en la 3B.1 (cliente real y evaluador oficial siguen pendientes).
 
 **Simulacro de las 72 condiciones** (`FullSimulation`, prompts originales y repositorios reales en solo lectura, cliente falso,
 respuestas sintéticas derivadas del primer fragmento, con variantes que deben conservarse: vallas Markdown, espacios y saltos
@@ -418,7 +431,7 @@ iniciales, CRLF):
 - Las 72 respuestas guardadas coinciden byte a byte con las devueltas por el cliente falso (también las que llevan vallas, CRLF o
   saltos iniciales).
 - Conversión: 36 `E1` → `patch_ready`; normalización: 36 `O1` → `normalized`; 72 registros de formato; aplicabilidad y resolución
-  figuran como `pending_phase_3B`. Estos estados son consecuencia de la construcción sintética, **no un resultado**.
+  figuraban como `pending_phase_3B` (al cierre de 3A; en 3B.1 pasaron a ser las etapas `applicability` y `functional`). Estos estados son consecuencia de la construcción sintética, **no un resultado**.
 - `verify(recompute=True)` correcto sin avisos; todos los registros llevan `synthetic: true`; cadena de eventos íntegra.
 - Resultados originales (`results/`, tamaños de `logs/downstream`) idénticos antes y después.
 
@@ -431,9 +444,10 @@ recuperados en el tercer intento, persistentes (par excluido, no atribuido al mo
 aplicación por condición); cliente real rechazado; rutas de salida prohibidas rechazadas sin crear nada; constantes del cliente
 iguales a las del generador original (leídas por AST) y ausencia de cualquier import de `google`.
 
-## Limitaciones y puntos pendientes para la fase 3B
+## Limitaciones y puntos pendientes para la fase 3B *(estado al cierre de 3A)*
 
-1. **Aplicabilidad (filtro G) y resolución funcional no implementadas**; `decision.py` solo está probada con recuentos sintéticos.
+1. **Aplicabilidad (filtro G) y resolución funcional no implementadas** *(al cierre de 3A; implementadas después, en 3B.1, con datos
+   sintéticos y evaluador falso)*; `decision.py` solo estaba probada con recuentos sintéticos.
 2. **Ubicación de las salidas reales.** El protocolo 15.4 prevé `results/downstream_pilot_p1/` y `logs/downstream_pilot_p1/`, pero esta
    fase prohíbe escribir en `results/` y `logs/`; el orquestador solo admite `pilot_p1_runs/<ejecución>`, **adoptado como ubicación
    definitiva** (sustituye a las rutas previstas en el protocolo; documentado en 15.4) y añadido a `.gitignore`. Una prueba comprueba que
@@ -444,6 +458,245 @@ iguales a las del generador original (leídas por AST) y ausencia de cualquier i
    para reintentarla de forma autorizada.
 6. Un cliente real (Gemini) y su manejo de errores no existen; la lista de códigos reintentables se copia del generador original.
 7. Sin comprobar en Linux/Docker; `RUN.lock` huérfano y `*.tmp` requieren revisión manual.
+
+---
+
+# Fase 3B.1: filtro común G e integración técnica de la evaluación funcional (sin ejecución real)
+
+> **Estado: implementada y probada solo con datos sintéticos (364 pruebas superadas) y revisada; P1 no se ha ejecutado con generaciones
+> reales y su protocolo sigue pendiente de aprobación.** No se ha ejecutado ninguna generación real, ni el
+> evaluador oficial, ni se ha usado la red, ni se han instalado o descargado dependencias o repositorios. Nada de lo que sigue es un
+> resultado del piloto P1. No se ha modificado el protocolo, sus umbrales ni los documentos generales.
+
+## 1. Objetivos y alcance
+
+**Incluido:** (a) el filtro común G (`gate.py`), con la misma política para `O1n` y `E1`; (b) las etapas `apply_gate()` y
+`evaluate_functional()` del orquestador, con registros, verificación de integridad, reintentos y reanudación; (c) la interfaz de
+evaluación funcional y un evaluador falso (`functional.py`); (d) la agregación por pares (`pair_results()`, `decision_report()`) hacia
+`decision.py`; (e) los controles que impiden mezclar resultados sintéticos y reales o conectar por error el evaluador original.
+
+**Fuera de alcance (3B.2 y posteriores):** cliente real de la API, adaptador del evaluador oficial, ejecución de G y de la evaluación
+sobre salidas reales del modelo, verificación en Linux/Docker, aprobación y congelación del protocolo.
+
+## 2. Filtro común G (`gate.py`)
+
+- **Política única:** `git apply --check -p1 <parche>` en un directorio **temporal**. El árbol contiene una copia de los ficheros que el
+  parche toca (rutas de `numstat` y de las cabeceras, incluidos los orígenes de renombrados) y de los antecesores que sean ficheros,
+  leídos como blobs del `base_commit` con `git cat-file` (solo lectura; sin checkout). El parche se pasa **byte a byte, sin ninguna
+  corrección adicional** (ni finales de línea, ni prefijos, ni espacios).
+- **Mismo tratamiento para `O1n` y `E1`:** `gate_check(patch, source)` ni siquiera recibe el brazo; el orquestador la llama con los mismos
+  argumentos para los dos (`o1n.patch` o `diff.patch`). Pruebas: la firma no contiene `arm`; bytes idénticos dan resultados idénticos; el
+  parche de `E1` y el de `O1n` para la misma edición son ambos aplicables y producen el mismo fichero; un parche `O1` con CRLF o sin
+  prefijos se rechaza con la misma severidad que se aplicaría a `E1`.
+- **`E1` sin parche:** si la conversión no llegó a `patch_ready`, no hay nada que aplicar y la condición se registra `not_applicable`
+  (motivo `conversion:<estado>`) sin ejecutar git; si la conversión fue infraestructura, se propaga como no evaluable. A `O1n` se le
+  aplica G siempre (aunque `N` no reconozca un diff): git dará su veredicto. Es la consecuencia natural de que `O1` entrega un parche
+  y `E1` no lo entrega cuando falla el formato.
+- **Estados:** `applicable` (código 0); `not_applicable` (código 1, o 128/129 con un mensaje de rechazo de parche de
+  `PATCH_REJECTION_MARKERS`; atribuible a la salida); `environment_error` (cualquier otro fallo de git, tiempo agotado, fuente ilegible,
+  directorio de trabajo inseguro) → hasta 3 intentos totales con la misma entrada y, si persiste, `not_evaluable_infrastructure`.
+- **Se registra:** comando (plantilla `git apply --check -p1 <patch_file>`), código de salida, stdout/stderr (recortados), detalle del
+  error, duración, versión de git, rutas tocadas, hash del parche, intentos, motivo y artefacto de entrada.
+- **Artefactos distintos y conservados** (`conditions/<cond_id>/`): `response.txt` (respuesta original), `o1.patch` (tratamiento del
+  generador original), `o1n.patch` (normalizado por N), `diff.patch` (convertido de `E1`) y `applicability.json` (veredicto de G).
+- **Aplicabilidad ≠ resolución:** G solo dice que git acepta el parche; no mide si arregla la tarea.
+
+## 3. Evaluación funcional (`functional.py` y `orchestrator.evaluate_functional`)
+
+- **Interfaz:** `FunctionalEvaluator.evaluate(EvalRequest) → EvalResponse` con `outcome` ∈ {`resolved`, `not_resolved`,
+  `infrastructure_error`}, `evidence` (JSON) y `detail`. `EvalRequest` incluye condición, par, tarea, método, brazo, ruta y hash del parche,
+  repositorio, `base_commit` y un `run_label` propio (`<run_id>-<cond_id>`, que empieza por `p1-`).
+- **Solo se evalúan los parches que G aprobó.** Se registran `functional.json` (evaluador, versión, petición, resultado, intentos,
+  hash de la aplicabilidad y de la evidencia) y `functional_evidence.json` (evidencia necesaria para reproducir; limitada a 200 KB).
+- **Estados:** *pendiente* = parche aplicable sin `functional.json` (no se escribe un fichero «pendiente»: cada artefacto se crea una sola
+  vez); *no aplicable* = G no lo aprobó (nunca se evalúa); `resolved` / `not_resolved`; `not_evaluable` (infraestructura).
+- **Evaluadores:** solo `FakeFunctionalEvaluator` (sintético). `check_evaluator_allowed` rechaza evaluadores no sintéticos en una
+  ejecución sintética, cualquier evaluador sintético en una real, módulos `src.*`/`swebench` y, en 3B.1, **toda** ejecución real.
+- **Integración prevista del evaluador oficial (3B.2, no implementada):** un adaptador que implemente esta misma interfaz y se ejecute en
+  un entorno aislado (ver los requisitos en el apartado 10); la evaluación funcional no tiene criterio de éxito ni de abandono en el
+  protocolo y solo se describe.
+
+## 4. Efectos secundarios del evaluador original y por qué no se usa
+
+Revisado `src/downstream/evaluation.py`, `src/repo_manager.py` y los ejecutores de PolyBench y Pro (solo lectura):
+
+| Efecto | Dónde | Consecuencia |
+|---|---|---|
+| `git clone`, **`git fetch origin`** y **`git checkout --force <base_commit>`** | `prepare_repository`, llamado al inicio de `evaluate_patch` | Usa la red y **modifica el árbol de trabajo y el HEAD** de los repositorios de `repos/` |
+| `git apply --check` sobre el repositorio de trabajo | `check_patch_applies` | Depende del estado que dejó el checkout (CRLF/LF, `autocrlf`) |
+| Descarga de datos | `load_task`, `load_swebench_dataset`, runners (`load_dataset`) | Red / caché de Hugging Face |
+| `podman pull` | `ensure_podman_image` | Red; descarga imágenes |
+| Contenedores | `docker.from_env()`, `run_instance`; Pro con `--use_local_docker --dockerhub_username` | Crea y borra contenedores; ejecuta código de los parches y de las pruebas; baja imágenes |
+| Escritura en `logs/` | `logs/run_evaluation/<run_id>/…`, `logs/polybench/…`, `logs/probench/…` | Escribe en una zona prohibida |
+| `run_id = downstream-<método>` fijo | `evaluate_patch` | **Colisiona** entre tareas y entre brazos de P1 y con los resultados originales: podría sobrescribirlos o mezclarlos |
+| Parche global de `Path.write_text` y de `swe_run.cleanup_container` | `run_with_windows_podman_compatibility` | Cambia el comportamiento de todo el proceso mientras dura |
+| Subprocesos con `.venv-polybench` y `external/SWE-bench_Pro` | `evaluate_poly_patch`, `evaluate_pro_patch` | Ejecutan código externo; escriben ficheros del evaluador |
+
+**Conclusión:** no se puede garantizar su aislamiento tal cual, y por eso **no se invoca**. Cómo se evita que afecte al experimento:
+ningún módulo de `pilot_p1/` importa `src`, `docker`, `swebench`, `google` ni librerías de red (comprobado por AST y en un subproceso),
+ni llama a `prepare_repository`, `evaluate_patch`, `run_instance` o `check_patch_applies`; nunca se ejecuta `checkout`, `fetch`,
+`clone`, `pull`, `reset`, `clean`, `add` ni `push`; `check_evaluator_allowed` impide conectar el evaluador original; y G solo actúa
+sobre copias temporales.
+
+## 5. Aislamiento y protección
+
+- **Repositorios originales:** `GitSource` solo ejecuta `ls-tree` y `cat-file`; G trabaja en directorios temporales fuera del proyecto
+  y de cualquier árbol git (`assert_safe_workdir`), con el entorno limpio de `GIT_DIR`/`GIT_WORK_TREE` y de la configuración global.
+  Las pruebas comprueban que ninguna invocación usa como `cwd` un repositorio de `repos/` y que HEAD e índice no cambian.
+- **Resultados y logs originales:** el orquestador solo escribe en `pilot_p1_runs/<ejecución>` (o un directorio `simulacro_*`/`p1_run_*`
+  validado); se prohíben `src/`, `repos/`, `results/`, `logs/`, `diagnostics/` y `docs/`. Las pruebas comparan antes y después los hashes
+  de `results/` y los tamaños de `logs/downstream`.
+- **Artefactos de P1:** creación exclusiva (`write_new`), registro de eventos encadenado por hashes y `verify()` extendido: el parche de
+  entrada de G coincide con su hash, `functional.json` solo existe para parches aprobados por G y evalúa exactamente ese parche, la
+  evidencia coincide con su hash, el `run_label` es de P1 y **todo registro tiene el mismo `synthetic` que el manifiesto** (no se
+  mezclan sintéticos y reales). `verify(recompute=True)` vuelve a ejecutar G y compara el veredicto.
+
+## 6. Estados, errores, reintentos y reanudación
+
+| Etapa | Estados | Error del modelo | Infraestructura |
+|---|---|---|---|
+| Aplicabilidad (G) | `applicable`, `not_applicable`, `not_evaluable_infrastructure` | `not_applicable` (no se reintenta) | `environment_error` ×3 → no evaluable; el **par se excluye** de la decisión |
+| Funcional | `resolved`, `not_resolved`, `not_evaluable`, pendiente, no aplicable | — | `EvaluatorInfraError`/`infrastructure_error` ×3 → `not_evaluable`; **no** excluye el par (no tiene criterio de decisión) |
+
+- **Reintentos:** hasta 3 intentos totales con la misma entrada, solo ante infraestructura; nunca se regenera ni se reaplica por un
+  rechazo del parche.
+- **Pausa:** si más del 25 % de las evaluaciones funcionales de parches aplicables terminan en infraestructura,
+  `summary()["functional_infrastructure"]["pause_recommended"]` es verdadero (regla del protocolo; exactamente el 25 % no pausa).
+- **Reanudación:** `apply_gate()` y `evaluate_functional()` verifican la integridad, saltan lo ya registrado (sin duplicados ni
+  sobrescrituras) y retoman una evaluación interrumpida; un `RUN.lock` huérfano bloquea hasta que alguien lo revise.
+- **Decisión:** `pair_results()` convierte G y el formato en `PairResult` (aplicable/no aplicable, `None` si no evaluable);
+  `decision_report()` aplica `decision.py` (mejora neta, victorias, empates, exclusiones). Con datos sintéticos no es un resultado.
+
+## 7. Pruebas realizadas
+
+**Suite completa de `pilot_p1` (todas las fases): 364 pruebas, 364 superadas, 0 fallidas, 0 omitidas** (`Ran 364 tests … OK`, ≈ 32 min en
+esta máquina, porque incluye los contrastes con repositorios reales en solo lectura). Son las 303 de las fases 1, 2 y 3A, que siguen
+pasando, más **61 nuevas de 3B.1**: `test_gate.py` 19 y `test_functional.py` 42.
+
+`test_gate.py` (19): parche válido (comando, código de salida, intentos, versión de git); contexto erróneo, corrupto, vacío y basura
+(`not_applicable` sin reintentos); sin prefijos rechazado y, normalizado por N, aplicable; altas (también sobre un fichero existente);
+fichero inexistente, conflicto de antecesor y renombrado; CRLF nativo (E1 aplicable; el mismo parche en LF, rechazado); bytes del parche
+entregados sin modificar a git; la firma de `gate_check` no tiene brazo y bytes idénticos dan resultados idénticos; parche de `E1` y de
+`O1n` para la misma edición, ambos aplicables y con el mismo fichero final; errores de infraestructura (fuente que falla 2 veces y se
+recupera, fallo persistente = 3 intentos, tiempo agotado, git ausente, código 128 sin/con mensaje de rechazo); entorno sin `GIT_DIR` ni
+configuración global; directorios de trabajo inseguros; rutas con `..` sin escribir fuera; equivalencia con un árbol completo en 8 casos;
+y, **sobre repositorios y parches reales en solo lectura**, que `psf__requests-5414/hybrid` es rechazado tal cual y aceptado tras N y
+`pytest-5809/bm25` es aceptado, sin ninguna invocación con `cwd` en `repos/` y con HEAD e índice intactos.
+
+`test_functional.py` (42): *etapa G* (11): ambos brazos con artefactos distintos y veredictos registrados, mismas llamadas y argumentos,
+veredictos iguales a una recomputación independiente, reanudación sin repetir ni sobrescribir, `E1` sin parche (git no se ejecuta),
+CRLF rechazado sin correcciones, infraestructura recuperada y persistente (par excluido, no es error del modelo), sin reintentos ante
+rechazos. *Evaluación funcional* (11): solo se evalúan los aprobados por G, registro completo (petición con `run_label` de P1, evidencia,
+hashes), espera a G, misma forma de petición para los dos brazos, reanudación sin duplicados, reanudación tras una caída, reintentos con
+recuperación, fallo persistente = `not_evaluable` sin excluir el par, umbral de pausa del 25 % (estricto), evaluadores no permitidos.
+*Manipulación* (8): parche, veredicto, evaluación de otro parche, mezcla sintético/real, evidencia, etiqueta ajena a P1. *`strip()` original*
+(2): ver el hallazgo del apartado 9. *Higiene* (5): imports y llamadas prohibidos por AST, git solo en comandos permitidos, importar el paquete
+no carga `docker`/`swebench`/`google`/`src.downstream.evaluation`. *Simulacro completo con G* (5): 72 condiciones con prompts y repositorios reales
+en solo lectura, respuestas y evaluador sintéticos: 36 `E1` aplicables y `O1` no aplicables solo en las respuestas con CRLF, evaluación solo de
+los aplicables, `decision_report()` calculable con victorias, empates y mejora neta, y comparación antes/después de `results/`,
+`logs/downstream` y del HEAD e índice de los 21 repositorios. **Los veredictos de ese simulacro se deducen de cómo se construyeron las
+respuestas sintéticas: no son resultados del piloto.**
+
+Comandos: `python -B -m unittest discover -s pilot_p1/tests -t .` (toda la suite) y `python -B -m unittest pilot_p1.tests.test_gate
+pilot_p1.tests.test_functional` (solo 3B.1).
+
+## 8. Reproducción (sin Internet ni credenciales)
+
+Desde la raíz del repositorio, con Python 3 y `git` en el PATH; no se necesita API, red, Docker ni dependencias adicionales:
+
+```bash
+python -B -m unittest discover -s pilot_p1/tests -t .
+```
+
+Solo 3B.1: `python -B -m unittest pilot_p1.tests.test_gate pilot_p1.tests.test_functional`. `P1_SKIP_KNOWN=1` omite el contraste lento con
+parches conocidos (fases 1 y 2). Las pruebas escriben únicamente en directorios temporales; de `repos/` y `logs/downstream` solo leen.
+
+## 9. Decisiones técnicas y limitaciones
+
+- **Árbol parcial en lugar de uno completo:** `git apply --check` solo necesita los ficheros tocados; una prueba compara el veredicto con el
+  de un árbol completo (`git archive`) en 8 casos (válido, contexto, inexistente, alta, alta sobre existente, antecesor-fichero,
+  sin prefijos, vacío) y coincide siempre.
+- **Parche sin correcciones:** los originales se guardaron con CRLF por la traducción de `write_text` en Windows; P1 guarda bytes. G no
+  convierte CRLF, así que un parche con CR que apunta a un fichero LF se rechaza (igual para los dos brazos); `E1` conserva el CRLF nativo
+  de un fichero CRLF.
+- **Lo que G no ve:** al ser `git apply --check`, no detecta, por ejemplo, un alta bajo un directorio que en realidad es un fichero (la
+  conversión de `E1` lo rechaza antes con `unsafe_path`). Es la limitación del filtro del protocolo, no un defecto añadido.
+- **Hallazgo — `strip()` del generador original:** el generador guarda `response.strip() + "\n"`; un diff cuyo último renglón sea una línea
+  de contexto en blanco la pierde y queda con el hunk truncado (corrupto). `original_style_patch` reproduce ese tratamiento para `O1`
+  (fidelidad) y N detecta el hunk truncado (`unchanged_malformed`) sin repararlo. Esto fue la causa del sexto parche `O1` no aplicable en el
+  simulacro (las otras cinco eran respuestas con CRLF). No se ha cambiado nada; afecta solo a `O1`/`O1n` y conviene tenerlo presente al
+  interpretar el brazo original.
+- **Clasificación por código de salida:** 1, o 128/129 con mensajes de rechazo conocidos, es rechazo del parche; el resto es infraestructura.
+  La lista de mensajes es una heurística acotada (`PATCH_REJECTION_MARKERS`).
+- **Sin cliente real ni evaluador oficial:** todo el flujo se ha probado con clientes y evaluadores falsos.
+
+## 10. Estado por categorías y trabajo pendiente para 3B.2
+
+- **Implementado y verificado (con datos sintéticos, y en solo lectura sobre repositorios y prompts reales):** G, sus estados y
+  reintentos; las etapas `apply_gate`/`evaluate_functional`; los registros, la verificación y la reanudación; la protección frente a
+  mezclas sintético/real; el simulacro de 72 condiciones con respuestas sintéticas y evaluador falso.
+- **Preparado, sin validar sobre tareas reales:** la interfaz de evaluación funcional y la regla de pausa del 25 %; el uso de G sobre
+  salidas reales del modelo; `decision_report()` sobre datos reales.
+- **Pendiente (3B.2):** (1) adaptador del evaluador oficial en un entorno aislado: copia de trabajo propia (no `repos/`), sin `fetch`/
+  `checkout` sobre los originales, `run_id` único de P1, salida en `pilot_p1_runs/` (no `logs/`), sin parches globales, red/imágenes
+  controladas y registro de versiones; (2) cliente real de la API y su política de errores; (3) revisar si G debe usar un árbol
+  completo y el efecto del `strip()` original sobre `O1n`; (4) verificación en Linux/Docker; (5) aprobación y congelación del protocolo;
+  (6) disponibilidad de modelo, API e imágenes. Nada de esto se ha hecho.
+
+## 11. Construcción de los datos sintéticos (fases 3A y 3B.1) y su alcance
+
+Explicación técnica de cómo se fabricaron los datos de los simulacros y las pruebas, para poder valorar su incorporación a la memoria.
+Todo lo descrito está en el código; las referencias indican dónde.
+
+**Qué es «sintético» aquí.** Cualquier dato que fabrica el banco de pruebas en lugar de proceder del LLM o del evaluador oficial: las
+respuestas del «modelo», los veredictos funcionales, los errores de infraestructura y los mundos de juguete. Los registros de los
+simulacros llevan `synthetic: true`, viven en directorios `simulacro_*` y el manifiesto lo advierte (`orchestrator.py`).
+
+**Respuestas sintéticas de `O1` y `E1`** (`tests/sim_helpers.py`, `synthetic_text` y `variant`). Se fabrican a partir del **primer fragmento
+de contexto del prompt real de cada condición** (`prompts.split_prompt`), no se escriben a mano condición a condición:
+- `E1`: un bloque `FILE: <ruta del fragmento>` con `SEARCH` = las 6 primeras líneas del fragmento y `REPLACE` = esas mismas líneas más
+  `# pilot-check`.
+- `O1`: un diff unificado **sin prefijos `a/` `b/`** que reescribe una línea intermedia (`k = (n-1)//2`) y añade `# pilot-check`, con
+  contexto antes y después y sin líneas en blanco finales (ver el hallazgo de `strip()` en el apartado 9).
+- `variant` aplica de forma determinista, según `sha256(prompt)[:2] % 6`, una variación que debe conservarse byte a byte: vallas ```
+  (valor 1), saltos de línea iniciales y espacios finales (2), CRLF (3); sin cambios en 0, 4 y 5. Las proporciones son arbitrarias.
+- `Recorder` guarda lo devuelto y `fake_client()` lo entrega a `FakeClient` (`client.py`), de modo que se puede comparar con lo guardado.
+Estas «ediciones» no intentan resolver la incidencia: solo añaden un comentario.
+
+**Entradas reales, solo en lectura.** Las 12 tareas reales (`orchestrator.selection_from_manifest`, `data/task_selection.json`); los prompts
+originales (`logs/downstream/<tarea>/<método>/prompt.txt`, vía `default_prompt_provider` y `prompts.py`); `final_tasks.csv` y los blobs
+de `repos/` (`default_source_factory`, `GitSource`: solo `git ls-tree` y `git cat-file`); y algunos de los 150 parches originales
+(`tests/test_normalizer.py`, `tests/test_normalizer_known.py`, y `OriginalRepositoriesAreOnlyRead` en `tests/test_gate.py`). El simulacro de 72
+condiciones (`FullSimulation` en `tests/test_orchestrator.py` y `FullSimulationWithGate` en `tests/test_functional.py`) combina esas entradas reales
+con las respuestas fabricadas. Los tests pequeños usan `SyntheticWorld` (`sim_helpers.py`): tareas inventadas `synth__task-<i>` y ficheros
+`pkg/m<j>.py` con líneas `v<j>_<k> = <k>`, con prompts construidos con la plantilla real (`prompts.rebuild_shared`).
+
+**Cómo se decide el resultado de G.** No hay una lista de casos que «deben pasar»: el veredicto lo da `git apply --check` real sobre el
+parche construido, de modo que se deduce de la construcción. En el simulacro, `E1` es aplicable en las 36 condiciones (el `SEARCH` copia
+líneas contiguas del fichero del `base_commit`; una prueba verifica que los 360 fragmentos coinciden con el fichero) y `O1` lo es salvo en
+las respuestas con CRLF (5 de 36 en la ejecución realizada), que G rechaza sin correcciones; el test `test_verdicts_follow_from_the_synthetic_construction…`
+calcula ese número desde las respuestas registradas. El oráculo independiente de G es `git apply --check` sobre un árbol completo
+(`PartialTreeEquivalence`, `tests/test_gate.py`). El caso no previsto —un parche `O1` truncado por `strip()`— apareció al ejecutar el
+simulacro, no se fijó de antemano.
+
+**Evaluador funcional simulado** (`functional.py`, `FakeFunctionalEvaluator`; en los tests, `resolver` de `tests/test_functional.py`): devuelve
+`resolved` si `int(patch_sha256[:2], 16) % 2 == 1` y `not_resolved` en otro caso. El veredicto está **determinado por el hash del parche**:
+no ejecuta las pruebas oficiales ni depende de que el parche arregle nada.
+
+**Errores de infraestructura inyectados a propósito:** respuestas `APIError` 503/429/400 programadas en `FakeClient`
+(`tests/test_orchestrator.py`, clase `Errors`); una `source_factory` que lanza `SourceError` las primeras N veces o siempre (conversión y G);
+`subprocess` simulado con tiempo agotado, git ausente o código 128 (`tests/test_gate.py`); un repositorio temporal con su objeto árbol
+borrado (`tests/test_orchestrator.py`); y `EvaluatorInfraError`/`infrastructure_error` programados en el evaluador falso
+(`tests/test_functional.py`).
+
+**Qué verifican las 364 pruebas y qué no.** Verifican el comportamiento esperado de la infraestructura en los escenarios ensayados:
+determinismo, mismo tratamiento de `O1n` y `E1` en G, aislamiento y protección de los datos originales, detección de manipulaciones,
+reanudación sin duplicados ni sobrescrituras, y separación de estados y reintentos. **No demuestran mejoras de aplicabilidad ni de
+resolución funcional**, ni dicen nada sobre la capacidad del LLM con cada formato, la tasa real de respuestas parseables, la equivalencia
+con el evaluador oficial o el comportamiento en Linux/Docker; el 36/36 de `E1` es consecuencia de la construcción, y `decision_report()` con
+estos datos no tiene significado experimental.
+
+**Qué no ocurrió:** no hubo generaciones reales del LLM, ni llamadas a la API, ni ejecución del evaluador oficial.
 
 ---
 
@@ -461,7 +714,24 @@ iguales a las del generador original (leídas por AST) y ausencia de cualquier i
 * El contraste usa solo parches que ya aplicaban, no salidas reales de un modelo con este formato.
 * Un fichero nuevo con colisión de mayúsculas solo se detecta con la información de git/directorio de la fuente.
 
-## Pendiente para completar P1 (no hecho, no autorizado)
+## Estado de la preparación técnica y trabajo pendiente para completar P1
 
-Instrucciones y prompts O1/E1, normalizador N, selección y congelación de las 12 tareas, orquestación de las 72
-generaciones con directorios de salida propios, filtro G, evaluación funcional y análisis.
+**Fases técnicas implementadas** (herramientas y pruebas locales; ninguna es una ejecución experimental):
+
+| Fase | Contenido | Estado |
+|---|---|---|
+| 1 | Parser y aplicador SEARCH/REPLACE | Implementada, probada, commiteada (`e4342dd`) |
+| 2 | Prompts O1/E1, normalizador N, selección determinista de las 12 tareas | Implementada, probada, commiteada (`f9d0c8d`) |
+| Protocolo | Estados, métricas de formato, calendario y reglas de análisis | Versión técnica congelada (`fb589c1`); **aprobación definitiva pendiente** |
+| 3A | Orquestación aislada de las 72 condiciones (cliente falso, simulacro sintético), vallas, decisión con exclusiones | Implementada, probada, commiteada (`b87abb2`) |
+| 3B.1 | Filtro común G, etapas de aplicabilidad y de evaluación funcional, evaluador falso | **Implementada y probada con datos sintéticos (364 pruebas) y revisada; sin ejecución con generaciones reales** |
+
+**Actividades experimentales todavía pendientes (no hechas, no autorizadas):**
+- fase 3B.2: adaptador del evaluador oficial en un entorno aislado y cliente real de la API (apartado 10 de la 3B.1);
+- generación real de las 72 condiciones (12 tareas × 3 métodos × 2 brazos);
+- aplicación de G y evaluación funcional sobre las salidas reales del modelo, y análisis con la regla de decisión del protocolo;
+- verificación en Linux/Docker, comprobación de modelo, API e imágenes, aprobación y congelación del protocolo, y ejecución.
+
+*Texto original de este apartado (tras la fase 1, conservado como histórico):* «Instrucciones y prompts O1/E1, normalizador N, selección y
+congelación de las 12 tareas, orquestación de las 72 generaciones con directorios de salida propios, filtro G, evaluación funcional y
+análisis». De esa lista, todo lo técnico está ya implementado salvo lo indicado arriba; lo experimental sigue pendiente.

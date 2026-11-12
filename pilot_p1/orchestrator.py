@@ -30,6 +30,9 @@ from .client import (APIError, ClientResponse, MAX_API_ATTEMPTS, MAX_OUTPUT_TOKE
                      THINKING_LEVEL)
 from .format_metrics import format_metrics
 from .normalizer import normalize_patch
+from . import decision as DEC
+from . import functional as FUN
+from . import gate as GATE
 
 PROTOCOL_COMMIT = "fb589c13129e6da2c8302cd243bc151dff598158"
 PROTOCOL_VERSION = f"P1-frozen-{PROTOCOL_COMMIT[:7]}"
@@ -48,8 +51,10 @@ EVENTS = "events.jsonl"
 LOCK = "RUN.lock"
 COND_DIR = "conditions"
 FILES_COMMON = {"prompt.txt", "generation.json", "generation_failed.json", "response.txt", "format_metrics.json"}
-FILES_E1 = {"conversion.json", "diff.patch"}
-FILES_O1 = {"normalization.json", "o1.patch", "o1n.patch"}
+FILES_STAGE2 = {"applicability.json", "functional.json", "functional_evidence.json"}      # fase 3B.1
+FILES_E1 = {"conversion.json", "diff.patch"} | FILES_STAGE2
+FILES_O1 = {"normalization.json", "o1.patch", "o1n.patch"} | FILES_STAGE2
+EVIDENCE_LIMIT = 200_000
 
 
 class OrchestrationError(RuntimeError):
@@ -180,6 +185,16 @@ def default_prompt_provider(task_id: str, method: str) -> str:
     return P.load_original_prompt(LOGS_ORIGINAL / task_id / method / "prompt.txt")
 
 
+def default_task_info(task_id: str) -> dict:
+    """Repositorio y base_commit de la tarea (solo lectura de results/final_tasks.csv); {} si no se encuentra."""
+    try:
+        with TASKS_CSV.open(encoding="utf-8", newline="") as fh:
+            row = next(r for r in csv.DictReader(fh) if r["original_inst_id"] == task_id)
+        return {"repo": row["repo"], "base_commit": row["base_commit"]}
+    except (OSError, StopIteration):
+        return {}
+
+
 def default_source_factory(task_id: str):
     with TASKS_CSV.open(encoding="utf-8", newline="") as fh:
         row = next(r for r in csv.DictReader(fh) if r["original_inst_id"] == task_id)
@@ -251,7 +266,8 @@ class Orchestrator:
     def __init__(self, out_dir, client, *, synthetic: bool = True, require_synthetic: bool = True,
                  task_ids: Optional[Sequence[str]] = None, prompt_provider=None, source_factory=None,
                  clock: Optional[Callable[[], str]] = None, sleep: Callable[[float], None] = time.sleep,
-                 on_interrupted: str = "stop", max_apply_attempts: int = MAX_APPLY_ATTEMPTS):
+                 on_interrupted: str = "stop", max_apply_attempts: int = MAX_APPLY_ATTEMPTS,
+                 functional_evaluator=None, task_info_provider=None):
         if require_synthetic and not getattr(client, "is_synthetic", False):
             raise RealClientNotAllowed("la fase 3A solo admite clientes sinteticos (is_synthetic = True)")
         if synthetic and not getattr(client, "is_synthetic", False):
@@ -266,6 +282,8 @@ class Orchestrator:
         self.max_apply_attempts = max_apply_attempts
         self.prompt_provider = prompt_provider or default_prompt_provider
         self.source_factory = source_factory or default_source_factory
+        self.functional_evaluator = functional_evaluator
+        self.task_info_provider = task_info_provider or default_task_info
         self.task_ids = list(task_ids) if task_ids is not None else selection_from_manifest()
         self.conditions = build_conditions(self.task_ids)
         self.prompts: Dict[str, str] = {}
@@ -537,6 +555,190 @@ class Orchestrator:
         if infra:
             self.log.append("condition_not_evaluable", cond_id=c.cond_id, reason="environment_error", stage="conversion")
 
+
+    # ---- aplicabilidad (filtro comun G) y evaluacion funcional (fase 3B.1) -----------------------
+    def _locked(self, fn):
+        """Ejecuta ``fn`` con el bloqueo de la ejecucion, tras verificar la integridad de una ejecucion YA existente."""
+        if not (self.out / MANIFEST).is_file():
+            raise OrchestrationError("no existe la ejecucion (falta RUN_MANIFEST.json): ejecute antes run()")
+        lock = self.out / LOCK
+        try:
+            with open(lock, "xb") as fh:
+                fh.write(f"pid={os.getpid()}\n".encode())
+        except FileExistsError:
+            raise OrchestrationError(f"hay otra ejecucion en curso o un bloqueo previo: {lock}") from None
+        try:
+            self._open()
+            return fn()
+        finally:
+            if lock.exists():
+                lock.unlink()
+
+    def _patch_artifact(self, c: Condition, d: Path):
+        """(nombre, bytes|None, registro_previo) del parche que entra en G, o None si aun no existe la etapa previa."""
+        if c.arm == "O1":
+            if not (d / "normalization.json").exists():
+                return None
+            return "o1n.patch", (d / "o1n.patch").read_bytes(), json.loads((d / "normalization.json").read_bytes())
+        if not (d / "conversion.json").exists():
+            return None
+        up = json.loads((d / "conversion.json").read_bytes())
+        return ("diff.patch", (d / "diff.patch").read_bytes(), up) if up["status"] == "patch_ready" else (None, None, up)
+
+    def apply_gate(self) -> Dict[str, int]:
+        """Aplica G a todas las condiciones con parche disponible. Reanudable: no repite ni sobrescribe ``applicability.json``."""
+        def go():
+            stats = {"gate_written": 0, "gate_skipped": 0, "upstream_missing": 0}
+            for c in self.conditions:
+                d = self.out / COND_DIR / c.cond_id
+                if (d / "applicability.json").exists():
+                    stats["gate_skipped"] += 1
+                    continue
+                if not (d / "generation.json").exists() or self._patch_artifact(c, d) is None:
+                    stats["upstream_missing"] += 1
+                    continue
+                self._gate_condition(c, d)
+                stats["gate_written"] += 1
+            return stats
+        return self._locked(go)
+
+    def _gate_condition(self, c: Condition, d: Path) -> None:
+        name, data, up = self._patch_artifact(c, d)
+        rec = {"cond_id": c.cond_id, "pair_id": c.pair_id, "task_id": c.task_id, "method": c.method, "arm": c.arm,
+               "synthetic": self.synthetic, "stage": "applicability", "filter": "G",
+               "policy": {"command": GATE.GATE_COMMAND + ["<patch_file>"], "patch_bytes_unmodified": True,
+                          "tree": "copia temporal de los ficheros que toca el parche, leidos como blobs del base_commit",
+                          "same_policy_for_O1n_and_E1": True, "max_attempts": self.max_apply_attempts,
+                          "retry_only": "environment_error"},
+               "input_artifact": name, "response_sha256": up["response_sha256"],
+               "upstream": {"stage": up["stage"], "status": up["status"], "category": up["category"]},
+               "functional": "pending"}
+        if data is None:                                            # E1 sin parche: no hay nada que aplicar
+            infra = up["category"] == "infrastructure_not_evaluable"
+            rec.update(status="not_evaluable_infrastructure" if infra else GATE.NOT_APPLICABLE,
+                       category="infrastructure_not_evaluable" if infra else "model_output_error",
+                       reason=f"conversion:{up['status']}", patch_sha256=None, attempts=[], paths=[], git_version="")
+            rec["functional"] = "not_applicable"
+        else:
+            res = GATE.gate_check(data, lambda: self._source(c.task_id), max_attempts=self.max_apply_attempts)
+            for a in res.attempts:
+                if a.status == GATE.ENV_ERROR:
+                    self.log.append("apply_infra_retry", cond_id=c.cond_id, stage="applicability", attempt=a.attempt,
+                                    detail=(a.detail or a.stderr)[:200])
+            infra = res.status == GATE.ENV_ERROR
+            rec.update(status="not_evaluable_infrastructure" if infra else res.status, category=res.category,
+                       reason=res.reason, patch_sha256=res.patch_sha256, paths=res.paths, git_version=res.git_version,
+                       unmaterialized=res.unmaterialized,
+                       attempts=[{"attempt": a.attempt, "status": a.status, "command": a.command[:-1] + ["<patch_file>"],
+                                  "returncode": a.returncode, "stdout": a.stdout.replace(a.command[-1], "<patch_file>"),
+                                  "stderr": a.stderr.replace(a.command[-1], "<patch_file>"), "detail": a.detail,
+                                  "duration_s": round(a.duration_s, 4)} for a in res.attempts])
+            rec["recovered_after_retry"] = (not infra) and len(res.attempts) > 1
+            rec["functional"] = "pending" if res.status == GATE.APPLICABLE else "not_applicable"
+        rec["n_attempts"] = len(rec["attempts"])
+        write_new(d / "applicability.json", canonical(rec))
+        self.log.append("stage_written", cond_id=c.cond_id, stage="applicability", status=rec["status"])
+        if rec["status"] == "not_evaluable_infrastructure":
+            self.log.append("condition_not_evaluable", cond_id=c.cond_id, reason="environment_error", stage="applicability")
+
+    def evaluate_functional(self, evaluator=None) -> Dict[str, int]:
+        """Evalua funcionalmente los parches aplicables (solo evaluadores sinteticos en 3B.1). Reanudable, sin duplicados."""
+        ev = evaluator if evaluator is not None else self.functional_evaluator
+        if ev is None:
+            raise OrchestrationError("no hay evaluador funcional configurado")
+        FUN.check_evaluator_allowed(ev, synthetic_run=self.synthetic)
+
+        def go():
+            stats = {"evaluated": 0, "skipped": 0, "not_applicable": 0, "pending_gate": 0, "not_evaluable": 0}
+            run_id = self.manifest["run_id"]
+            for c in self.conditions:
+                d = self.out / COND_DIR / c.cond_id
+                if not (d / "applicability.json").exists():
+                    stats["pending_gate"] += 1
+                    continue
+                app = json.loads((d / "applicability.json").read_bytes())
+                if app["status"] != GATE.APPLICABLE:
+                    stats["not_applicable"] += 1
+                    continue
+                if (d / "functional.json").exists():
+                    stats["skipped"] += 1
+                    continue
+                self._functional_condition(c, d, app, ev, run_id)
+                stats["evaluated"] += 1
+                stats["not_evaluable"] += json.loads((d / "functional.json").read_bytes())["outcome"] == FUN.NOT_EVALUABLE
+            return stats
+        return self._locked(go)
+
+    def _functional_condition(self, c: Condition, d: Path, app: dict, ev, run_id: str) -> None:
+        info = self.task_info_provider(c.task_id) or {}
+        req = FUN.EvalRequest(cond_id=c.cond_id, pair_id=c.pair_id, task_id=c.task_id, method=c.method, arm=c.arm,
+                              patch_path=str(d / app["input_artifact"]), patch_sha256=app["patch_sha256"],
+                              run_label=f"{run_id}-{c.cond_id}", repo=info.get("repo"), base_commit=info.get("base_commit"))
+        started, attempts, resp = self.clock(), [], None
+        for n in range(1, self.max_apply_attempts + 1):
+            try:
+                resp = ev.evaluate(req)
+                attempts.append({"attempt": n, "outcome": resp.outcome, "detail": resp.detail[:300]})
+            except FUN.EvaluatorInfraError as exc:
+                resp = None
+                attempts.append({"attempt": n, "outcome": FUN.INFRA_ERROR, "detail": str(exc)[:300]})
+            if resp is not None and resp.outcome in (FUN.RESOLVED, FUN.NOT_RESOLVED):
+                break
+            self.log.append("apply_infra_retry", cond_id=c.cond_id, stage="functional", attempt=n)
+        ok = resp is not None and resp.outcome in (FUN.RESOLVED, FUN.NOT_RESOLVED)
+        outcome = resp.outcome if ok else FUN.NOT_EVALUABLE
+        evidence = {} if resp is None else dict(resp.evidence)
+        edata = json.dumps({"cond_id": c.cond_id, "synthetic": self.synthetic, "evidence": evidence}, sort_keys=True,
+                           ensure_ascii=False, default=str)
+        truncated = len(edata) > EVIDENCE_LIMIT
+        edata_b = (edata[:EVIDENCE_LIMIT] if truncated else edata).encode("utf-8")
+        write_new(d / "functional_evidence.json", edata_b + b"\n")
+        rec = {"cond_id": c.cond_id, "pair_id": c.pair_id, "arm": c.arm, "synthetic": self.synthetic, "stage": "functional",
+               "evaluator": {"name": ev.name, "version": ev.version, "is_synthetic": bool(ev.is_synthetic)},
+               "request": {"task_id": req.task_id, "method": req.method, "run_label": req.run_label, "repo": req.repo,
+                           "base_commit": req.base_commit, "patch_artifact": app["input_artifact"],
+                           "patch_sha256": req.patch_sha256},
+               "applicability_sha256": sha256_bytes((d / "applicability.json").read_bytes()),
+               "outcome": outcome, "category": "ok" if ok else "infrastructure_not_evaluable", "attempts": attempts,
+               "n_attempts": len(attempts), "recovered_after_retry": ok and len(attempts) > 1,
+               "evidence_sha256": sha256_bytes(edata_b + b"\n"), "evidence_truncated": truncated,
+               "started": started, "finished": self.clock()}
+        write_new(d / "functional.json", canonical(rec))
+        self.log.append("stage_written", cond_id=c.cond_id, stage="functional", status=outcome)
+        if not ok:
+            self.log.append("condition_not_evaluable", cond_id=c.cond_id, reason="evaluator_infrastructure", stage="functional")
+
+    # ---- pares y decision ----------------------------------------------------------------------
+    def pair_results(self) -> List[DEC.PairResult]:
+        """Un ``PairResult`` por (tarea, metodo) a partir de G y del formato. ``None`` = no evaluable por infraestructura."""
+        out = []
+        for c in self.conditions:
+            if c.arm != "O1":
+                continue
+            e1 = self.out / COND_DIR / f"{c.pair_id}-E1"
+            o1 = self.out / COND_DIR / c.cond_id
+
+            def passed(d: Path):
+                if (d / "generation_failed.json").exists():
+                    return None
+                f = d / "applicability.json"
+                if not f.exists():
+                    raise OrchestrationError(f"aplicabilidad pendiente en {d.name}: ejecute apply_gate()")
+                s = json.loads(f.read_bytes())["status"]
+                return None if s == "not_evaluable_infrastructure" else s == GATE.APPLICABLE
+
+            parse = None
+            if (e1 / "format_metrics.json").exists():
+                parse = bool(json.loads((e1 / "format_metrics.json").read_bytes())["parse"]["parseable"])
+            out.append(DEC.PairResult(c.task_id, c.method, passed(e1), passed(o1), parse))
+        return out
+
+    def decision_report(self) -> dict:
+        """Decision del protocolo (``decision.evaluate``); exige las 36 condiciones. Con datos sinteticos no es un resultado."""
+        rep = DEC.evaluate(self.pair_results())
+        rep["synthetic"] = self.synthetic
+        return rep
+
     # ---- verificacion --------------------------------------------------------------------------
     def verify(self, recompute: bool = False) -> VerifyReport:
         rep = VerifyReport()
@@ -552,6 +754,7 @@ class Orchestrator:
             return rep
         if manifest.get("manifest_core_sha256") != self._core_sha(manifest):
             rep.errors.append("el manifiesto fue alterado (hash del nucleo)")
+        self._manifest_synthetic = manifest.get("synthetic")
         try:
             events = EventLog.read(self.out / EVENTS)
         except (IntegrityError, FileNotFoundError) as exc:
@@ -589,10 +792,13 @@ class Orchestrator:
 
         def read_json(name):
             try:
-                return json.loads((d / name).read_bytes().decode("utf-8"))
+                obj = json.loads((d / name).read_bytes().decode("utf-8"))
             except ValueError:
                 rep.errors.append(f"{cid}: {name} no es JSON valido")
                 return None
+            if isinstance(obj, dict) and obj.get("synthetic") != self._manifest_synthetic:
+                rep.errors.append(f"{cid}: {name} mezcla resultados sinteticos y reales (synthetic != manifiesto)")
+            return obj
 
         if "prompt.txt" in names and sha256_bytes((d / "prompt.txt").read_bytes()) != rec["prompt_sha256"]:
             rep.errors.append(f"{cid}: prompt.txt no coincide con el manifiesto")
@@ -626,6 +832,7 @@ class Orchestrator:
                             rep.errors.append(f"{cid}: {pn} no coincide con normalization.json")
             elif stage in names and gen is None:
                 rep.errors.append(f"{cid}: {stage} sin generacion sellada")
+        self._verify_stage2(d, rec, names, gen, read_json, rep, recompute)
         if recompute and gen is not None and "response.txt" in names:
             response = (d / "response.txt").read_bytes().decode("utf-8")
             if "format_metrics.json" in names:
@@ -639,14 +846,89 @@ class Orchestrator:
                 if read_json("normalization.json").get("status") != r.status:
                     rep.errors.append(f"{cid}: normalization.json no se reproduce al recalcular")
 
+    def _verify_stage2(self, d: Path, rec: dict, names: set, gen, read_json, rep: VerifyReport, recompute: bool) -> None:
+        cid = d.name
+        app = None
+        if "applicability.json" in names:
+            app = read_json("applicability.json")
+            if app is not None:
+                if gen is None or app.get("response_sha256") != gen["response_sha256"]:
+                    rep.errors.append(f"{cid}: applicability.json no corresponde a la respuesta sellada")
+                art = app.get("input_artifact")
+                if art:
+                    if art not in names or sha256_bytes((d / art).read_bytes()) != app.get("patch_sha256"):
+                        rep.errors.append(f"{cid}: el parche de entrada de G no coincide con applicability.json ({art})")
+                elif app.get("status") == GATE.APPLICABLE:
+                    rep.errors.append(f"{cid}: applicability.json aplicable sin parche")
+                if recompute and art and art in names and app.get("status") != "not_evaluable_infrastructure":
+                    res = GATE.gate_check((d / art).read_bytes(), lambda: self._source(rec["task_id"]),
+                                          max_attempts=self.max_apply_attempts)
+                    if res.status != GATE.ENV_ERROR and res.status != app["status"]:
+                        rep.errors.append(f"{cid}: applicability.json no se reproduce al recalcular G")
+        if "functional.json" in names:
+            fun = read_json("functional.json")
+            if app is None or app.get("status") != GATE.APPLICABLE:
+                rep.errors.append(f"{cid}: functional.json sin aplicabilidad aprobada por G")
+            elif fun is not None:
+                if fun["request"]["patch_sha256"] != app["patch_sha256"]:
+                    rep.errors.append(f"{cid}: functional.json evalua otro parche distinto del aprobado por G")
+                if fun.get("applicability_sha256") != sha256_bytes((d / "applicability.json").read_bytes()):
+                    rep.errors.append(f"{cid}: functional.json no corresponde a applicability.json")
+                if not fun["request"]["run_label"].startswith("p1-"):
+                    rep.errors.append(f"{cid}: identificador de evaluacion no propio de P1")
+                if "functional_evidence.json" not in names or \
+                        sha256_bytes((d / "functional_evidence.json").read_bytes()) != fun.get("evidence_sha256"):
+                    rep.errors.append(f"{cid}: functional_evidence.json no coincide con functional.json")
+        elif "functional_evidence.json" in names:
+            rep.errors.append(f"{cid}: functional_evidence.json sin functional.json")
+        if "applicability.json" in names:
+            ev = d / "functional_evidence.json"
+            if ev.exists():
+                read_json("functional_evidence.json")
+
     # ---- resumen -------------------------------------------------------------------------------
+    def _summary_stage2(self, d: Path, r: dict, out: dict, not_eval: set) -> None:
+        if not (d / "generation.json").exists():
+            return
+        st = out["stages"]
+        if not (d / "applicability.json").exists():
+            if (d / "conversion.json").exists() or (d / "normalization.json").exists():
+                st["applicability"]["pending"] += 1
+                out["by_arm"][r["arm"]]["pending"] += 1
+            return
+        a = json.loads((d / "applicability.json").read_bytes())
+        st["applicability"][a["status"]] += 1
+        out["by_arm"][r["arm"]][a["status"]] += 1
+        out["gate_infrastructure"]["retries"] += max(a["n_attempts"] - 1, 0)
+        out["gate_infrastructure"]["recovered_after_retry"] += bool(a.get("recovered_after_retry"))
+        if a["status"] == "not_evaluable_infrastructure":
+            not_eval.add(r["cond_id"])                                    # afecta a la decision: el par queda excluido
+        if a["status"] != GATE.APPLICABLE:
+            st["functional"]["not_applicable"] += 1
+            return
+        if not (d / "functional.json").exists():
+            st["functional"]["pending"] += 1
+            return
+        f = json.loads((d / "functional.json").read_bytes())
+        st["functional"][f["outcome"]] += 1
+        out["functional_infrastructure"]["retries"] += f["n_attempts"] - 1
+        out["functional_infrastructure"]["recovered_after_retry"] += bool(f["recovered_after_retry"])
+        out["functional_infrastructure"]["not_evaluable"] += f["outcome"] == FUN.NOT_EVALUABLE   # NO excluye el par (sin criterio)
+
     def summary(self) -> dict:
         """Resumen separado por etapa y por tipo de error (modelo / infraestructura / no evaluable)."""
         cdir = self.out / COND_DIR
         manifest = json.loads((self.out / MANIFEST).read_bytes().decode("utf-8"))
         out = {"run_id": manifest["run_id"], "synthetic": manifest["synthetic"], "n_conditions": manifest["n_conditions"],
                "stages": {"generation": 0, "format_metrics": 0, "conversion_E1": 0, "normalization_O1": 0,
-                          "applicability": "pending_phase_3B", "resolution": "pending_phase_3B"},
+                          "applicability": {"applicable": 0, "not_applicable": 0, "not_evaluable_infrastructure": 0, "pending": 0},
+                          "functional": {"resolved": 0, "not_resolved": 0, "not_evaluable": 0, "pending": 0,
+                                         "not_applicable": 0}},
+               "by_arm": {a: {"applicable": 0, "not_applicable": 0, "not_evaluable_infrastructure": 0, "pending": 0}
+                          for a in ARMS},
+               "gate_infrastructure": {"retries": 0, "recovered_after_retry": 0},
+               "functional_infrastructure": {"retries": 0, "recovered_after_retry": 0, "not_evaluable": 0,
+                                             "pause_recommended": False},
                "model_output_errors": {}, "infrastructure": {"api_failures": 0, "apply_retries": 0, "recovered_after_retry": 0},
                "not_evaluable_conditions": [], "format": {"external_fences": 0, "inner_fences": 0, "wraps_response": 0,
                                                           "fences_union": 0, "original_metric_a": 0,
@@ -690,6 +972,10 @@ class Orchestrator:
                     if stage == "conversion.json":
                         out["infrastructure"]["apply_retries"] += s["n_attempts"] - 1
                         out["infrastructure"]["recovered_after_retry"] += bool(s["recovered_after_retry"])
+            self._summary_stage2(d, r, out, not_eval)
+        fx = out["functional_infrastructure"]
+        evaluated = out["stages"]["functional"]["resolved"] + out["stages"]["functional"]["not_resolved"] + fx["not_evaluable"]
+        fx["pause_recommended"] = bool(evaluated) and fx["not_evaluable"] / evaluated > 0.25      # regla del protocolo (25 %)
         out["not_evaluable_conditions"] = sorted(not_eval)
         pairs = {r["pair_id"] for r in manifest["conditions"] if r["cond_id"] in not_eval}
         out["excluded_pairs"] = sorted(pairs)

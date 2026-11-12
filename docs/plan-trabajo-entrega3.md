@@ -424,21 +424,32 @@ sección 15. **El experimento NO está aprobado ni ejecutado**; esta nota no lo 
 
 - **Fase técnica 3A completada (12/11/2026; sin ejecución):** orquestación aislada de las 72 generaciones probada con un cliente
   falso y un simulacro sintético (303 pruebas técnicas en total, ninguna es un resultado experimental); salidas en
-  `pilot_p1_runs/` (ignorada por Git); mejora neta y vallas aclaradas en el protocolo. **Pendiente (fase 3B):** cliente real, filtro G,
+  `pilot_p1_runs/` (ignorada por Git); mejora neta y vallas aclaradas en el protocolo. **Pendiente al cierre de 3A (fase 3B):** cliente real, filtro G,
   evaluación funcional, verificación en Linux/Docker, aprobación y congelación del protocolo, y la ejecución; sin generaciones ni API
   reales hasta autorización.
+- **Fase técnica 3B.1 implementada, validada y revisada (12/11/2026; sin ejecución con generaciones reales; protocolo pendiente de aprobación):** filtro común G (misma política
+  para `O1n` y `E1`, sobre copias temporales) e integración técnica de la evaluación funcional con evaluadores **sintéticos**,
+  con aislamiento verificado: 364 pruebas superadas, 0 fallidas, 0 omitidas (`python -B -m unittest discover -s pilot_p1/tests -t .`; detalle en `pilot_p1/README.md`).
+  Hallazgo documentado: el `response.strip() + "\n"` del generador original puede truncar un diff que termine en una línea de
+  contexto en blanco; se conserva y N no lo repara. Ninguna de estas pruebas es un resultado del piloto. **Pendiente para 3B.2
+  (no autorizada):** adaptador del evaluador oficial en un entorno aislado, cliente real de la API, G y evaluación sobre salidas
+  reales, verificación en Linux/Docker, revisión del efecto de `strip()` sobre `O1n` y aprobación/congelación del protocolo.
 - **Qué se propone (resumen):** un piloto pequeño del formato de edición alternativo que pidió el director: 12 tareas × 3
   estrategias = 36 condiciones, con cuatro brazos (originales `O0`, nueva generación con el prompt original `O1`, `O1`
-  normalizado `O1n` y formato de edición `E1`), comparación primaria `E1` frente a `O1n`, una generación por condición y sin
-  reintentos, y criterios de éxito y de abandono fijados antes de ejecutar. Como análisis secundario opcional, la recuperación
+  normalizado `O1n` y formato de edición `E1`), comparación primaria `E1` frente a `O1n`, una generación por condición y brazo
+  generado y sin reintentos, y criterios de éxito y de abandono fijados antes de ejecutar. Las **72 generaciones nuevas** corresponden
+  a `O1` y `E1` (12 tareas × 3 estrategias × 2 generaciones); `O1n` no se genera: se obtiene normalizando las salidas de `O1`, y `O0`
+  son los resultados originales reutilizados, sin regenerar. Como análisis secundario opcional, la recuperación
   mecánica de los 11 parches (`S1`), siempre separada de P1.
 - **Hallazgo que condiciona la propuesta:** el formato no corrige que el modelo cite código que no existe ni que edite ficheros
   que no vio; de los 96 fallos de contexto o corrupt, solo 20 anclan todos sus hunks por contenido en el repositorio. La cifra
   "50 de 96" de visibilidad de ficheros no es un techo de convertibilidad (sección 15.2).
-- **Fechas propuestas (no aprobadas):** nada experimental antes de la entrega del **07/12/2026**; completar la implementación pendiente (orquestación, filtro G, evaluación) y congelar el
-  protocolo el 8–12/12; ejecutar el 14–18/12; decisión hacia el 20/12; solo si hay éxito, una ampliación a las 50 tareas el
+- **Fechas propuestas (no aprobadas):** nada experimental antes de la entrega del **07/12/2026**; abordar las tareas técnicas pendientes de 3B.2 (adaptador del evaluador oficial en un entorno
+  aislado, cliente real de la API, verificación en Linux/Docker y revisión del efecto de `strip()` sobre `O1n`; la orquestación y el
+  filtro G ya están implementados en 3A y 3B.1) y congelar el protocolo el 8–12/12; ejecutar el 14–18/12; decisión hacia el 20/12; solo si hay éxito, una ampliación a las 50 tareas el
   5–16/1 con protocolo propio; integrar en la memoria el 26/1–2/2; **predepósito el 03/02/2027**. La Fase 2 original de este plan
-  (13–15/11, con decisión el 15/11) no se ejecutaría en esas fechas si se aprueba esta propuesta; hasta entonces sigue pendiente.
+  (13–15/11, con decisión el 15/11) no se ejecutaría en esas fechas si se aprueba esta propuesta; hasta entonces sigue pendiente. **Estas fechas son una propuesta no aprobada y esta nota no autoriza ninguna
+  ejecución experimental** (ni generaciones reales, ni llamadas a la API, ni evaluaciones).
 - **Prioridad:** proteger el tiempo de revisión del Word y no ampliar el experimento sin aprobación.
 - **Decisiones pendientes:** aprobar o modificar P1 (formato, selección, brazos y umbrales); incluir o no S1; aprobar el
   calendario; comentarlo o no con el director antes del 7/12; etiquetar en Git los resultados originales.

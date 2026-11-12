@@ -1940,3 +1940,60 @@ llamada a la API, ni filtro G, ni evaluación funcional**; los resultados origin
   (`6dbd0c9f9365690c`) sin cambios.
 
 Detalle: `pilot_p1/README.md` y `docs/downstream-patch-diagnostics.md` (15.4).
+
+
+---
+
+## Fase 3B.1 de P1 (2026-11-12): filtro común G e integración técnica de la evaluación funcional
+
+**Preparación técnica; no es una ejecución del piloto P1** (D-005 sigue sin aprobar). **No se realizó ninguna generación real, ni
+llamada a la API, ni evaluación con el evaluador oficial; no se usó la red ni se instalaron o descargaron dependencias o
+repositorios**; los resultados originales no cambian. **Estado: implementada y validada técnicamente (364 pruebas superadas,
+0 fallidas, 0 omitidas) y revisada; P1 no se ha ejecutado con generaciones reales y su protocolo sigue pendiente de aprobación.**
+
+- **Filtro común G** (`pilot_p1/gate.py`): `git apply --check -p1` sobre una copia temporal de los ficheros que toca el parche
+  (blobs del `base_commit` leídos con `git cat-file`), con el parche pasado byte a byte y la misma función para `O1n` y `E1`
+  (`gate_check` no recibe el brazo). Los artefactos del parche original, el normalizado (`o1n.patch`) y el convertido
+  (`diff.patch`) se conservan por separado. Aplicabilidad no es resolución funcional.
+- **Evaluación funcional integrada con evaluadores sintéticos** (`pilot_p1/functional.py` y etapas del orquestador): interfaz
+  inyectable, solo evaluador falso; solo se evalúan los parches que G aprobó; estados `resolved`, `not_resolved`, `not_evaluable`;
+  hasta 3 intentos ante errores de infraestructura (sin excluir el par de la decisión), regla de pausa si más del 25 % falla por
+  infraestructura y reanudación sin duplicados. No existe ningún adaptador del evaluador oficial.
+- **Garantías de aislamiento:** el evaluador original no se reutiliza (hace `git fetch` y `git checkout --force` sobre `repos/`,
+  usa la red, escribe en `logs/` con `run_id` fijo y parchea `Path.write_text` globalmente); G solo trabaja en directorios
+  temporales fuera del proyecto y de cualquier árbol git; ningún módulo de `pilot_p1` importa el evaluador original, `docker`,
+  `swebench` ni librerías de red; se impide mezclar registros sintéticos y reales; ningún artefacto se sobrescribe.
+- **Hallazgo (`response.strip() + "\n"`):** el generador original guarda la respuesta con ese tratamiento, de modo que un diff que
+  acaba en una línea de contexto en blanco la pierde y el hunk queda truncado (parche corrupto). Se conserva el comportamiento
+  original (`O1`); el normalizador N lo detecta (`unchanged_malformed`) pero **no repara el hunk**. Fue la causa de un parche `O1`
+  no aplicable inesperado en el simulacro sintético. No se ha medido cuántos de los 150 parches originales se vieron afectados.
+- **Reproducibilidad:** `python -B -m unittest discover -s pilot_p1/tests -t .` (Windows 11, Python 3.14.4, git 2.52.0.windows.1; sin credenciales ni red). Resultado:
+  `Ran 364 tests … OK` en ≈ 32 min (303 de las fases 1 a 3A + 61 nuevas: 19 de G y 42 de etapas, evaluación y simulacro de 72
+  condiciones con respuestas sintéticas). Los veredictos del simulacro se deducen de cómo se construyeron las respuestas sintéticas:
+  **no son resultados del piloto**. Integridad: SHA-256 idénticos en los 150 parches, `results/` y los 21 repositorios.
+- **Limitaciones:** G mide exactamente `git apply --check` (no detecta, por ejemplo, un alta bajo un directorio que en realidad es un
+  fichero); solo se ha probado en Windows (sin Linux/Docker); la clasificación de errores de git usa una lista acotada de mensajes.
+- **Pendiente (3B.2, no autorizado):** adaptador del evaluador oficial en un entorno aislado, cliente real de la API, G y evaluación
+  sobre salidas reales, revisar el efecto de `strip()` sobre `O1n`, verificación en Linux/Docker, y aprobación y congelación del
+  protocolo.
+
+Detalle técnico y reproducción: `pilot_p1/README.md` (fase 3B.1).
+
+
+---
+
+## Nota sobre los datos sintéticos de las fases 3A y 3B.1 (2026-11-12)
+
+Registro de cómo se construyeron los datos sintéticos de los simulacros (detalle técnico y referencias a archivos y funciones en
+`pilot_p1/README.md`, apartado 11). **No hubo generaciones reales del LLM, ni llamadas a la API, ni ejecución del evaluador oficial.**
+
+- **Respuestas de `O1` y `E1`:** fabricadas a partir del primer fragmento de contexto de los prompts reales de las 12 tareas seleccionadas
+  (plantilla determinista, con variaciones de vallas, espacios y CRLF); solo añaden un comentario, no intentan resolver la incidencia.
+- **Entradas reales, solo en lectura:** prompts, repositorios (`git ls-tree` / `git cat-file`) y algunos de los 150 parches originales.
+- **Evaluador funcional simulado:** el veredicto lo determina el hash del parche; no ejecuta las pruebas oficiales.
+- **Errores de infraestructura:** inyectados deliberadamente para comprobar su tratamiento (reintentos, no evaluables, exclusión de pares).
+- **Alcance de las 364 pruebas:** verifican el comportamiento esperado de la infraestructura en los escenarios ensayados; **no demuestran
+  mejoras de aplicabilidad ni de resolución funcional**, y los veredictos del simulacro se deducen de cómo se construyeron las respuestas.
+
+**Tarea pendiente:** Valorar la incorporación de la validación sintética de P1 a la memoria final del TFM, diferenciándola de los
+resultados experimentales.

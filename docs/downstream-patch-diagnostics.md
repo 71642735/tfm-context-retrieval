@@ -960,8 +960,12 @@ repitieron con `autocrlf=false`, así que el efecto de `autocrlf` sobre ellos no
   indica que **todos** los ficheros que el parche edita estaban en el contexto proporcionado al modelo, y 46 de los 96 que
   intentaban modificar **al menos un fichero ausente** del contexto. Son cifras de **visibilidad de ficheros**, no de la
   posibilidad de convertir los parches mediante otro formato: ni "50" es un techo de lo que un formato de edición podría
-  arreglar ni "46" un suelo. La convertibilidad se analiza por anclaje de contenido en la sección 15.2. Que un formato
-  de edición ayude, y hasta dónde, **es una hipótesis** y exigiría nuevas generaciones, fuera del plazo del diagnóstico.
+  arreglar ni "46" un suelo. El análisis de anclaje de contenido (sección 15.2) aporta una medida **distinta**: de los 96,
+  **20** tienen todos sus hunks anclados en el repositorio, **24** solo algunos, **51** ninguno y **1** no es verificable.
+  Todas estas cifras son **exploratorias** y **no predicen directamente** la aplicabilidad ni la resolución funcional de
+  futuras generaciones. Que un formato de edición ayude, y hasta dónde, **es una hipótesis** y exigiría nuevas
+  generaciones, fuera del plazo del diagnóstico. El piloto P1 y el análisis secundario S1 son **propuestas, no
+  experimentos autorizados ni ejecutados**.
 
 ### D-004 · 2026-11-12 · Ejecución de la matriz completa
 
@@ -1124,9 +1128,11 @@ ficheros*, no de *convertibilidad*. Hay que separar dos cosas:
 
 Por tanto, "50" no es ni techo ni suelo: 3 parches con ficheros no visibles sí anclan (el modelo reprodujo el código de
 memoria) y 1 de los 11 que aplican no tenía ningún fichero en el contexto; y entre los 50 visibles, 33 no anclan del todo.
-**La cota exploratoria de lo que podría convertir un formato anclado por contenido sobre las salidas existentes es del orden de
-20 de 96 (21 %), o 44 de 96 (46 %) contando los parches en los que anclan algunos hunks.** Para generaciones nuevas es
-desconocida: el modelo podría citar el texto con más cuidado cuando se le pide copiarlo literalmente **[HIPÓTESIS]**.
+**Como indicio exploratorio, 20 de los 96 parches existentes (21 %) tienen todos sus hunks completamente anclados al
+contenido del repositorio, y 44 de 96 (46 %) si se cuentan también los parches en los que anclan algunos hunks.** Es una
+descripción de las salidas ya generadas: **no** es un límite de convertibilidad ni predice cuántos serían aplicables tras una
+transformación, ni cuántos podrían recuperarse con nuevas generaciones. Para generaciones nuevas el resultado es desconocido:
+el modelo podría citar el texto con más cuidado cuando se le pide copiarlo literalmente **[HIPÓTESIS]**.
 
 ### 15.3 Hipótesis (no verificadas)
 

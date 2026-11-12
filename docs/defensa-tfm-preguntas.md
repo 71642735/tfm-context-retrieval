@@ -374,11 +374,13 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > Hay dos líneas de naturaleza distinta. **A. Recuperar mecánicamente** parches ya generados, normalizando rutas y finales
 > de línea: según el diagnóstico, 11 de los 141 pasarían la comprobación, pero no sabemos si resolverían la tarea. **B.
 > Probar un formato de edición alternativo** (bloques de búsqueda y reemplazo literales que el pipeline convierte en
-> parche), con el mismo contexto y modelo. B es una **hipótesis**: de los 96 fallos de contexto o corrupt, en 50 el modelo
-> vio todos los ficheros que modificó y en 46 editó ficheros que no vio; además, solo 20 de los 96 anclan todos sus hunks
-> por contenido en el repositorio, así que un formato de edición arreglaría lo mecánico, no el texto que el modelo cita mal
-> o no vio. El diagnóstico D-004 está **cerrado**; el protocolo del piloto (D-005) está preparado, pero **el piloto no está
-> aprobado ni ejecutado**.
+> parche), con el mismo contexto y modelo. B es una **hipótesis**. De los 96 fallos de contexto o corrupt, en 50 el modelo
+> vio todos los ficheros que modificó y en 46 intentó editar al menos uno que no vio; y, como dato distinto, solo 20 de los
+> 96 tienen todos sus hunks anclados por contenido en el repositorio (24 algunos y 51 ninguno). Son cifras exploratorias que
+> **no predicen** cuánto mejoraría un formato nuevo: un formato de edición podría corregir problemas mecánicos (rutas,
+> cabeceras, conteos), pero no hace que el texto citado exista ni que el modelo vea el fichero (la diferencia entre ver,
+> citar, aplicar y resolver se explica en 7.4). El diagnóstico D-004 está **cerrado**; el protocolo del piloto P1 (D-005) y el
+> análisis secundario S1 son **propuestas**: **no están aprobados ni ejecutados**.
 
 *Para estudiarla con más detalle: guía de estudio, **P16** (sección 8.5).*
 
@@ -475,12 +477,38 @@ funcional. Los resultados originales no cambian.
 *Para estudiarla con más detalle: guía de estudio, **P10** (sección 8.4).*
 
 ### 7.4 ¿De quién es la culpa de los 96 parches con contexto o estructura incorrectos?
-🟡 **PARCIAL**
+🟡 **PARCIAL** (ampliada el 2026-11-12)
 
 > No lo atribuyo automáticamente al modelo. Pudo influir el modelo, el prompt (solo pide un unified diff y el modelo ve
 > fragmentos), el formato de salida y el procedimiento (recuperación estática, sin acceso al repositorio). Como dato
 > exploratorio a nivel de fichero: en 46 de los 96 el parche edita al menos un fichero que no estaba en el contexto
 > recuperado; en 50 todos sus ficheros sí estaban. No lo he comprobado a nivel de línea ni frente al gold context.
+
+**Cuatro cosas que no hay que confundir** (cada una exige más que la anterior):
+
+| Nivel | Pregunta | Qué dicen los datos de estos 96 (exploratorio) |
+|---|---|---|
+| 1. El modelo **vio el fichero** | ¿Estaba en el contexto recuperado? | 50 vieron todos sus ficheros; 46 intentaban editar al menos uno que no vieron |
+| 2. El contenido citado **existe** en ese fichero | ¿Aparece, tal cual, el texto que el parche cita (contexto y líneas eliminadas)? | 20 tienen todos sus hunks anclados; 24 solo algunos; 51 ninguno; 1 no verificable |
+| 3. El parche **puede aplicarse** | ¿Pasa `git apply --check`? | Estos 96 no (son los que fallan por contexto o estructura); los 11 que sí pasan no están entre ellos |
+| 4. La solución **resuelve** la incidencia | ¿Superan las pruebas de la tarea? | No medido para ninguno de ellos; solo 2 de los 150 parches resolvieron |
+
+**Ejemplo sencillo** (inventado para entender, no es un caso real). El modelo recibe el fichero `ventas.py`, donde la función
+`calcular_total` termina en `return total * (1 + impuesto)`. Su parche quita la línea `return total + impuesto`.
+- Nivel 1: **cumplido**, vio el fichero.
+- Nivel 2: **falla**, porque esa línea no existe tal cual en `ventas.py`; haber visto el fichero no garantiza citarlo bien.
+- Nivel 3: por eso Git no puede aplicar el parche, aunque la idea fuera buena.
+- Si hubiera citado la línea correcta, el parche se aplicaría (nivel 3), pero solo las pruebas dirían si arregla el error
+  (nivel 4). Y si nunca hubiera recibido `ventas.py`, solo podría acertar adivinando el código de memoria.
+
+Por eso, en los datos, que 50 de los 96 vieran todos sus ficheros no significa que esos 50 tuvieran el código bien citado
+(solo 17 de ellos anclan del todo), y que 46 no los vieran no significa que fueran casos perdidos (3 de ellos sí anclan).
+
+**Respuesta oral.** «Hay cuatro cosas distintas: que el modelo haya visto el fichero, que el texto que cita el parche exista
+de verdad en él, que el parche pueda aplicarse y que la solución resuelva la incidencia. En los 96 fallos, 50 habían visto
+todos sus ficheros pero solo 20 tenían todos sus bloques anclados en el repositorio. Por eso no atribuyo el fallo
+automáticamente al modelo ni solo al formato, y no afirmo nada sobre la resolución. Son análisis exploratorios, a nivel de
+fichero y de contenido, y no predicen lo que ocurriría con nuevas generaciones».
 
 *Para estudiarla con más detalle: guía de estudio, **P12** (sección 8.4).*
 
@@ -538,7 +566,7 @@ Incidencia + repositorio
 - Diagnóstico completo: `docs/downstream-patch-diagnostics.md` y `diagnostics/downstream-patches/`.
 - Datos de la matriz: `diagnostics/downstream-patches/data/matriz_completa_20261112T000024Z/` (`cells.jsonl`, `controls.json`,
   `analisis.md`, `manifest.json`…). Los análisis `analisis_anclaje_contenido.json` y `analisis_referencia.json` y los modos
-  `--anclaje-contenido` y `--referencia` del script de análisis **todavía no están en un commit**.
+  `--anclaje-contenido` y `--referencia` del script de análisis ya están versionados (commit `67d391b`).
 
 ### 8.1 Bloque 1. El problema que nos señaló Pablo
 
@@ -800,15 +828,16 @@ Por tanto, **46 de 96 intentaban modificar al menos un fichero no proporcionado 
 a programar**. El prompt le decía «usa solo el contexto recuperado» y, aun así, el modelo editó ficheros que no vio. De hecho,
 85 de los 96 editan el mismo fichero que la solución de referencia, y **38 de ellos sin que ese fichero estuviera en el
 contexto**: el modelo parecía saber qué fichero tocar (por ejemplo, por la traza de la incidencia) pero la recuperación no se
-lo había dado. Eso es un problema de **recuperación**, no de formato.
+lo había dado. Eso apunta a un problema de **recuperación** y no de formato, aunque la causa no está demostrada.
 
 **Qué no se puede decir.** Que un fichero no esté en el contexto **no demuestra por sí solo** que esa sea la causa del fallo.
 Es un análisis a nivel de **fichero**, no de línea. Otro dato exploratorio: solo 20 de los 96 anclan todos sus hunks por
-contenido en el repositorio (51 no anclan ninguno), de modo que incluso con los ficheros delante muchos parches citan mal el
-código.
+contenido en el repositorio (24 anclan algunos y 51 ninguno; 1 no es verificable), de modo que incluso con los ficheros
+delante muchos parches citan mal el código. La diferencia entre ver el fichero, citar contenido que existe, aplicar y
+resolver se explica con un ejemplo en la pregunta 7.4. Todo esto es exploratorio y no predice nuevas generaciones.
 
-**Evidencia.** `analisis_ficheros_contexto.json`, `analisis_referencia.json` y `analisis_anclaje_contenido.json` (estos dos
-últimos aún sin commit).
+**Evidencia.** `analisis_ficheros_contexto.json`, `analisis_referencia.json` y `analisis_anclaje_contenido.json`, todos en
+`data/matriz_completa_20261112T000024Z/`.
 
 ### 8.5 Bloque 5. Limitaciones y preguntas difíciles del tribunal
 
@@ -939,7 +968,7 @@ aprobado».
 - [ ] Si se hace la prueba de significación, reescribir 4.2 y la conclusión 6.2.1.
 - [x] Efecto de CRLF y prefijos cuantificado con la matriz completa: 3.2, 3.4, 3.6, 3.8 y 4.4 actualizadas (2026-11-12). Pendiente: si se ejecutara el evaluador oficial o uno tolerante, reescribir 3.4, 3.6 y la sección 7.
 - [ ] Actualizar la sección 7, la guía (sección 8) y la tabla de cifras si se corrige alguna cifra al incorporar el diagnóstico a la memoria.
-- [ ] Hacer commit de los análisis `--anclaje-contenido` y `--referencia` y de sus JSON; después, retirar la advertencia «aún sin commit» de la sección 8.
+- [x] Análisis `--anclaje-contenido` y `--referencia` y sus JSON versionados en el commit `67d391b`.
 - [x] Clasificación manual de los 24 sin diff contrastada y corregida en `docs/downstream-patch-diagnostics.md` (sección 2, 2026-11-12). Pendiente solo: pasarla a un script si se quiere reproducible.
 - [ ] Contrastar las cifras con la versión final de la memoria (los números cambiarán si se repite el experimento).
 - [ ] Comprobar si el director espera que la memoria final recoja estos hallazgos.

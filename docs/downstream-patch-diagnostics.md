@@ -1151,6 +1151,13 @@ edición (EDIT-v1) aumenta, frente al formato original con las normalizaciones m
 se convierte en un parche que pasa el filtro de aplicabilidad? Secundarias: embudo de conversión, resolución funcional entre los
 que llegan y causas de fallo según visibilidad y anclaje.
 
+**Alcance de la comparación primaria (decisión del 12/11/2026).** `E1` frente a `O1n` evalúa el efecto del **formato de edición**
+(y de su conversión determinista) sobre la proporción de salidas que se convierten en parches aplicables, manteniendo
+constantes el modelo, la configuración, las tres estrategias de recuperación y el contexto recuperado (idéntico en ambos brazos).
+**No evalúa ni demuestra mejoras de recuperación**: la recuperación no se modifica y no se vuelve a ejecutar. Un resultado
+favorable a `E1` indicaría un efecto del formato en esta muestra pequeña, no una mejora de BM25, UniXcoder o RRF. `N` se mantiene
+conservador (no repara contadores ni hunks), de modo que `O1n` no recibe correcciones que favorezcan artificialmente a ningún brazo.
+
 **Selección reproducible de tareas.** 12 tareas de `results/final_tasks.csv` (50), estratificadas por fuente de forma
 proporcional (Verified 29, Poly 12 y Pro 9 → 7, 3 y 2). Dentro de cada fuente, las tareas se ordenan por el SHA-256 de
 `"42:<original_inst_id>"` y se toman las primeras *n*. Lista resultante (36 condiciones = 12 tareas × 3 estrategias; hash de
@@ -1161,6 +1168,14 @@ la lista, `sha256` de los identificadores unidos por saltos de línea y truncado
 | Verified (7) | `scikit-learn-13439`, `pytest-5809`, `xarray-6992`, `pytest-5262`, `matplotlib-24177`, `matplotlib-24627`, `sympy-19637` |
 | Poly (3) | `transformers-29675`, `yt-dlp-4841`, `keras-18871` |
 | Pro (2) | `qutebrowser-16de0540…` (instancia completa en `final_tasks.csv`), `ansible-7e1a3476…` (ídem) |
+
+**Aclaración de implementación (12/11/2026; `pilot_p1/select_tasks.py`; no cambia la selección).** Los nombres de la tabla están
+abreviados: el criterio de orden y el hash usan los `original_inst_id` **completos** de `final_tasks.csv` (por ejemplo
+`scikit-learn__scikit-learn-13439` o `instance_ansible__ansible-7e1a3476…-v390e508…`). La lista del hash se forma en el orden
+Verified, Poly, Pro (cada grupo en su orden de SHA-256), unida por saltos de línea y **sin salto de línea final**. Recalculada
+con el dataset local, la selección conserva el hash **`6dbd0c9f9365690c`**. El manifiesto con las 50 tareas, su fuente, la regla
+y el hash está en `pilot_p1/data/task_selection.json`; si el hash no coincidiera, el código se detiene en lugar de sustituir
+tareas.
 
 Tres de ellas ya tienen un parche aplicable original (`pytest-5809`, `matplotlib-24177`, `ansible-7e1a…`). La lista se congela
 con su hash antes de generar nada; no se sustituyen tareas según resultados.
@@ -1178,11 +1193,31 @@ Comparación **primaria: `E1` frente a `O1n`**, pareada por condición, con recu
 con O1n). Secundarias: `O1n` frente a `O1` (efecto de N), `O1` frente a `O0` (ruido de re-muestreo; para comparar con `O0` se
 aplica N también a los originales) y `E1` frente a `O1`. Es descriptivo; no hay contrastes de significación.
 
+**Aclaraciones sobre N y el número de generaciones (12/11/2026; `pilot_p1/normalizer.py`).** El normalizador N solo añade `a/` en
+las líneas `---` y `b/` en las `+++` cuando **todas** las cabeceras del parche carecen de ellos y son coherentes entre sí (en una
+alta de fichero solo `+++`). **No repara hunks, contadores, números de línea ni contenido**, es idempotente y, ante cualquier
+ambigüedad o mala formación (cabeceras mixtas, `diff --git` incoherente, rutas entre comillas, renombrados, contadores que no
+cuadran, parche sin hunks), devuelve el parche **sin cambios** con un estado explícito. Por eso `O1n` no corrige salidas con
+contadores rotos o cabeceras truncadas; es deliberado, para no favorecer al brazo original. Las generaciones nuevas son `O1` y `E1`
+para cada una de las 36 condiciones: 12 tareas × 3 métodos × 2 brazos = **72 generaciones**; `O0` no se regenera y `O1n` se deriva
+de `O1` sin llamar al modelo. **La comparación primaria sigue siendo `E1` frente a `O1n`.**
+
 **Mismo modelo, contexto y configuración.** `gemini-3.5-flash-lite`, K = 10, mismos fragmentos (la parte "ISSUE y RETRIEVED
-CONTEXT" del prompt es idéntica byte a byte a la del `prompt.txt` original; solo cambia el bloque INSTRUCTIONS), 4096 tokens
+CONTEXT" del prompt es idéntica byte a byte a la del prompt original **en memoria** [aclarado el 12/11/2026, ver abajo]; solo cambia el bloque INSTRUCTIONS), 4096 tokens
 de salida, razonamiento `minimal` y parámetros por defecto como en el original. Se registran el identificador del modelo, la
 fecha y el hash del prompt de cada brazo. Los pares (`O1`, `E1`) de una condición se generan consecutivamente para reducir la
 deriva temporal.
+
+**Aclaración sobre la reconstrucción de O1 y los finales de línea (12/11/2026; `pilot_p1/prompts.py`).** "Idéntica byte a byte"
+se refiere al prompt **en memoria** que construía `build_prompt` y se enviaba al modelo, **no** a los bytes del `prompt.txt`
+guardado en Windows. Ese fichero se escribió con `Path.write_text` (`generation.py:166`), que traduce cada `\n` a `\r\n`: en los
+150 ficheros todo `\n` va precedido de `\r`. O1 se reconstruye deshaciendo exactamente esa traducción (cada `\r\n` del fichero
+vuelve a `\n`), sin nueva recuperación BM25, UniXcoder ni RRF. Un fragmento de código que ya contenía `\r\n` se guardó como
+`\r\r\n` (108 de los 150 prompts) y se recupera como `\r\n`: **los CRLF internos del contexto se conservan; no se normalizan
+indiscriminadamente los finales de línea**. Comprobado en las 150 condiciones: la ida y vuelta con `write_text` es exacta, el
+`build_prompt` real reproduce el prompt reconstruido, y O1 y E1 comparten issue, fragmentos, orden y parte compartida (se registran
+sus hashes). Los prompts nuevos se guardan sin traducción de saltos de línea (`write_bytes`). Los bytes realmente enviados por
+red no se pueden comprobar porque no se guardaron.
 
 **Formato EDIT-v1 (una única variante, una única iteración del prompt).** Se mantienen las frases de información del original
 ("usa solo la descripción y el contexto", "no asumas acceso a otros ficheros", "cambio mínimo") y se sustituye "devuelve solo un
@@ -1191,12 +1226,48 @@ unified diff" por: bloques `FILE: <ruta tal como aparece en una línea File:>` s
 coincidir exactamente y ser lo más corto posible pero único; sin bloques Markdown ni explicaciones. El texto exacto se versiona
 y se fija por hash antes de ejecutar. Variantes (función completa reescrita, etc.) quedan fuera del piloto.
 
+**Aclaración (12/11/2026; `pilot_p1/instructions_edit_v1.txt`).** Las instrucciones E1 incluyen también la regla de **creación de
+ficheros nuevos**: un bloque con SEARCH vacío (sin líneas entre `<<<<<<< SEARCH` y `=======`) y el contenido completo del fichero
+en el REPLACE, solo para una ruta que no existe en el repositorio. Es lo que ya admiten el parser y el aplicador (no es una
+sintaxis nueva) y corresponde a la frase del aplicador sobre ficheros nuevos. El texto congelado tiene **SHA-256 definitivo
+`3577b64d079143810dd018d805677146fe515bc49904d2862dded53f8db293be`**; la primera versión congelada, sin la regla de creación
+(`ae053cec644edcf53308bec657f68b2a687a1cc9ad27728780fdbf9ab29246a8`), queda sustituida. Las demás reglas del formato no cambian.
+
 **Aplicador determinista (versionado y probado antes, sin LLM).** Para cada bloque: leer el fichero del `base_commit` con
 `git cat-file` (finales de línea LF), exigir que el SEARCH coincida **una sola vez** (nivel 1: líneas exactas ignorando espacios
-finales; nivel 2: ignorando sangrado, solo si es único; sin ninguna coincidencia aproximada más). Estados: `parse_error`,
-`file_not_found`, `search_not_found`, `ambiguous_match`, `patch_ready`. Con los reemplazos se genera un unified diff (3 líneas
+y tabuladores finales; nivel 2: ignorando sangrado, solo si es único; sin ninguna coincidencia aproximada más). Estados: los
+doce de la tabla siguiente. Con los reemplazos se genera un unified diff (3 líneas
 de contexto, `a/` y `b/`, LF) que se pasa por el mismo filtro que `O1n`. Para ficheros nuevos solo se admite SEARCH vacío si el
 fichero no existe.
+
+**Estados del aplicador y su tratamiento (reglas definitivas, 12/11/2026; `pilot_p1/applier.py`).** Parseabilidad, aplicabilidad
+y resolución funcional son tres cosas distintas y no se confunden: *parseable* = el parser acepta la salida (cualquier estado
+distinto de `parse_error`); *aplicable* = `patch_ready` **y** el diff generado pasa el filtro común (más abajo); *resuelve* =
+supera la evaluación funcional.
+
+| Estado | Tipo | Significado |
+|---|---|---|
+| `patch_ready` | Conversión satisfactoria | El diff se generó sin ambigüedad. Es una conversión **técnica**: no implica que pase el filtro común ni que resuelva la tarea |
+| `parse_error` | Fallo de la salida | La respuesta no cumple EDIT-v1 (marcadores, estructura, texto fuera de bloque, NUL) |
+| `file_not_found` | Fallo de la salida | El fichero citado (o editado) no existe en el `base_commit` |
+| `search_not_found` | Fallo de la salida | El SEARCH no aparece en el fichero (ni exacto ni ignorando sangrado) |
+| `ambiguous_match` | Fallo de la salida | El SEARCH coincide más de una vez en el mismo nivel |
+| `blank_search` | Fallo de la salida | El SEARCH solo contiene líneas en blanco |
+| `overlapping_edits` | Fallo de la salida | Dos bloques se solapan en el mismo fichero (incluidos duplicados) |
+| `inconsistent_edits` | Fallo de la salida | Operaciones contradictorias: crear un fichero que existe, crearlo dos veces, fichero nuevo vacío, colisiones de mayúsculas |
+| `unsafe_path` | Fallo de la salida | Ruta absoluta, con `..`, `.git`, unidad, nombre reservado de Windows o bajo un padre que no es directorio |
+| `unsupported_file` | Fallo de aplicabilidad | El destino es binario, no UTF-8, symlink, submódulo, directorio o tiene finales de línea mixtos |
+| `empty_diff` | Fallo de aplicabilidad | Las ediciones no cambian ningún fichero |
+| `environment_error` | **Infraestructura** | Git falla, se agota el tiempo o hay un error de entrada/salida; **no es atribuible al modelo** |
+
+Los **fallos de la salida o de aplicabilidad** describen problemas de la respuesta o de su conversión; cuentan como fracaso de la
+condición en ese brazo. Ante `environment_error` **se reintenta la aplicación de la misma salida, sin regenerar ni volver a
+llamar al modelo** (la aplicación es determinista, local y gratuita; se propone un máximo de 3 intentos en total, a fijar en la
+orquestación antes de ejecutar). Si persiste, la condición se registra como **no evaluable por infraestructura** y se separa de
+los denominadores de éxito y fracaso del modelo: no cuenta como fallo del formato ni del modelo, y **siempre se informa de cuántas
+condiciones quedaron excluidas**, por brazo y en total. Una condición no evaluable en `E1` o en `O1n` se excluye de la comparación
+pareada. Los umbrales de decisión **no se reescalan**: se aplican tal como están definidos y, si las condiciones excluidas
+pudieran cambiar la decisión, el resultado se declara inconcluyente por infraestructura.
 
 **Filtro común.** `git apply --check -p1` con parche LF contra un árbol LF reconstruido del `base_commit`, estricto, igual para
 `O1n` y `E1`. Es una prueba de sensibilidad, **no** equivale a la aceptación del evaluador oficial.
@@ -1211,7 +1282,19 @@ los errores transitorios de la API (429 y 503), como en el protocolo original, y
    ficheros (todos, parcial, ninguno) y anclaje.
 3. *Resolución:* evaluación funcional oficial de todos los parches que pasan el filtro en `O1n` y en `E1`, con los mismos
    evaluadores; resultados resolved, not_resolved e infrastructure_error por brazo, solo descriptivos.
-4. *Cumplimiento de formato:* proporción de salidas con bloques Markdown o sin edición, y tokens y latencia.
+4. *Cumplimiento de formato (dos métricas independientes; decisión del 12/11/2026), más tokens y latencia:*
+   - *(a) Presencia de vallas Markdown de código:* proporción de respuestas (de `O1` y de `E1`) con al menos una línea cuyo
+     texto, sin sangrado inicial, empieza por tres acentos graves. Se calcula con una comprobación **independiente**, sobre la
+     respuesta tal cual, sin modificarla y sin tocar el parser ni el normalizador. Mide el incumplimiento de la instrucción de no
+     usar vallas; no mide validez.
+   - *(b) Parseabilidad:* proporción de respuestas de `E1` que el parser existente acepta (estado distinto de `parse_error`). Es la
+     que usan los umbrales de decisión.
+   - *Respuestas con vallas que siguen siendo parseables:* el parser tolera las vallas en la primera columna **fuera** de los
+     bloques, de modo que esas respuestas cuentan como parseables en (b) **y** como respuestas con vallas en (a). Una valla con
+     sangrado fuera de un bloque no la tolera el parser (`parse_error`) pero sí la detecta (a). Las vallas no invalidan por sí
+     solas una respuesta y no se retiran antes de analizarla. Las que estén dentro del contenido de un bloque forman parte del
+     texto y cuentan también en (a) (no se distinguen: limitación declarada). Se informa de la intersección (con vallas y
+     parseables) además de (a) y (b).
 5. *Plausibilidad (descriptiva, sin decidir con ella):* mismo fichero que la referencia.
 
 **Criterios de éxito y de abandono (fijados antes de ejecutar; reglas de decisión, no contrastes).** Con 36 condiciones por
@@ -1238,6 +1321,12 @@ Tabla 6); lista blanca de rutas de escritura, directorio de salida nuevo con ape
 los resultados y de los repositorios antes y después; un tag de Git sobre el commit de los resultados originales; congelar el
 protocolo (hash del prompt, lista de tareas, código del aplicador) en un commit propio antes de cualquier generación.
 
+**Estado de la preparación técnica (12/11/2026).** Las fases técnicas 1 y 2 están realizadas localmente (`pilot_p1/`, commits
+`e4342dd` y `f9d0c8d`; 208 pruebas técnicas). Son pruebas de las herramientas, **no resultados experimentales**: **no se han
+realizado generaciones, llamadas a la API, filtro G ni evaluaciones funcionales**. Siguen pendientes la orquestación de las 72
+generaciones, el filtro G, la verificación en Linux/Docker, la aprobación y congelación del protocolo y la ejecución. Esta nota no
+cambia el calendario ni la aprobación (el protocolo sigue siendo un borrador no aprobado).
+
 ### 15.5 Análisis secundario S1: recuperación mecánica de los 11 (propuesta)
 
 **Conviene incluirlo, pero solo como análisis secundario y después de cerrar el análisis primario de P1.**
@@ -1260,20 +1349,21 @@ entrega final", no antes de la del 7/12.
 
 | Fechas | Actividad |
 |---|---|
-| 12–15/11 | Solo documentación y revisión del protocolo; sin ejecutar nada |
+| 12–15/11 | Documentación y revisión del protocolo, y **preparación técnica local** de P1 (fases 1 y 2 de `pilot_p1/`, ya hechas el 12/11); sin generaciones, API, filtro G ni evaluaciones |
 | 16–22/11 | Sin disponibilidad |
 | 23–25/11 | Análisis estadístico pareado (prioridad del plan); no se inicia el piloto |
 | 26/11–6/12 | Reestructuración y revisión del Word (tiempo protegido) |
 | **7/12** | **Entrega**: diagnóstico D-004 y P1 como propuesta, marcado como no ejecutado |
-| 8–12/12 | Implementar P1 (≈ 1,5 días), probar el aplicador sin LLM sobre las salidas existentes y congelar el protocolo |
+| 8–12/12 | Completar la implementación pendiente de P1 (orquestación, filtro G, integración de la evaluación y control de integridad; el conversor, los prompts, N y la selección ya están hechos), probar sin LLM y congelar el protocolo |
 | 14–18/12 | Ejecutar P1 (generación ≈ 1 h; filtro; evaluadores ≈ 1–2 días) y analizar |
 | **≈ 20/12** | **Decisión**: éxito, inconcluyente o abandono. Si abandono o inconcluyente, documentar y cerrar hacia el 22/12 |
 | 5–16/1 (solo si éxito) | P2 con las 50 tareas, con protocolo y autorización propios |
 | 26/1–2/2 | Integrar en la memoria; **3/2: predepósito** |
 
-Las vacaciones de finales de diciembre y principios de enero se tratan como colchón. Esfuerzo estimado de P1: 12–16 h;
-de S1: 8–10 h con riesgo de infraestructura. No se recomienda ejecutar P1 antes del 7/12: no cabe en la ventana del 13–15/11 y
-quitaría tiempo a la revisión del Word.
+Las vacaciones de finales de diciembre y principios de enero se tratan como colchón. Esfuerzo estimado de P1: 12–16 h (estimación
+original, anterior al adelanto de las fases técnicas 1 y 2; queda la orquestación, el filtro G y la evaluación); de S1: 8–10 h con
+riesgo de infraestructura. No se recomienda **ejecutar** P1 antes del 7/12 (la preparación técnica ya hecha no es ejecución): no cabe en la ventana del
+13–15/11 y quitaría tiempo a la revisión del Word.
 
 ### 15.7 Decisiones pendientes
 

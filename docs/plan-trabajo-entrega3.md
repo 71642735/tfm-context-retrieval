@@ -415,6 +415,12 @@ sección 15. **El experimento NO está aprobado ni ejecutado**; esta nota no lo 
   generaciones, el filtro G, la verificación en Linux/Docker y la ejecución experimental; **no se han ejecutado** las
   generaciones ni la evaluación funcional. Continuar con el piloto completo sigue **pendiente de autorización y de viabilidad
   temporal** (nada experimental antes de la entrega del 07/12/2026).
+- **Revisión del protocolo cerrada (12/11/2026; sin ejecución):** se documentaron los doce estados del aplicador (con
+  `environment_error` como infraestructura: se reintenta la aplicación sin regenerar y, si persiste, la condición queda
+  excluida e informada), las dos métricas de formato (vallas Markdown y parseabilidad), el alcance de la comparación primaria
+  (`E1` frente a `O1n` mide el efecto del formato, no mejoras de recuperación) y el calendario. No cambian las 12 tareas, las
+  72 generaciones ni los umbrales. **Pendiente antes de ejecutar:** orquestación, filtro G, integración de la evaluación,
+  verificación en Linux/Docker, aprobación y congelación del protocolo en un commit propio.
 
 - **Qué se propone (resumen):** un piloto pequeño del formato de edición alternativo que pidió el director: 12 tareas × 3
   estrategias = 36 condiciones, con cuatro brazos (originales `O0`, nueva generación con el prompt original `O1`, `O1`
@@ -424,7 +430,7 @@ sección 15. **El experimento NO está aprobado ni ejecutado**; esta nota no lo 
 - **Hallazgo que condiciona la propuesta:** el formato no corrige que el modelo cite código que no existe ni que edite ficheros
   que no vio; de los 96 fallos de contexto o corrupt, solo 20 anclan todos sus hunks por contenido en el repositorio. La cifra
   "50 de 96" de visibilidad de ficheros no es un techo de convertibilidad (sección 15.2).
-- **Fechas propuestas (no aprobadas):** nada experimental antes de la entrega del **07/12/2026**; implementar y congelar el
+- **Fechas propuestas (no aprobadas):** nada experimental antes de la entrega del **07/12/2026**; completar la implementación pendiente (orquestación, filtro G, evaluación) y congelar el
   protocolo el 8–12/12; ejecutar el 14–18/12; decisión hacia el 20/12; solo si hay éxito, una ampliación a las 50 tareas el
   5–16/1 con protocolo propio; integrar en la memoria el 26/1–2/2; **predepósito el 03/02/2027**. La Fase 2 original de este plan
   (13–15/11, con decisión el 15/11) no se ejecutaría en esas fechas si se aprueba esta propuesta; hasta entonces sigue pendiente.

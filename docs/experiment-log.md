@@ -1894,3 +1894,26 @@ LLM, llamadas a la API, filtro G ni evaluación funcional, y los resultados orig
   `results/` y los 21 repositorios.
 
 Detalle: `pilot_p1/README.md`.
+
+
+---
+
+## Cierre de la revisión del protocolo P1 (2026-11-12)
+
+**Revisión documental; no hubo ejecución experimental** (ni generaciones con el LLM, ni llamadas a la API, ni filtro G, ni
+evaluaciones funcionales). P1 sigue siendo un borrador no aprobado y los resultados originales no cambian.
+
+Decisiones adoptadas (detalle en `docs/downstream-patch-diagnostics.md`, sección 15.4 y 15.6):
+- **Estados del aplicador:** se documentan los doce estados reales. `patch_ready` es una conversión técnica (no implica
+  aplicabilidad ni resolución); los demás, salvo `environment_error`, son fallos de la salida o de aplicabilidad. Ante
+  `environment_error` se reintenta la aplicación de la misma salida, sin regenerar; si persiste, la condición se registra como no
+  evaluable por infraestructura, se separa de los denominadores del modelo y se informa siempre de cuántas se excluyeron.
+- **Métricas de formato:** dos independientes, presencia de vallas Markdown (comprobación aparte, sin modificar respuesta ni
+  parser) y parseabilidad con el parser existente; una respuesta con vallas puede ser parseable y cuenta en ambas. Parseabilidad,
+  aplicabilidad y resolución funcional no se confunden.
+- **Comparación primaria:** `E1` frente a `O1n` evalúa el efecto del formato de edición con las estrategias de recuperación y el
+  contexto constantes; no demuestra mejoras de recuperación. `N` sigue siendo conservador.
+- **Calendario:** actualizado para distinguir la preparación técnica ya hecha (fases 1 y 2, 12/11) de la ejecución.
+- **Sin cambios:** 12 tareas × 3 métodos × 2 brazos = 72 generaciones, umbrales de éxito, abandono e inconcluso, hash de selección
+  `6dbd0c9f9365690c` y SHA-256 de E1 `3577b64d079143810dd018d805677146fe515bc49904d2862dded53f8db293be`. Las 208 pruebas técnicas
+  de `pilot_p1/` no son resultados experimentales.

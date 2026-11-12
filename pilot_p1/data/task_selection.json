@@ -1,0 +1,272 @@
+{
+  "protocol": "docs/downstream-patch-diagnostics.md, seccion 15.4 (P1, borrador no aprobado)",
+  "seed": "42",
+  "quotas": {
+    "Verified": 7,
+    "Poly": 3,
+    "Pro": 2
+  },
+  "ordering_rule": "sha256(\"42:<original_inst_id>\") ascendente dentro de cada fuente; se toman las primeras n",
+  "hash_rule": "sha256(\"\\n\".join(ids))[:16], ids completos, orden Verified, Poly, Pro",
+  "expected_hash": "6dbd0c9f9365690c",
+  "selection_hash": "6dbd0c9f9365690c",
+  "population_source": "results/final_tasks.csv; campo `source` de Contextbench/ContextBench (cache local, offline)",
+  "population": [
+    {
+      "id": "Significant-Gravitas__AutoGPT-4652",
+      "source": "Poly"
+    },
+    {
+      "id": "astropy__astropy-13398",
+      "source": "Verified"
+    },
+    {
+      "id": "astropy__astropy-14309",
+      "source": "Verified"
+    },
+    {
+      "id": "astropy__astropy-14598",
+      "source": "Verified"
+    },
+    {
+      "id": "django__django-10880",
+      "source": "Verified"
+    },
+    {
+      "id": "django__django-14373",
+      "source": "Verified"
+    },
+    {
+      "id": "huggingface__transformers-26752",
+      "source": "Poly"
+    },
+    {
+      "id": "huggingface__transformers-29675",
+      "source": "Poly"
+    },
+    {
+      "id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_internetarchive__openlibrary-910b08570210509f3bcfebf35c093a48243fe754-v0f5aece3601a5b4419f7ccec1dbda2071be28ee4",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+      "source": "Pro"
+    },
+    {
+      "id": "keras-team__keras-18871",
+      "source": "Poly"
+    },
+    {
+      "id": "keras-team__keras-19201",
+      "source": "Poly"
+    },
+    {
+      "id": "keras-team__keras-19863",
+      "source": "Poly"
+    },
+    {
+      "id": "langchain-ai__langchain-4579",
+      "source": "Poly"
+    },
+    {
+      "id": "langchain-ai__langchain-4646",
+      "source": "Poly"
+    },
+    {
+      "id": "langchain-ai__langchain-5609",
+      "source": "Poly"
+    },
+    {
+      "id": "matplotlib__matplotlib-24177",
+      "source": "Verified"
+    },
+    {
+      "id": "matplotlib__matplotlib-24627",
+      "source": "Verified"
+    },
+    {
+      "id": "matplotlib__matplotlib-26208",
+      "source": "Verified"
+    },
+    {
+      "id": "mwaskom__seaborn-3069",
+      "source": "Verified"
+    },
+    {
+      "id": "pallets__flask-5014",
+      "source": "Verified"
+    },
+    {
+      "id": "psf__requests-1142",
+      "source": "Verified"
+    },
+    {
+      "id": "psf__requests-2931",
+      "source": "Verified"
+    },
+    {
+      "id": "psf__requests-5414",
+      "source": "Verified"
+    },
+    {
+      "id": "pydata__xarray-4075",
+      "source": "Verified"
+    },
+    {
+      "id": "pydata__xarray-6992",
+      "source": "Verified"
+    },
+    {
+      "id": "pylint-dev__pylint-4970",
+      "source": "Verified"
+    },
+    {
+      "id": "pylint-dev__pylint-8898",
+      "source": "Verified"
+    },
+    {
+      "id": "pytest-dev__pytest-10081",
+      "source": "Verified"
+    },
+    {
+      "id": "pytest-dev__pytest-5262",
+      "source": "Verified"
+    },
+    {
+      "id": "pytest-dev__pytest-5809",
+      "source": "Verified"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-13439",
+      "source": "Verified"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-14087",
+      "source": "Verified"
+    },
+    {
+      "id": "scikit-learn__scikit-learn-26323",
+      "source": "Verified"
+    },
+    {
+      "id": "sphinx-doc__sphinx-8721",
+      "source": "Verified"
+    },
+    {
+      "id": "sphinx-doc__sphinx-9461",
+      "source": "Verified"
+    },
+    {
+      "id": "sphinx-doc__sphinx-9711",
+      "source": "Verified"
+    },
+    {
+      "id": "sympy__sympy-16886",
+      "source": "Verified"
+    },
+    {
+      "id": "sympy__sympy-17655",
+      "source": "Verified"
+    },
+    {
+      "id": "sympy__sympy-19637",
+      "source": "Verified"
+    },
+    {
+      "id": "yt-dlp__yt-dlp-4841",
+      "source": "Poly"
+    },
+    {
+      "id": "yt-dlp__yt-dlp-5933",
+      "source": "Poly"
+    },
+    {
+      "id": "yt-dlp__yt-dlp-9862",
+      "source": "Poly"
+    }
+  ],
+  "selected": [
+    {
+      "id": "scikit-learn__scikit-learn-13439",
+      "source": "Verified"
+    },
+    {
+      "id": "pytest-dev__pytest-5809",
+      "source": "Verified"
+    },
+    {
+      "id": "pydata__xarray-6992",
+      "source": "Verified"
+    },
+    {
+      "id": "pytest-dev__pytest-5262",
+      "source": "Verified"
+    },
+    {
+      "id": "matplotlib__matplotlib-24177",
+      "source": "Verified"
+    },
+    {
+      "id": "matplotlib__matplotlib-24627",
+      "source": "Verified"
+    },
+    {
+      "id": "sympy__sympy-19637",
+      "source": "Verified"
+    },
+    {
+      "id": "huggingface__transformers-29675",
+      "source": "Poly"
+    },
+    {
+      "id": "yt-dlp__yt-dlp-4841",
+      "source": "Poly"
+    },
+    {
+      "id": "keras-team__keras-18871",
+      "source": "Poly"
+    },
+    {
+      "id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+      "source": "Pro"
+    },
+    {
+      "id": "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+      "source": "Pro"
+    }
+  ],
+  "methods": [
+    "bm25",
+    "semantic",
+    "hybrid"
+  ],
+  "n_conditions": 36
+}

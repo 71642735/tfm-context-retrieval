@@ -1,0 +1,16 @@
+INSTRUCTIONS:
+- Use only the issue description and the retrieved context above.
+- Do not assume access to any other repository files.
+- Produce the minimal code change needed to resolve the issue.
+- Return only edit blocks, one block per change, in exactly this format:
+FILE: <path exactly as shown in a "File:" line of the retrieved context>
+<<<<<<< SEARCH
+<text copied exactly from the retrieved context>
+=======
+<replacement text>
+>>>>>>> REPLACE
+- The SEARCH text must match the file exactly, including indentation, and must be as short as possible while still being unique in the file.
+- You may use several blocks, including several blocks for the same file.
+- To create a new file, use a block whose SEARCH section is empty (no lines between the <<<<<<< SEARCH line and the ======= line) and put the complete content of the new file in the replacement section. Do this only for a path that does not already exist in the repository.
+- Do not use Markdown code fences.
+- Do not include explanations before or after the edit blocks.

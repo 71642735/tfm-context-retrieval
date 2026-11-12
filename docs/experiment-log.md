@@ -1872,3 +1872,25 @@ el LLM, llamadas a la API, evaluaciones funcionales, checkout ni fetch; los resu
 
 Detalle técnico y reproducción: `pilot_p1/README.md`. Siguen pendientes (no autorizados) los prompts, el normalizador, la
 selección de tareas, las 72 generaciones y la evaluación funcional.
+
+
+---
+
+## Segunda fase técnica de P1 (2026-11-12): prompts O1/E1, normalizador N y selección de tareas
+
+**Preparación y validación local; no es una ejecución del piloto P1** (D-005 sigue sin aprobar). No hubo generaciones con el
+LLM, llamadas a la API, filtro G ni evaluación funcional, y los resultados originales no cambian.
+
+- **Prompts O1/E1** (`pilot_p1/prompts.py`): O1 se reconstruye a partir del `prompt.txt` original deshaciendo la traducción de
+  saltos de línea de `write_text` en Windows (sin nueva recuperación y conservando los CRLF internos de los fragmentos); E1 solo
+  sustituye el bloque INSTRUCTIONS por el formato EDIT-v1, con una regla explícita para crear ficheros (SEARCH vacío). Instrucciones
+  E1 congeladas con SHA-256 `3577b64d079143810dd018d805677146fe515bc49904d2862dded53f8db293be`; contexto idéntico entre O1 y E1 en las 150 condiciones.
+- **Normalizador N** (`pilot_p1/normalizer.py`): solo añade `a/` y `b/` cuando todas las cabeceras carecen de ellos; no repara
+  contadores ni hunks; idempotente; los 11 parches recuperables quedan normalizados y equivalentes a `git apply -p0`.
+- **Selección determinista** (`pilot_p1/select_tasks.py`): las 12 tareas del protocolo (7 Verified, 3 Poly, 2 Pro) y hash
+  `6dbd0c9f9365690c`, coincidente con el del protocolo.
+- **Pruebas:** 208 locales (139 de la fase 1 + 69 nuevas), todas superadas. Pendientes y sin ejecutar: orquestación de las 72
+  generaciones, filtro G, verificación en Linux/Docker y ejecución experimental. Integridad: SHA-256 idénticos en los 150 parches,
+  `results/` y los 21 repositorios.
+
+Detalle: `pilot_p1/README.md`.

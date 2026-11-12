@@ -1,9 +1,10 @@
-# pilot_p1 — Fase técnica 1: conversor SEARCH/REPLACE → diff
+# pilot_p1 — Preparación técnica del piloto P1 (fases 1 y 2)
 
-> **Esta fase es una validación técnica, NO una ejecución experimental de P1.** No hay generaciones con LLM, ni llamadas
-> a API, ni selección de tareas, ni evaluación funcional. Solo se ha implementado y validado en local el mecanismo que
-> convierte instrucciones SEARCH/REPLACE en un diff. El protocolo P1 (D-005) sigue **sin aprobar**. Los resultados del
-> experimento original (150 parches, `results/`, `repos/`) no se han tocado.
+> **Ni la fase 1 ni la fase 2 son una ejecución experimental de P1.** No hay generaciones con LLM, ni llamadas a API, ni
+> evaluación funcional, ni se ha ejecutado el filtro experimental G. La fase 1 (commit `e4342dd`) validó el conversor
+> SEARCH/REPLACE → diff; la fase 2 prepara y valida los prompts O1/E1, el normalizador N y la selección
+> determinista de las 12 tareas. El protocolo P1 (D-005) sigue **sin aprobar**. Los resultados del experimento original
+> (150 parches, `results/`, `repos/`) no se han tocado.
 
 ## Objetivo
 
@@ -18,7 +19,12 @@ el aplicador. No dice nada sobre si el formato mejora los resultados.
 |---|---|
 | `edit_format.py` | Parser estricto de instrucciones `FILE` / `SEARCH` / `REPLACE` |
 | `applier.py` | Aplicador determinista sobre copias temporales de ficheros de un commit; genera el diff |
+| `prompts.py` | Fase 2: reconstrucción de los prompts O1 y E1 y verificación de que comparten contexto |
+| `instructions_edit_v1.txt` | Fase 2: instrucciones E1 congeladas (SHA-256 fijado en `prompts.py`) |
+| `normalizer.py` | Fase 2: normalizador N de parches del brazo original |
+| `select_tasks.py`, `data/task_selection.json` | Fase 2: selección determinista de las 12 tareas y metadatos para reproducirla |
 | `tests/` | Pruebas (`unittest`), fixtures y contraste con parches conocidos |
+| `.gitattributes` | `* -text` para `instructions_edit_v1.txt` y `data/` (sin conversión de finales de línea) |
 | `tests/fixtures/.gitattributes` | `* -text`: impide que `core.autocrlf` convierta los fixtures (solo afecta a esa carpeta) |
 
 ## Formato EDIT-v1
@@ -105,7 +111,7 @@ python -B -m unittest discover -s pilot_p1/tests -t .
 ```
 
 Requisitos: Python 3 y `git` en el PATH (usado para los repositorios temporales y para contrastar con `git apply`).
-`P1_SKIP_KNOWN=1` omite el contraste con parches conocidos (~2,5 min). Duración total ≈ 4 min.
+`P1_SKIP_KNOWN=1` omite el contraste con parches conocidos (~2,5 min). Duración total ≈ 8-10 min (fases 1 y 2). `python -m pilot_p1.select_tasks --check` verifica la selección.
 
 ## Validación técnica
 
@@ -154,7 +160,143 @@ fixtures 4, creación de ficheros 16); contraste con parches conocidos 1.
 **Integridad.** Antes y después de las pruebas son idénticos los SHA-256 de los ficheros versionados, de los 450 ficheros de
 `logs/downstream` (los 150 parches), de `results/` y el HEAD e índice de los 21 repositorios de `repos/`.
 
-## Limitaciones pendientes
+---
+
+# Fase 2: prompts O1/E1, normalizador N y selección de tareas
+
+Preparación y validación local, sin generaciones, API ni evaluadores. Sigue el protocolo P1 (`docs/downstream-patch-diagnostics.md`,
+15.4) sin modificarlo; las dudas están en "Problemas pendientes de la fase 2".
+
+## Prompts O1 y E1 (`prompts.py`)
+
+**Cómo se reconstruye O1.** No se recupera nada de nuevo (ni BM25, ni UniXcoder, ni RRF). El prompt que se envió al modelo
+se obtiene del `prompt.txt` original deshaciendo exactamente la traducción de `Path.write_text` en Windows: todo `LF` del
+prompt en memoria se guardó como `CRLF`, así que cada `CRLF` del fichero vuelve a `LF`. `reconstruct_prompt` **exige** que
+todo `LF` del fichero vaya precedido de `CR` (se cumple en los 150) y falla si no. O1 es ese prompt sin cambios.
+
+**Cómo se preservan los CRLF internos.** Un fragmento de código que ya contenía `CRLF` se guardó como `CR CR LF` (108 de los
+150 prompts) y se recupera como `CRLF`: no se normaliza ningún final de línea del contexto. Los prompts nuevos se serializan con
+`serialize_prompt` (UTF-8 exacto, `write_bytes`, sin traducción), de modo que lo enviado y lo guardado son los mismos bytes.
+
+**Cómo se construye E1.** `build_e1` = parte compartida de O1 (todo lo anterior a `INSTRUCTIONS:`) + el texto congelado de
+`instructions_edit_v1.txt`. **La única diferencia autorizada entre O1 y E1 es el bloque INSTRUCTIONS.** E1 conserva las tres
+frases de información del original (usar solo issue y contexto, no asumir otros ficheros, cambio mínimo) y la de no usar
+bloques Markdown, y sustituye "unified diff" y "sin explicaciones antes o después del parche" por el formato EDIT-v1
+(`FILE:` + `SEARCH` / `REPLACE`), compatible con el parser y el aplicador de la fase 1.
+
+**Creación de ficheros (instrucción añadida el 12/11/2026).** E1 incluye la regla: *"To create a new file, use a block whose
+SEARCH section is empty (no lines between the `<<<<<<< SEARCH` line and the `=======` line) and put the complete content of the
+new file in the replacement section. Do this only for a path that does not already exist in the repository."* Es exactamente lo
+que ya aceptan `edit_format.py` y `applier.py` (SEARCH vacío = crear; sobre un fichero existente da `inconsistent_edits`); no se
+inventó sintaxis ni se tocó el aplicador. Se probó que un bloque escrito según la regla se analiza y produce un fichero nuevo con
+`new file mode`, que sobre un fichero existente se rechaza, y que el texto de E1 **sin** esa regla conserva el SHA-256 de la
+primera versión congelada (`ae053cec644edcf53308bec657f68b2a687a1cc9ad27728780fdbf9ab29246a8`): las demás reglas no cambiaron.
+
+**Verificación de la reconstrucción (confirmada con las 150 condiciones).**
+1. *O1 reproduce el prompt en memoria enviado al modelo:* el `prompt.txt` se escribió con `write_text(prompt)` en
+   `generate_from_context`, inmediatamente antes de la llamada a la API, con el mismo `prompt`; se ejecuta el `build_prompt`
+   real del generador sobre los fragmentos recuperados del fichero y el resultado es igual al prompt reconstruido.
+2. *`prompt.txt` contiene transformaciones de Windows:* los 150 ficheros cumplen que **todo** `LF` va precedido de `CR` (ningún
+   `LF` suelto), y `windows_write_text_bytes(reconstruct(raw)) == raw` en los 150.
+3. *Los CRLF internos se conservan:* los 108 prompts con `CR CR LF` recuperan `CRLF` dentro del fragmento; el recuento de `CRLF`
+   de O1 y de E1 es idéntico y no hay normalización global.
+4. *E1 solo cambia las instrucciones finales:* issue, parte compartida y fragmentos (10) idénticos y mismos bytes del prefijo.
+Limitación: no se puede comprobar contra los bytes realmente enviados por la red (no se guardaron); la fidelidad se apoya en
+la plantilla del generador y en la exactitud de la inversión.
+
+**Parser del prompt.** `split_prompt` divide en issue, fragmentos, parte compartida e instrucciones y comprueba que
+reconstruir con la plantilla del generador original (`build_prompt`, `src/downstream/generation.py`) devuelve exactamente el
+mismo texto; si hay ambigüedad (p. ej. un issue que imita el marcador de contexto) lanza `PromptError` en lugar de adivinar.
+`arm_record` exige además los 10 fragmentos del protocolo (K = 10).
+
+**Hashes y controles (todos verificados por pruebas):**
+
+| Control | Valor |
+|---|---|
+| SHA-256 de `instructions_edit_v1.txt` (E1, **vigente**, con la regla de creación) | `3577b64d079143810dd018d805677146fe515bc49904d2862dded53f8db293be` |
+| SHA-256 de E1 en la primera versión congelada (sin la regla de creación; sustituida) | `ae053cec644edcf53308bec657f68b2a687a1cc9ad27728780fdbf9ab29246a8` |
+| SHA-256 de las instrucciones originales (O1) | `1980c18b541d4c935ed5ff1686128e7086155d97f2f6a56d80de528eb91cdaac` |
+| Plantilla O1 | extraída por AST del generador real y comparada; además se ejecuta su `build_prompt` real sobre los fragmentos parseados y reproduce el prompt original en las 150 condiciones |
+| Ida y vuelta con `write_text` | `windows_write_text_bytes(reconstruct(raw)) == raw` en las 150 |
+| Igualdad de contexto O1/E1 | `arm_record` registra el SHA-256 de O1, de E1, del issue, de la parte compartida, del orden de fragmentos y del código de cada uno; `context_identical` es verdadero en las 150 |
+| Procedencia del contexto | el código de los 360 fragmentos de las 36 condiciones del piloto coincide con las líneas `start..end` del fichero en el `base_commit` (salvo espacios finales) |
+| Rutas `File:` | las 360 son seguras y existen como fichero en el `base_commit` (solo lectura) |
+| Respuesta E1 simulada (no del modelo) | copiar las 6 primeras líneas del primer fragmento como SEARCH da `patch_ready` en las 36 condiciones |
+
+## Normalizador N (`normalizer.py`)
+
+Única corrección posible: añadir `a/` (en `---`) y `b/` (en `+++`) cuando **todas** las cabeceras carecen de ellos. Puro, en
+memoria, determinista e idempotente; conserva cada terminador de línea y el sufijo de las cabeceras (marcas de tiempo). No toca
+hunks, contenido, contadores ni números de línea: solo cambian líneas `---`/`+++`, y solo por el prefijo. Los hunks se recorren
+con sus contadores, de modo que una línea que parece cabecera dentro de un hunk es contenido.
+
+| Estado | Cuándo | Efecto |
+|---|---|---|
+| `normalized` | todas las cabeceras sin prefijo y coherentes (`---` y `+++` con la misma ruta) | prefijos añadidos |
+| `already_prefixed` | todas con `a/` `b/` (incluye `diff --git a/x b/x` coherente y altas con `b/`) | ninguno |
+| `unchanged_mixed` | cabeceras con y sin prefijo | ninguno |
+| `unchanged_git_headers` | `diff --git` no coherente con unas cabeceras ya prefijadas (p. ej. `---` sin prefijo) | ninguno |
+| `unchanged_malformed` | hunk truncado, con línea no válida o que excede sus contadores | ninguno (no se reparan contadores) |
+| `unchanged_no_headers` | no hay `---`/`+++` seguidas de un hunk | ninguno |
+| `unchanged_unsupported` | rutas entre comillas, renombrados, borrado completo, `/dev/null` en ambos lados | ninguno |
+
+Altas de fichero (`--- /dev/null`): solo se modifica `+++`. Como Git, N ignora las líneas sobrantes **después** de un hunk
+completo (comprobado con `git apply`, que las tolera; p. ej. el parche de `ansible-7e1a…/hybrid`).
+
+**Limitaciones.** (1) No repara contadores, cabeceras truncadas ni parches sin hunks: esos casos fallan igual que en el
+original, así que `O1n` puede no corregir parches que un normalizador más agresivo habría arreglado; es deliberado para no
+favorecer al brazo original. (2) Una ruta que empiece por un directorio real llamado `a` o `b` se trata como sin prefijo si
+`---` y `+++` son iguales (`a/a/x.py`), pero un alta con `b/...` se interpreta como ya prefijada. (3) `unchanged_malformed` es
+el juicio estructural de N (por contadores), no el de Git.
+
+**Resultados sobre los 150 originales (solo lectura, en memoria):** `normalized` 49, `already_prefixed` 34,
+`unchanged_malformed` 36, `unchanged_no_headers` 29, `unchanged_git_headers` 2; idempotente en todos. Coincide con el
+diagnóstico de prefijos (93 sin prefijo: 49 normalizados, 30 malformados, 14 sin hunk, 2 con `diff --git` incoherente;
+39 con `a/` `b/`; 17 sin cabeceras). De los 11 parches recuperables (los que Git acepta con `-p0`), **los 11 quedan
+`normalized` y aplican con `-p1` dando el mismo fichero final** que con `-p0` (comprobación técnica en temporales, no es G).
+
+## Selección de las 12 tareas (`select_tasks.py`, `data/task_selection.json`)
+
+Regla del protocolo, sin cambios: 7 Verified + 3 Poly + 2 Pro de las 50 tareas de `results/final_tasks.csv`; dentro de cada
+fuente se ordenan por `sha256("42:<original_inst_id>")` y se toman las primeras *n*. El hash de la lista es
+`sha256("<ids unidos por salto de línea>")[:16]` con los **identificadores completos**, en el orden Verified, Poly, Pro, sin
+salto final. **Resultado: `6dbd0c9f9365690c`, igual al del protocolo.** `check_selection` lanza `SelectionHashMismatch` si no
+coincide: no hay sustitución silenciosa. Las 36 condiciones son estas 12 tareas × `bm25`, `semantic`, `hybrid`, y las 36 tienen
+su `prompt.txt` original.
+
+El manifiesto guarda solo lo necesario para reproducir: las 50 tareas con su fuente (campo `source` del dataset local
+`Contextbench/ContextBench`, cache offline), la regla, el hash y la lista. Recalcular no necesita red ni el dataset
+(`python -m pilot_p1.select_tasks --check`); `--write` no escribe si el hash no coincide ni sobrescribe.
+
+## Pruebas de la fase 2 y resultados
+
+Se añaden `test_prompts.py` (21), `test_normalizer.py` (32), `test_normalizer_known.py` (1) y `test_selection.py` (15).
+**Suite completa: 208 pruebas, 208 superadas, 0 fallidas, 0 omitidas** (139 de la fase 1, que siguen pasando, + 69 de la fase 2; 0 fallos, 0 omitidas;
+≈ 10 min). Las pruebas de la fase 2 comprueban, sobre las 150 condiciones originales: reconstrucción exacta de O1 (ida y vuelta
+con `write_text`, `build_prompt` real del generador), contexto idéntico O1/E1 (hash del issue, de la parte compartida, del orden
+y del código de cada fragmento), CRLF internos preservados (108 prompts), instrucciones E1 con SHA-256 fijado y aceptadas por el
+parser y el aplicador; normalizador con casos positivos, negativos y de idempotencia, solo cambian cabeceras y 11/11 recuperables
+equivalentes a `git apply -p0`; y la selección (hash `6dbd0c9f9365690c`, cuotas 7/3/2, regla de orden, manifiesto manipulado y
+hash distinto rechazados).
+
+## Problemas pendientes de la fase 2
+
+1. ~~E1 no pedía crear ficheros~~ **Resuelto** (instrucción añadida, nuevo SHA-256, ver arriba). Queda como límite que el
+   modelo debe declarar el fichero nuevo con SEARCH vacío; si no lo hace, E1 devolverá `file_not_found`.
+2. **"Idéntico byte a byte al `prompt.txt` original" (protocolo 15.4)** se cumple respecto del prompt en memoria enviado al
+   modelo, no respecto de los bytes del fichero guardado en Windows (traducción de saltos de línea). Es la interpretación
+   pedida para esta fase; conviene reflejarla al revisar el protocolo.
+3. El protocolo no fija la forma del identificador del hash de selección; se verificó con los identificadores completos.
+4. `O1n` no repara contadores ni cabeceras truncadas (limitación 1 del normalizador). Se mantiene.
+5. Los prompts nuevos deben guardarse con `serialize_prompt`/`write_bytes`; `write_text` volvería a traducir los saltos en Windows.
+6. Sigue sin verificarse nada en Linux/Docker y no se ha comprobado la disponibilidad de modelo y API (no se hacen llamadas).
+7. **Falta para la orquestación de las 72 generaciones:** módulo de generación (O1 y E1 por condición, consecutivos) con
+   directorios de salida nuevos y lista blanca de rutas, reintentos solo para 429/503 y registro de modelo, fecha y hashes;
+   filtro G y evaluación; control de integridad antes y después; y la aprobación del protocolo.
+
+---
+
+# Fase 1: limitaciones pendientes
 
 * No se puede añadir ni quitar el salto final de un fichero (el contraste omite hunks con `\ No newline`). Borrar la última
   línea de un fichero sin salto final deja la anterior con salto.

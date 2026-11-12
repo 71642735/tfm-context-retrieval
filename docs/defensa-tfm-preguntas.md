@@ -11,6 +11,31 @@ Material de estudio para la exposición. Complementa el informe técnico
 | 🟡 **PARCIAL** | Parte es dato y parte depende de una prueba pendiente. | Dar el dato y decir claramente qué falta. |
 | ⏳ **PENDIENTE** | Depende de comprobaciones que aún no se han hecho. | Presentarla como línea de trabajo o hipótesis, nunca como resultado. |
 
+**Cómo está organizado.**
+- **Banco de preguntas del tribunal (secciones 1 a 7):** preguntas con respuestas breves y orales, para la defensa.
+- **Guía de estudio del diagnóstico downstream (sección 8):** explicaciones paso a paso para *entender* qué hicimos, por qué,
+  cómo lo comprobamos y qué se puede defender. Termina con un resumen de un minuto, cinco ideas clave, un glosario y los
+  errores que hay que evitar.
+- **Regla para no duplicar:** si ya existía una pregunta equivalente en el banco, la **respuesta oral** sigue en esa pregunta y
+  la **explicación para estudiar** está en la guía (cada pregunta del banco lleva una remisión). Las preguntas nuevas llevan
+  ambas cosas en la guía.
+
+**Ruta de estudio recomendada** (léela en este orden; P1 a P16 son las preguntas de la guía):
+
+| Bloque | Pregunta de la guía | Respuesta oral |
+|---|---|---|
+| 1. El problema que señaló Pablo | P1 ¿Por qué solo 9 de 150 llegaron a la evaluación funcional? | 1.1 |
+| | P2 ¿Qué significa realmente `invalid_patch`? | Guía (8.1) |
+| 2. Qué descubrimos en los 141 rechazos | P3 Causas de rechazo | Guía (8.2); ver también 1.3 y 1.6 |
+| | P4 Problema con las rutas · P6 CRLF y LF | 3.1 · 3.4 |
+| | P5 Diferencia entre `-p0` y `-p1` | Guía (8.2) |
+| 3. Cómo hicimos las 1.800 comprobaciones | P7 De dónde salen las 1.800 | Guía (8.3) |
+| | P8 Cómo se ejecutaron · P9 Reproducibilidad | 3.8 · 3.7 |
+| 4. Qué descubrimos con la matriz | P10 Cuántos parches se recuperan · P11 Recuperar no es resolver · P12 Ficheros que recibió el modelo | 7.3 · 2.6 · 7.4 |
+| 5. Limitaciones y preguntas difíciles | P13 Por qué no en Linux · P15 ¿Qué estrategia es mejor? | Guía (8.5); ver también 2.3, 4.2 y 7.5 |
+| | P14 `git apply --check` frente a evaluación funcional · P16 Mejoras | 7.6 · 5.5 |
+| 6. Para repasar | Resumen de un minuto, cinco ideas, glosario y errores a evitar | Guía (8.6) |
+
 Las cifras proceden de `results/downstream_results_final.jsonl`, de las tablas de la memoria (v2.6) y de
 `diagnostics/downstream-patches/`. **Antes de la defensa, actualiza este documento con lo que cambie en la
 memoria final** (por ejemplo, si se repite la evaluación con el LLM).
@@ -25,7 +50,7 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 | `resolved` | 2, ambos con BM25 | Memoria, Tabla 6 |
 | Causas de los 141 | 45 fichero inexistente, 41 parche corrupto, 24 sin diff, 24 contexto no coincide, 7 fragmento sin cabecera | `diagnostics/.../invalid_patches_classification.csv` |
 | `invalid_patch` con estructura de parche reconocible por Git | 117 de 141 (83 %): 112 con cabeceras completas y 5 con cabecera defectuosa. Sin diff: 24 (17 %) | Diagnóstico, sec. 2.1 y D-001 |
-| Parches sin prefijo `a/` `b/` | 94 de los 141 (los 9 aplicables sí lo llevan) | Diagnóstico, sec. 3 |
+| Parches sin prefijo `a/` `b/` | 94 de los 141 (93 con `-p` natural y 1 mixto; los 9 aplicables sí lo llevan) | Diagnóstico, sec. 3 |
 | Recuperados con `git apply --check -p0` (reconstrucción CRLF, observación previa) | 9 de 94 | Diagnóstico, sec. 7 |
 | Matriz completa, `-p` natural, de 123 `invalid_patch` | Filtro original reconstruido (CC): 9 · parche LF y árbol CRLF (LC): 11 · parche CRLF y árbol LF (CL): 0 · parche LF y árbol LF (LL): 11 | Diagnóstico, sec. 14.2 |
 | Matriz completa, `-p1` (el de los evaluadores) | 0 de 141 aplican en las cuatro combinaciones CRLF/LF; los 9 controles aplican en CC, LC y LL | Diagnóstico, sec. 14.4 |
@@ -33,20 +58,32 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 | Contexto o corrupt en LL (`-p` natural) | 96 de 123 (78 %; 68 % de los 141); en 46 de los 96 el parche edita ficheros que no estaban en el contexto recuperado (dato exploratorio) | Diagnóstico, sec. 14.6 |
 | Parches guardados con CRLF | 150 de 150 | Diagnóstico, sec. 7 |
 | F1 a nivel de fichero, K = 5 | BM25 0,2578 · RRF 0,2505 · UniXcoder 0,1673 | Memoria, Tablas 3-5 |
+| Comprobaciones del diagnóstico | **1.800** = 1.200 (matriz principal, 150 × 8) + 600 (robustez, 150 × 4); no son generaciones ni evaluaciones funcionales | Diagnóstico, sec. 14 |
+| 123 y 18 | 123 parches con `-p` natural interpretable; 18 fuera de ese análisis (17 sin cabeceras y 1 con `-p` indeterminado) | Diagnóstico, sec. 14.2 |
+| Los 11 recuperables | 9 tareas en 7 repositorios; 9 necesitan solo prefijos y 2 prefijos y finales de línea; 0 cambios de contenido | Diagnóstico, sec. 15.1 |
+| Ficheros que recibió el modelo (96) | 50 con todos sus ficheros en el contexto, 41 con ninguno y 5 parcialmente (46 con algún fichero no visto) | `analisis_ficheros_contexto.json` |
+| Los 24 sin diff (lectura manual, orientativa) | 8 rechazos explícitos, 3 textos que argumentan falta de contexto, 2 mensajes de error, 7 solo cabeceras de fichero, 4 otros textos | Lectura de `logs/downstream/*/patch.diff` (no está en un script) |
+| Bloques Markdown pese a la instrucción | 60 de 150 salidas | `analisis_anclaje_contenido.json` |
 
 ---
 
 ## 1. Los 141 parches inválidos y sus causas
 
-### 1.1 ¿Por qué el 94 % de los parches no se pueden aplicar?
+### 1.1 ¿Por qué el 94 % de los parches no se pueden aplicar? (es decir, ¿por qué solo 9 de 150 llegaron a la evaluación funcional?)
 ✅ **RESPALDADA** (descripción) · 🟡 (causa raíz)
 
-> De las 150 condiciones, 141 generan un parche que `git apply --check` rechaza. Clasificados por el mensaje
-> de Git: 45 apuntan a un fichero inexistente, 41 son parches corruptos, 24 ni siquiera contienen un diff,
-> 24 tienen un contexto que no coincide con el código y 7 son fragmentos sin cabecera. Visto de otro modo, 117 de los 141 (83 %) tienen una estructura de parche que
-> Git reconoce, y 24 (17 %) no contienen diff. Es decir, la mayoría
-> son fallos de **formato** del diff, no de lógica. La causa raíz última (formato de salida del modelo frente
-> a artefactos de mi entorno Windows) la he empezado a separar y lo explico a continuación.
+> «En el experimento original generamos 150 parches, pero 141 fueron rechazados por una comprobación previa de
+> aplicabilidad. Para investigar esta limitación realizamos un diagnóstico reproducible que distinguía problemas de
+> rutas, finales de línea y estructura de los parches. Comprobamos que 11 de los 141 parches rechazados podían superar
+> una comprobación de aplicabilidad bajo condiciones alternativas, aunque eso no garantiza que resolvieran las tareas.
+> También encontramos casos en los que el modelo intentaba modificar ficheros ausentes del contexto recuperado. Por
+> tanto, concluimos que los resultados funcionales deben interpretarse con cautela y que es necesario distinguir entre
+> la calidad de la recuperación, la generación del parche y su aplicación».
+>
+> Datos de apoyo: el filtro `git apply --check` clasificó los 141 por el mensaje de Git en 45 fichero inexistente, 41
+> parche corrupto, 24 sin diff, 24 contexto que no coincide y 7 fragmentos sin cabecera. Visto de otro modo, 117 de los
+> 141 (83 %) tienen estructura de parche que Git reconoce y 24 (17 %) no contienen diff. No es, por tanto, solo un
+> problema de formato: la causa última (modelo, prompt, formato de salida o recuperación) **no está determinada**.
 
 ### 1.2 ¿Es un problema del modelo o de su pipeline?
 🟡 **PARCIAL** (actualizada el 2026-11-12 tras la matriz completa)
@@ -60,12 +97,15 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > modelo, el prompt, el formato de salida o la recuperación: **no está determinado**.
 
 ### 1.3 ¿Qué son los 24 casos en los que no hay diff?
-✅ **RESPALDADA** (qué son) · ⏳ (por qué)
+✅ **RESPALDADA** (qué son, por lectura manual) · ⏳ (por qué)
 
-> Son respuestas en las que el modelo declara que no puede producir el parche porque el contexto recuperado
-> no incluye el código relevante. Revisé dos ejemplos concretos. Mi hipótesis es que se trata de fallos de
-> recuperación (el contexto era insuficiente), pero **no la he comprobado** contra el gold context. Si se
-> confirmara, serían casos donde la recuperación, no el formato, es el factor limitante.
+> No son todos iguales. Leyendo los 24 textos: **8** son un rechazo explícito («I cannot… porque el contexto recuperado
+> no contiene…»), **3** son explicaciones largas que argumentan que falta contexto, **2** son mensajes de error del propio
+> proceso («Failed to generate patch. No context files available…»), **7** contienen solo las dos líneas de cabecera de
+> fichero (`---` y `+++`) sin ningún hunk, es decir, un parche vacío, y **4** son otro texto o razonamiento sin diff. En
+> unos 13 el texto dice expresamente que falta contexto, pero **no lo he comprobado** contra el gold context: que el "sin
+> diff" se deba a una recuperación insuficiente es una hipótesis. Esta clasificación es una lectura manual y **no está en
+> un script**.
 
 ### 1.4 ¿Cómo los clasificó y de dónde salen los números?
 ✅ **RESPALDADA**
@@ -78,7 +118,8 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 ✅ **RESPALDADA**
 
 > No de forma relevante: 47 con BM25, 48 con UniXcoder y 46 con RRF. El problema es transversal a las tres,
-> lo que apunta a la generación y no a una estrategia concreta.
+> que no depende de una estrategia concreta. Por sí solo no permite decir si el origen es la generación, el prompt o la
+> recuperación.
 
 ### 1.6 ¿Por qué inicialmente se contabilizaron 113 parches con estructura de diff y posteriormente 117?
 ✅ **RESPALDADA**
@@ -154,6 +195,8 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > reconocible" no demuestra que el modelo acierte, sino solo que produce algo con forma de parche. Esta pregunta
 > es distinta de la 2.1, que separa recuperación, aplicabilidad y resolución.
 
+*Para estudiarla con más detalle: guía de estudio, **P11** (sección 8.4).*
+
 ---
 
 ## 3. Prefijos de rutas, `git apply`, LF/CRLF y reproducibilidad
@@ -164,6 +207,8 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > Un diff de Git suele escribir las rutas como `a/ruta` y `b/ruta`. `git apply` por defecto usa `-p1`, que
 > elimina el primer componente de cada ruta. Si el diff no lleva esos prefijos, Git quita en realidad el
 > primer directorio real (por ejemplo `src/` en `src/_pytest/pastebin.py`) y busca un fichero que no existe.
+
+*Para estudiarla con más detalle: guía de estudio, **P4** (sección 8.2).*
 
 ### 3.2 ¿Cuántos fallos se deben a ese problema?
 ✅ **RESPALDADA** (actualizada el 2026-11-12)
@@ -192,6 +237,8 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > falla (8 de los 9 controles fallan en esa combinación), pero según el código los evaluadores reciben el parche leído con
 > `read_text`, es decir, en LF.
 
+*Para estudiarla con más detalle: guía de estudio, **P6** (sección 8.2).*
+
 ### 3.5 ¿Por qué se guardaron los parches con CRLF?
 ⏳ **PENDIENTE**
 
@@ -208,21 +255,32 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 > Pero eso **no demuestra equivalencia**: no ejecuté los evaluadores ni modelé sus alternativas.
 
 ### 3.7 ¿Cómo garantiza la reproducibilidad?
-✅ **RESPALDADA** (selección y registros) · 🟡 (entorno)
+✅ **RESPALDADA** (selección, registros y comprobaciones) · 🟡 (entorno)
 
-> La muestra se selecciona con semilla fija (42), se conserva en `results/final_tasks.csv`, y se guardan el
-> prompt, el parche y los metadatos de cada condición. La reproducibilidad **bit a bit** del LLM no está
-> garantizada (una sola generación por condición con un modelo remoto), y el comportamiento de `git apply`
-> depende de la configuración de Git y del sistema operativo, como acabo de ver con `autocrlf`.
+> La muestra se selecciona con semilla fija (42) y se conserva en `results/final_tasks.csv`; se guardan el prompt, el
+> parche y los metadatos de cada condición. En el diagnóstico: (1) la línea base reprodujo **exactamente los 150
+> resultados originales**, incluidos los mensajes de error; (2) los resultados por celda, los agregados y el manifest
+> están conservados en `diagnostics/downstream-patches/data/matriz_completa_20261112T000024Z/`; (3) los scripts están
+> versionados; (4) se compararon los hash SHA-256 de los parches y de los resultados originales antes y después; y (5) se
+> comprobó que `HEAD` y el índice de los 20 repositorios no cambiaron. Además, el piloto de 84 comprobaciones coincidió con la
+> matriz completa (esta comparación se hizo sobre ficheros locales que no están versionados). Lo que **no** está
+> garantizado: la reproducibilidad bit a bit del LLM (una sola generación con un modelo remoto) ni que el diagnóstico
+> reproduzca el entorno Linux/Docker de los evaluadores.
+
+*Para estudiarla con más detalle: guía de estudio, **P9** (sección 8.3).*
 
 ### 3.8 ¿Cómo comprobó el efecto de LF/CRLF sin repetir el experimento?
 ✅ **RESPALDADA** (actualizada el 2026-11-12)
 
-> Reconstruí en una carpeta temporal solo los ficheros que cada parche puede tocar, tomados del `base_commit` con
-> `git cat-file`, aplicando las reglas de `autocrlf` y `.gitattributes`, y ejecuté únicamente `git apply --check`.
-> Validé el método con 39 casos y después con la línea base de los 150 parches: reproduce 150 de 150 el resultado y el
-> mensaje originales. Luego ejecuté 1.200 comprobaciones de la matriz principal y 600 de la réplica, con hashes de los
-> parches, los resultados, los repositorios y sus índices antes y después, sin cambios.
+> «Para investigar los problemas de aplicabilidad desarrollé un script en Python que automatizaba una matriz de pruebas.
+> Utilicé los 150 parches originales y varié tres factores: los finales de línea del parche, los finales de línea de los
+> archivos y la opción de Git para interpretar las rutas. Esto produjo ocho combinaciones por parche, es decir, 1.200
+> comprobaciones. Añadí otras 600 para comprobar la influencia de la configuración `core.autocrlf` de Git. En cada caso
+> ejecuté `git apply --check`, que permite comprobar la aplicabilidad sin aplicar realmente el parche. Registré los
+> resultados y verifiqué que los archivos originales no se modificaran. Además, validé que el script reprodujera
+> exactamente los 150 resultados iniciales antes de interpretar las nuevas condiciones».
+
+*Para estudiarla con más detalle: guía de estudio, **P7** y **P8** (sección 8.3).*
 
 ---
 
@@ -313,11 +371,16 @@ memoria final** (por ejemplo, si se repite la evaluación con el LLM).
 ### 5.5 ¿Cómo mejoraría la evaluación con el LLM?
 🟡 **PARCIAL** (la línea) · ⏳ (su efecto) (actualizada el 2026-11-12)
 
-> Una opción es pedir un formato de edición más robusto, como bloques de búsqueda y reemplazo o la función completa
-> reescrita, y que el pipeline construya el parche, aplicado igual a las tres estrategias. Es una **hipótesis**: de
-> los 96 fallos de contexto o corrupt, en 50 el modelo vio todos los ficheros que modificó (ahí un formato de edición
-> podría ayudar), pero en 46 editó ficheros que no vio, y eso apunta más a la recuperación y al procedimiento. No lo he
-> probado y lo dejo como trabajo futuro.
+> Hay dos líneas de naturaleza distinta. **A. Recuperar mecánicamente** parches ya generados, normalizando rutas y finales
+> de línea: según el diagnóstico, 11 de los 141 pasarían la comprobación, pero no sabemos si resolverían la tarea. **B.
+> Probar un formato de edición alternativo** (bloques de búsqueda y reemplazo literales que el pipeline convierte en
+> parche), con el mismo contexto y modelo. B es una **hipótesis**: de los 96 fallos de contexto o corrupt, en 50 el modelo
+> vio todos los ficheros que modificó y en 46 editó ficheros que no vio; además, solo 20 de los 96 anclan todos sus hunks
+> por contenido en el repositorio, así que un formato de edición arreglaría lo mecánico, no el texto que el modelo cita mal
+> o no vio. El diagnóstico D-004 está **cerrado**; el protocolo del piloto (D-005) está preparado, pero **el piloto no está
+> aprobado ni ejecutado**.
+
+*Para estudiarla con más detalle: guía de estudio, **P16** (sección 8.5).*
 
 ### 5.6 ¿Cambiaría cómo se guardan los parches?
 🟡 **PARCIAL** (actualizada el 2026-11-12)
@@ -409,6 +472,8 @@ funcional. Los resultados originales no cambian.
 > original reconstruido y 0 de 141 con `-p1`. Esos 11 no se han evaluado funcionalmente: no sé si resolverían la
 > incidencia ni si el evaluador los aceptaría.
 
+*Para estudiarla con más detalle: guía de estudio, **P10** (sección 8.4).*
+
 ### 7.4 ¿De quién es la culpa de los 96 parches con contexto o estructura incorrectos?
 🟡 **PARCIAL**
 
@@ -416,6 +481,8 @@ funcional. Los resultados originales no cambian.
 > fragmentos), el formato de salida y el procedimiento (recuperación estática, sin acceso al repositorio). Como dato
 > exploratorio a nivel de fichero: en 46 de los 96 el parche edita al menos un fichero que no estaba en el contexto
 > recuperado; en 50 todos sus ficheros sí estaban. No lo he comprobado a nivel de línea ni frente al gold context.
+
+*Para estudiarla con más detalle: guía de estudio, **P12** (sección 8.4).*
 
 ### 7.5 ¿Qué estrategia genera parches más aplicables?
 ✅ **RESPALDADA** (que no se afirma)
@@ -430,6 +497,8 @@ funcional. Los resultados originales no cambian.
 > Tres niveles. (1) Pasar `git apply --check` en mi reconstrucción: lo que he medido. (2) Que el evaluador oficial lo
 > acepte: depende de su procedimiento (Linux, `-p1`, alternativas de aplicación) que no ejecuté ni modelé. (3) Resolver:
 > que el parche, ya aplicado, haga pasar las pruebas de la tarea. Solo 2 de los 150 llegan a este nivel.
+
+*Para estudiarla con más detalle: guía de estudio, **P14** (sección 8.5).*
 
 ### 7.7 ¿Por qué cerró el diagnóstico sin repetir la generación ni probar evaluadores tolerantes?
 🟡 **PARCIAL** (decisión de alcance)
@@ -448,6 +517,414 @@ funcional. Los resultados originales no cambian.
 
 ---
 
+## 8. Guía de estudio del diagnóstico downstream
+
+Esta sección es para **entender**, no para memorizar. Cada pregunta tiene una explicación para estudiar y la evidencia donde
+se puede comprobar; las respuestas orales están en la pregunta del banco (secciones 1 a 7) o, si es nueva, aquí mismo.
+
+**El mapa mental que lo ordena todo** (si te pierden en la defensa, vuelve a este esquema):
+
+```
+Incidencia + repositorio
+   │
+   ├─ [1] RECUPERACIÓN de contexto     BM25 · UniXcoder · RRF            → se mide con cobertura, precisión y F1
+   ├─ [2] GENERACIÓN del parche        un parche por tarea y estrategia  → 50 tareas × 3 = 150 parches
+   ├─ [3] APLICABILIDAD                filtro `git apply --check`        → aquí se quedan 141 (`invalid_patch`)
+   └─ [4] RESOLUCIÓN FUNCIONAL         pruebas oficiales de la tarea     → solo 9 llegan: 2 `resolved`, 7 `not_resolved`
+```
+
+**Dónde está la evidencia** (todo versionado salvo lo indicado):
+- Resultados originales: `results/downstream_results_final.jsonl`; el filtro, en `src/downstream/evaluation.py`.
+- Diagnóstico completo: `docs/downstream-patch-diagnostics.md` y `diagnostics/downstream-patches/`.
+- Datos de la matriz: `diagnostics/downstream-patches/data/matriz_completa_20261112T000024Z/` (`cells.jsonl`, `controls.json`,
+  `analisis.md`, `manifest.json`…). Los análisis `analisis_anclaje_contenido.json` y `analisis_referencia.json` y los modos
+  `--anclaje-contenido` y `--referencia` del script de análisis **todavía no están en un commit**.
+
+### 8.1 Bloque 1. El problema que nos señaló Pablo
+
+#### P1. ¿Por qué solamente 9 de los 150 parches llegaron a la evaluación funcional?
+✅ **RESPALDADA** · *Respuesta oral: pregunta 1.1.*
+
+**Para estudiar.**
+- Comparamos **tres métodos de recuperación de contexto**: **BM25** (busca coincidencias de palabras entre la incidencia y
+  el código), **UniXcoder** (usa representaciones semánticas del código, es decir, compara significados y no solo palabras) y
+  **RRF** (combina los rankings de los otros dos).
+- Usamos **50 tareas** y generamos **un parche por tarea y estrategia**: 50 × 3 = **150 parches**.
+- Resultados originales: **141 `invalid_patch`, 7 `not_resolved` y 2 `resolved`**.
+- Antes de pasar un parche a los evaluadores funcionales, el pipeline ejecuta `git apply --check`. Si falla, el parche se marca
+  como `invalid_patch` y **no llega** a evaluarse. Por eso solo **9** parches llegaron a esa fase (7 + 2).
+- **Por qué importa la preocupación de Pablo:** con 9 parches evaluados, la parte funcional casi no permite comparar qué
+  estrategia de recuperación ayuda más a resolver incidencias. Los 141 restantes no son "fallos funcionales": simplemente no
+  se llegó a probarlos.
+
+**Evidencia.** `results/downstream_results_final.jsonl` (150 filas); `src/downstream/evaluation.py:132-164` (el filtro) y
+`610-626` (si falla, `invalid_patch` y no se llama al evaluador).
+
+#### P2. ¿Qué significa realmente `invalid_patch`?
+✅ **RESPALDADA**
+
+**Para estudiar.** `invalid_patch` significa **una sola cosa**: el parche no superó el filtro de aplicabilidad original
+(`git apply --check`, con la configuración con que se ejecutó). Una analogía: es como entregar un trabajo en un formato que el
+sistema no sabe abrir; que no se abra no dice si el contenido era bueno o malo. **No significa automáticamente que:**
+- el modelo no supiera resolver la incidencia,
+- el método de recuperación fuera incorrecto,
+- el evaluador oficial hubiera rechazado el parche,
+- la solución propuesta no funcionara.
+
+Por eso hay que mantener separadas **cuatro etapas**:
+
+| Etapa | Pregunta que responde | Cómo se mide |
+|---|---|---|
+| Recuperación de contexto | ¿El contexto contiene lo relevante? | Cobertura, precisión y F1 frente al gold context |
+| Generación del parche | ¿El modelo produjo una modificación? | Existe un `patch.diff` con estructura de parche |
+| Aplicabilidad | ¿Git puede aplicar el parche al repositorio? | `git apply --check` |
+| Resolución funcional | ¿Hace pasar las pruebas de la tarea? | Evaluador oficial: `resolved` o `not_resolved` |
+
+**Respuesta oral.** «`invalid_patch` quiere decir que el parche no superó el filtro de aplicabilidad que usamos antes de
+evaluar. No significa que el modelo no supiera resolver la incidencia, ni que el evaluador oficial lo hubiera rechazado, ni
+que la solución no funcionara: significa que no pudimos llegar a probarla. Por eso distingo recuperación, generación,
+aplicabilidad y resolución funcional».
+
+### 8.2 Bloque 2. Qué descubrimos al analizar los 141 rechazos
+
+#### P3. ¿Cuáles fueron las principales causas de rechazo?
+✅ **RESPALDADA** (las categorías) · 🟡 (sus causas últimas)
+
+**Para estudiar.** Clasificamos los 141 por el **mensaje de error de Git**. Son **categorías de error observadas en el
+filtro, no necesariamente causas últimas**: por ejemplo, "fichero no encontrado" es el *síntoma*; la causa suele ser una
+convención de rutas, y que el parche no se aplique no dice si su código era correcto.
+
+| Categoría | Casos | Qué significa en sencillo | Ejemplo real |
+|---|---|---|---|
+| Fichero no encontrado | 45 | Git busca un fichero que no existe | `pytest-5809`: el parche escribe `src/_pytest/pastebin.py` y Git busca `_pytest/pastebin.py` |
+| Parche corrupto | 41 | Git no sabe interpretar el parche (p. ej. el bloque anuncia un número de líneas y trae otro) | `pytest-5809`: `corrupt patch at line 20` |
+| Sin diff | 24 | La respuesta no contiene ningún bloque de cambios | `ansible-39bd8b99`: «I cannot produce the required unified diff patch because…» |
+| Contexto que no coincide | 24 | Las líneas de contexto del parche no existen tal cual en el fichero | `astropy-14598`: `patch failed: astropy/io/fits/card.py:1023` |
+| Fragmento sin cabecera | 7 | Hay un bloque `@@` pero faltan las cabeceras de fichero | `openlibrary-910b…`: repite `---` y falta `+++` |
+
+**117 frente a 24.** De los 141, **117 (83 %)** tienen una estructura que Git reconoce como parche (112 con cabeceras
+completas y 5 con cabecera defectuosa) y **24 (17 %)** no tienen diff. **Tener estructura reconocible no significa que el
+parche sea válido**: ninguno de esos 117 pasó el filtro con `-p1`. La cifra inicial de 113 se debía a una heurística más
+tosca (pregunta 1.6).
+
+**Los 24 sin diff no son todos iguales** (pregunta 1.3): 8 rechazos explícitos, 3 explicaciones sobre falta de contexto, 2
+mensajes de error, 7 con solo cabeceras (parche vacío) y 4 otro texto.
+
+**Evidencia.** `diagnostics/downstream-patches/data/invalid_patches_classification.csv` (una fila por condición, con el
+mensaje de Git completo) y `scripts/classify_invalid_patches.py`.
+
+#### P4. ¿Qué problema encontramos con las rutas de los ficheros?
+✅ **RESPALDADA** · *Respuesta oral: pregunta 3.1.*
+
+**Para estudiar.** Un parche en formato Git suele escribir las rutas con prefijos: `a/` para el fichero "antes" y `b/` para el
+"después". `git apply` quita por defecto el **primer componente** de la ruta (`-p1`), precisamente para descartar esos prefijos.
+
+| Cabecera del parche | Qué entiende `git apply -p1` | ¿Existe en el repositorio? |
+|---|---|---|
+| `--- a/src/modulo.py` | `src/modulo.py` | Sí |
+| `--- src/modulo.py` (sin prefijo) | `modulo.py` | **No**: «No such file or directory» |
+
+Es decir, Git quita `src/` creyendo que es el prefijo y busca un fichero equivocado. **El código del parche podía ser
+correcto y aun así no aplicarse.** En los datos: 94 de los 141 no llevan prefijos (93 con `-p` natural y 1 mixto) y 44 de los
+45 "fichero no encontrado" son de ese grupo; los 9 parches aplicables sí llevan prefijos. El prompt solo pedía «un unified
+diff», sin indicar ninguna convención de rutas; **no sabemos por qué el modelo a veces escribe los prefijos y a veces no**.
+
+**Evidencia.** `invalid_patches_classification.csv` (columnas `prefix` y `cause`); `src/downstream/generation.py` (el prompt).
+
+#### P5. ¿Qué diferencia existe entre `-p0` y `-p1`?
+✅ **RESPALDADA**
+
+**Para estudiar.** `-pN` le dice a Git cuántos componentes iniciales de la ruta debe **eliminar**.
+- **`-p0`:** no elimina ninguno. `a/src/modulo.py` se queda `a/src/modulo.py`; `src/modulo.py` se queda `src/modulo.py`.
+- **`-p1`:** elimina el primero. `a/src/modulo.py` pasa a `src/modulo.py`; `src/modulo.py` pasa a `modulo.py`.
+
+Por tanto, un parche **con** prefijos necesita `-p1` y un parche **sin** prefijos necesita `-p0`. A esa opción que corresponde
+a las cabeceras reales de cada parche la llamamos su **`-p` natural**.
+
+**Por qué fue importante y por qué no se cambió en silencio.** El filtro original usaba `-p1` y, según el código leído, los
+evaluadores oficiales también usan `-p1`. Cambiar la opción del filtro sin decirlo **cambiaría la definición del experimento** y
+no sabríamos si comparamos con el mismo filtro. Por eso la línea base replica `-p1` y `-p0` se usa solo como **condición
+diagnóstica documentada**: responde a «¿cuántos pasarían si las rutas estuvieran bien escritas?», no «¿qué hace el
+evaluador?». Reescribir los prefijos y usar `-p1` equivale en teoría a usar `-p0`; esa equivalencia no se ha comprobado todavía
+sobre los parches reales.
+
+**Evidencia.** Matriz, columnas `p` y `p_natural` de `cells.jsonl`; `docs/downstream-patch-diagnostics.md`, secciones 12 y 14.
+
+#### P6. ¿Qué son CRLF y LF y por qué los investigamos?
+✅ **RESPALDADA** · *Respuesta oral: pregunta 3.4.*
+
+**Para estudiar.** Son dos formas de marcar el final de una línea en un fichero de texto: **LF** es un solo carácter (salto de
+línea; el habitual en Linux) y **CRLF** son dos (retorno de carro y salto de línea; el habitual en Windows). Dos ficheros con el
+mismo texto pero distinto final de línea no son idénticos byte a byte, y eso puede hacer que un parche no encaje.
+
+**Por qué los investigamos.** Los **150 parches** se guardaron con CRLF (probablemente por cómo se escribieron en Windows;
+es una hipótesis) y mi filtro usaba parche CRLF contra ficheros CRLF, mientras que, según el código, los evaluadores reciben
+el parche en LF y corren en Linux. Había que saber si esa diferencia podía explicar los 141 rechazos.
+
+**Qué descubrimos.**
+- Con `-p1`, **ninguno** de los 141 pasa el filtro aunque se normalice a LF.
+- Con su `-p` natural, el CRLF cambia si el parche pasa en solo **2 de 123** (y la categoría de error en otros 2).
+- Un parche CRLF contra ficheros LF **sí** falla (8 de los 9 controles), pero los evaluadores reciben el parche ya en LF.
+- Conclusión: **CRLF no era la causa principal**, aunque sí afectaba a algunos casos concretos. Esto vale **bajo
+  comprobación estricta** (`git apply --check`).
+
+**Evidencia.** `cells.jsonl` y `analisis.md` en `data/matriz_completa_20261112T000024Z/`.
+
+### 8.3 Bloque 3. Cómo realizamos las 1.800 comprobaciones
+
+#### P7. ¿De dónde salen exactamente las 1.800 comprobaciones?
+✅ **RESPALDADA**
+
+**Para estudiar.** Paso a paso:
+1. Partimos de los **150 parches originales**. **No generamos ninguno nuevo.**
+2. Variamos **tres factores**: (a) finales de línea del parche (CRLF o LF); (b) finales de línea de los archivos reconstruidos
+   (CRLF o LF); (c) interpretación de las rutas (`-p0` o `-p1`).
+3. 2 × 2 × 2 = **8 combinaciones** por parche, y 150 × 8 = **1.200** comprobaciones de la **matriz principal**.
+4. **Réplica de robustez:** repetimos las combinaciones sobre archivos LF con `core.autocrlf=false` (parche CRLF o LF, `-p0` o
+   `-p1`: 4 combinaciones) y 150 × 4 = **600**.
+5. Total: 1.200 + 600 = **1.800**.
+
+| Factor | Niveles | Combinaciones |
+|---|---|---|
+| Parche | CRLF · LF | |
+| Archivos reconstruidos | CRLF · LF | 2 × 2 × 2 = 8 por parche |
+| Rutas | `-p0` · `-p1` | |
+| Robustez (`autocrlf=false`, solo archivos LF) | parche CRLF/LF × `-p0`/`-p1` | 4 por parche |
+
+**Qué es `core.autocrlf`.** Es una opción de Git que **convierte finales de línea** al extraer o guardar ficheros: con `true`
+(típico en Windows) los ficheros extraídos pasan a CRLF aunque estén en LF en el repositorio. Quisimos controlar su influencia
+porque cambia el contenido de los ficheros sobre los que se aplica el parche. Resultado: las 600 celdas de la réplica dieron
+**el mismo resultado y el mismo mensaje** que las equivalentes con `autocrlf=true`.
+
+**Aclaraciones importantes.**
+- Las 1.800 comprobaciones **no son 1.800 generaciones del modelo** ni **evaluaciones funcionales**: son comprobaciones de
+  aplicabilidad de los mismos 150 parches.
+- La combinación «parche CRLF, ficheros CRLF, `-p1`» es el **filtro original reconstruido**: sirve de línea base.
+- El piloto (84 comprobaciones) y la línea base de 150 se ejecutaron **antes y aparte**; no forman parte de las 1.800.
+
+**Evidencia.** `cells.jsonl` (1.200 filas) y `cells_robustez_autocrlf_false.jsonl` (600 filas).
+
+#### P8. ¿Cómo ejecutamos técnicamente las 1.800 comprobaciones?
+✅ **RESPALDADA** · *Respuesta oral: pregunta 3.8.*
+
+**Para estudiar.** Lo hizo un script de Python, `diagnostics/downstream-patches/scripts/eol_prefix_matrix.py`. **No se ejecutaron
+a mano 1.800 comandos.** Para cada parche el script:
+1. lee el parche original;
+2. identifica el **`base_commit`** de su tarea: el estado exacto del repositorio sobre el que debe aplicarse la solución;
+3. **reconstruye en una carpeta temporal** solo los ficheros que el parche puede tocar, leyéndolos de ese commit con
+   `git cat-file` (sin cambiar de commit ni tocar el repositorio real);
+4. prepara los ficheros con CRLF o LF (siguiendo `.gitattributes` y `core.autocrlf`) y el parche en CRLF o LF;
+5. ejecuta `git apply --check` con `-p0` o `-p1`, que **comprueba sin aplicar nada**;
+6. guarda si pasó y, si falló, el mensaje completo de Git.
+
+**Garantías de seguridad y de rigor.** Solo se permiten unos pocos comandos de Git de lectura; la configuración de Git se aísla
+y se fija `core.autocrlf` de forma explícita; **antes de interpretar nada** el script reproduce los 150 resultados originales
+(si no coincidiera, se detiene); y al final compara los hash de los parches y resultados y el estado de los 20 repositorios.
+
+**Evidencia.** `scripts/eol_prefix_matrix.py`, `controls.json` (control 1: 150 de 150) y `manifest.json` (integridad antes y
+después).
+
+#### P9. ¿Cómo garantizamos la reproducibilidad?
+✅ **RESPALDADA** (con el matiz del piloto) · *Respuesta oral: pregunta 3.7.*
+
+**Para estudiar.** La reproducibilidad se apoya en seis cosas: (1) la **línea base reprodujo exactamente los 150 resultados
+originales**, incluidos los mensajes de error; (2) los resultados por celda, los agregados y el manifest están conservados;
+(3) los scripts están versionados; (4) se comprobaron los hash de los parches y resultados originales; (5) se comprobó que
+los repositorios no cambiaron; (6) el piloto de 84 comprobaciones coincidió con la matriz completa.
+
+**Qué es SHA-256.** Una **huella digital** de un fichero: una función que resume todo su contenido en una cadena de 64
+caracteres. Si cambia **un solo byte**, la huella cambia por completo. Guardamos la huella de cada parche y de los resultados
+**antes** y la volvimos a calcular **después**; si coinciden, el fichero no se ha modificado.
+
+**Dos matices honestos.** El punto (6) se comprobó sobre ficheros locales del piloto que **no están versionados**, así que
+conviene presentarlo como comprobación realizada y no como evidencia ya publicada. Y **reproducibilidad no es equivalencia**:
+reproducir nuestro diagnóstico no demuestra que reproduzca el entorno Linux/Docker de los evaluadores oficiales.
+
+**Evidencia.** `controls.json`, `manifest.json` (`integridad_antes` y `integridad_despues`) y los commits del repositorio.
+
+### 8.4 Bloque 4. Qué descubrimos con la matriz
+
+#### P10. ¿Cuántos parches conseguimos recuperar?
+✅ **RESPALDADA** · *Respuesta oral: pregunta 7.3.*
+
+**Para estudiar.** **11 de los 141** parches rechazados pasaron `git apply --check` en alguna condición alternativa. Los
+otros **130** no pasaron en **ninguna** de las 8 combinaciones de la matriz principal. El resultado principal, con el `-p`
+natural de cada parche, se calculó sobre **123** parches con cabeceras interpretables; los otros **18** (17 sin cabeceras y 1
+con `-p` indeterminado) quedan fuera de ese análisis concreto.
+
+| Condición | Parches originalmente rechazados que pasan, de 123 |
+|---|---|
+| CC | 9 |
+| LC | 11 |
+| CL | 0 |
+| LL | 11 |
+
+**Cómo leer las letras:** la **primera** es el final de línea del **parche** y la **segunda** el de los **archivos**; **C** es
+CRLF y **L** es LF. Así, CC es el filtro original reconstruido y LL es parche y archivos en LF.
+
+**Lo esencial.**
+- El filtro original usaba `-p1` y **ninguno de los 141** pasó con `-p1` en las condiciones estudiadas.
+- Los 11 necesitan condiciones distintas del filtro original: **9 solo con corregir prefijos y 2 con prefijos y finales de
+  línea**; ninguno necesita cambios en el contenido.
+- Son 9 tareas distintas de 7 repositorios (BM25 aporta 4, UniXcoder 1 y RRF 6). No se extraen conclusiones entre estrategias.
+
+**Evidencia.** `analisis.md` (sección 1) y `analisis.json`; `diagnostics/downstream-patches/data/.../analisis_referencia.json`.
+
+#### P11. ¿Por qué recuperar 11 parches no significa resolver 11 incidencias?
+✅ **RESPALDADA** · *Respuesta oral: pregunta 2.6.*
+
+**Para estudiar.** Son cuatro etapas distintas, cada una más exigente que la anterior:
+
+| Etapa | Qué exige | Cifras |
+|---|---|---|
+| 1. Formato interpretable | Tiene forma de parche | 117 de los 141 |
+| 2. Supera `git apply --check` | Rutas y contexto encajan en el repositorio | 0 de 141 con `-p1`; 11 en condiciones alternativas |
+| 3. Aceptado por un evaluador | Depende de su procedimiento (Linux, `-p1`, alternativas de aplicación) | **No medido** |
+| 4. Supera las pruebas funcionales | La incidencia queda resuelta | 2 de 150 (ambos entre los 9 controles originales) |
+
+**No hemos demostrado que esos 11 resuelvan sus tareas**: nunca se evaluaron funcionalmente. Como indicio exploratorio, los
+11 editan el mismo fichero que la solución de referencia y 6 solapan con alguna región de ella; pero ese indicador **no
+predice** la resolución (uno de los parches `resolved`, `pytest-5809`, no solapa).
+
+#### P12. ¿Qué descubrimos sobre los ficheros que recibió el modelo?
+✅ **RESPALDADA** (como dato exploratorio) · *Respuesta oral: pregunta 7.4.*
+
+**Para estudiar.** En los **96** parches con error de contexto o corrupción (en la mejor condición):
+- **50** intentaban modificar únicamente ficheros que **sí** estaban en el contexto recuperado;
+- **41** intentaban modificar ficheros que **no** estaban;
+- **5** combinaban ficheros presentes y ausentes.
+
+Por tanto, **46 de 96 intentaban modificar al menos un fichero no proporcionado al modelo**.
+
+**Por qué es relevante para el TFM.** Estudiamos justamente **qué contexto del repositorio se le da a un modelo para ayudarle
+a programar**. El prompt le decía «usa solo el contexto recuperado» y, aun así, el modelo editó ficheros que no vio. De hecho,
+85 de los 96 editan el mismo fichero que la solución de referencia, y **38 de ellos sin que ese fichero estuviera en el
+contexto**: el modelo parecía saber qué fichero tocar (por ejemplo, por la traza de la incidencia) pero la recuperación no se
+lo había dado. Eso es un problema de **recuperación**, no de formato.
+
+**Qué no se puede decir.** Que un fichero no esté en el contexto **no demuestra por sí solo** que esa sea la causa del fallo.
+Es un análisis a nivel de **fichero**, no de línea. Otro dato exploratorio: solo 20 de los 96 anclan todos sus hunks por
+contenido en el repositorio (51 no anclan ninguno), de modo que incluso con los ficheros delante muchos parches citan mal el
+código.
+
+**Evidencia.** `analisis_ficheros_contexto.json`, `analisis_referencia.json` y `analisis_anclaje_contenido.json` (estos dos
+últimos aún sin commit).
+
+### 8.5 Bloque 5. Limitaciones y preguntas difíciles del tribunal
+
+#### P13. ¿Por qué no realizamos las comprobaciones directamente en Linux?
+🟡 **PARCIAL** (es una limitación declarada)
+
+**Para estudiar.** El diagnóstico quería **aislar factores concretos** (rutas y finales de línea) que podían influir en el
+filtro original; por eso usé reconstrucciones controladas en las que variaba cada factor de forma sistemática. Un entorno real
+(Linux/Docker) mezcla muchos factores a la vez y no permitiría atribuir un efecto a uno de ellos. A cambio, el diagnóstico **no
+reproduce completamente** el entorno de los evaluadores oficiales: los archivos con finales LF son una **prueba de
+sensibilidad**, no una réplica demostrada de Linux, y no se ejecutaron los evaluadores.
+
+**Respuesta oral.** «El objetivo del diagnóstico era aislar factores concretos que podían influir en el filtro original,
+especialmente las rutas y los finales de línea. Por eso utilicé reconstrucciones controladas y varié esos factores de forma
+sistemática. No considero que estas pruebas reproduzcan completamente el entorno Linux o Docker de los evaluadores oficiales.
+Esa diferencia está recogida como limitación metodológica».
+
+#### P14. ¿Por qué `git apply --check` no equivale a una evaluación funcional?
+✅ **RESPALDADA** · *Respuesta oral: pregunta 7.6.*
+
+**Para estudiar.** `git apply --check` solo responde: «¿este parche **encaja** en estos ficheros, con estas opciones?». **No
+ejecuta ninguna prueba ni comprueba que la solución sea correcta.** Un parche puede encajar y no resolver nada (7 de los 9
+aplicables eran así).
+
+**Tampoco equivale a la aceptación de un evaluador oficial.** Según el código que leí (no lo ejecuté): SWE-bench Verified
+prueba cuatro intentos (`git apply --verbose`, `--3way`, `--reject` y `patch --fuzz=5`), PolyBench usa `--ignore-whitespace` y
+`patch --fuzz=5`, y Pro hace un único `git apply -v` estricto. Por eso **no podemos afirmar que los 141 hubieran sido
+rechazados** por ellos.
+
+#### P15. ¿Podemos concluir que BM25, UniXcoder o RRF es mejor generando soluciones?
+✅ **RESPALDADA** (que no se puede concluir)
+
+**Para estudiar.** **No.** Con solo **9 parches evaluados funcionalmente** no hay base para hablar de superioridad en la
+resolución. Además, las tres estrategias se probaron sobre **las mismas 50 tareas**, así que las observaciones **no son
+independientes**. Y hay que separar dos tipos de conclusión:
+- **Recuperación de contexto:** BM25 obtiene los F1 medios más altos en las seis configuraciones; **no se ha hecho** aún una
+  prueba de significación (pendiente: Wilcoxon o bootstrap).
+- **Resolución funcional:** los dos `resolved` son de BM25, pero entre los 9 evaluados BM25 aporta 3, UniXcoder 2 y RRF 4;
+  con esos recuentos es una observación descriptiva, no una diferencia.
+- **Aplicabilidad** (no es resolución): con el `-p` natural pasan 4 de 41 (BM25), 1 de 42 (UniXcoder) y 6 de 40 (RRF), de nuevo
+  descriptivo.
+
+**Respuesta oral.** «No puedo establecer una superioridad funcional con nueve parches evaluados, y además las tres
+estrategias se probaron sobre las mismas tareas. Lo que sí puedo decir es cómo se comportan en recuperación de contexto, y aun
+ahí estoy pendiente de una prueba de significación».
+
+#### P16. ¿Qué haríamos para mejorar el experimento?
+🟡 **PARCIAL** (las líneas) · ⏳ (su efecto) · *Respuesta oral: pregunta 5.5.*
+
+**Para estudiar.** Hay dos líneas distintas:
+- **A. Recuperar mecánicamente** parches ya generados normalizando rutas y finales de línea (afectaría a los 11). No requiere
+  nuevas llamadas al modelo, pero repara salidas ya generadas: se declararía como "salidas normalizadas".
+- **B. Probar un formato de edición alternativo** (el modelo propone bloques de búsqueda y reemplazo literales y el pipeline
+  construye el parche) con el mismo contexto y modelo. Respondería si un formato más robusto aumenta los parches que llegan a
+  evaluación; no corrige que el modelo cite mal código o no vea el fichero.
+
+**Estado, sin confundir propuestas con resultados.** El diagnóstico **D-004 está cerrado**. Para B existe un **protocolo
+preparado** (D-005: 12 tareas, 36 condiciones, criterios de éxito y abandono fijados antes), pero **el piloto no está
+aprobado ni ejecutado**; el calendario propuesto (tampoco aprobado) no prevé nada experimental antes de la entrega del
+7/12. Cualquier cifra sobre su posible efecto es una **hipótesis**.
+
+### 8.6 Bloque 6. Resumen para estudiar
+
+#### A. Resumen de un minuto
+«Comparamos tres formas de dar contexto de un repositorio a un modelo —BM25, UniXcoder y RRF— en 50 tareas, con un parche por
+tarea y estrategia: 150 parches. Pero solo 9 superaron el filtro de aplicabilidad y llegaron a la evaluación funcional; 141 se
+clasificaron como `invalid_patch`, así que la parte funcional aporta poca información. Para entender por qué hice un
+diagnóstico: un script de Python que, sin generar nada nuevo, repitió `git apply --check` 1.800 veces variando los finales de
+línea del parche y de los archivos y la interpretación de las rutas, partiendo de una línea base que reprodujo exactamente los
+150 resultados originales. Resultado: los prefijos de ruta explican parte de los rechazos y los finales de línea casi nada; 11
+de los 141 pasan una comprobación alternativa, pero no sabemos si resolverían la tarea; y 130 no pasan en ninguna condición,
+con problemas de contexto o de estructura de origen no determinado —en 46 de 96 el modelo editaba ficheros que no recibió—.
+Mi conclusión es prudente: hay que distinguir recuperación, generación, aplicabilidad y resolución; el diagnóstico no demuestra
+equivalencia con los evaluadores ni superioridad de una estrategia. Propongo un piloto de formato de edición, pero aún no está
+aprobado».
+
+#### B. Cinco ideas fundamentales
+1. El filtro de aplicabilidad impidió evaluar funcionalmente **141 de los 150** parches.
+2. Investigamos el problema con una **matriz automatizada y reproducible**.
+3. Los **prefijos de rutas** explican parte de los rechazos; **CRLF no era la causa principal**.
+4. **Once** parches pasan una comprobación alternativa, pero **no sabemos si resuelven** las tareas.
+5. Hay que distinguir **recuperación, generación, aplicabilidad y resolución funcional**.
+
+#### C. Glosario sencillo
+- **Unified diff:** formato de texto que describe cambios entre dos versiones de un fichero: cabeceras `---`/`+++`, bloques
+  `@@` y líneas que empiezan por espacio, `-` o `+`.
+- **Patch (parche):** fichero que describe cómo transformar un código en otro; normalmente es un unified diff.
+- **Hunk:** cada bloque de cambios de un diff, introducido por `@@ -a,b +c,d @@`, con sus líneas de contexto y cambiadas.
+- **`base_commit`:** el estado exacto del repositorio sobre el que se debe aplicar la solución de una tarea.
+- **`git apply --check`:** comprueba si un parche se podría aplicar, **sin modificar** ningún fichero.
+- **`-p0`:** no quita ningún componente inicial de las rutas del parche.
+- **`-p1`:** quita el primer componente de las rutas (normalmente `a/` o `b/`); es el valor por defecto de `git apply`.
+- **CRLF:** final de línea de dos caracteres (retorno de carro y salto de línea), típico de Windows.
+- **LF:** final de línea de un solo carácter (salto de línea), típico de Linux y macOS.
+- **`core.autocrlf`:** opción de Git que convierte finales de línea al extraer o guardar ficheros; con `true` (Windows) los
+  ficheros extraídos pasan a CRLF.
+- **SHA-256:** función que resume un fichero en una huella de 64 caracteres; si cambia un byte, cambia la huella.
+- **Aplicabilidad:** si un parche se puede aplicar a un código (aquí, si pasa `git apply --check`); no dice si es correcto.
+- **Evaluación funcional:** ejecutar las pruebas oficiales de la tarea tras aplicar el parche para saber si la incidencia queda
+  resuelta.
+- *Extras útiles:* **gold context** (el contexto de referencia anotado por humanos en ContextBench; no se da al modelo) y
+  **Pass@1** (una sola generación por condición, sin reintentos según la calidad).
+
+#### D. Errores que debo evitar en la defensa
+- Confundir las **1.800 comprobaciones** con 1.800 generaciones.
+- Afirmar que los **11** parches recuperables resuelven sus incidencias.
+- Atribuir automáticamente los **141 rechazos al modelo**.
+- Afirmar que el diagnóstico reproduce exactamente **Linux/Docker**.
+- Decir que **117 estructuras reconocibles equivalen a 117 parches válidos**.
+- **Mezclar** los resultados del diagnóstico con los resultados originales.
+- *(Añadidos tras la revisión de los datos)* Decir que **los 24 "sin diff" son todos rechazos explícitos del modelo** (hay
+  también cabeceras vacías, mensajes de error y otros textos) y presentar «50 de 96» como si fuera un **techo** de lo que un
+  formato nuevo podría arreglar (es solo la cuenta de parches con todos los ficheros visibles).
+
+---
+
 ## Frases de seguridad para la defensa
 
 - *"Eso lo he comprobado y los datos están en el repositorio."* (solo para lo etiquetado ✅)
@@ -461,7 +938,9 @@ funcional. Los resultados originales no cambian.
 - [ ] Si se repite la fase LLM o se cambia el formato de salida, reescribir las secciones 1, 2, 4.3 y 5.5.
 - [ ] Si se hace la prueba de significación, reescribir 4.2 y la conclusión 6.2.1.
 - [x] Efecto de CRLF y prefijos cuantificado con la matriz completa: 3.2, 3.4, 3.6, 3.8 y 4.4 actualizadas (2026-11-12). Pendiente: si se ejecutara el evaluador oficial o uno tolerante, reescribir 3.4, 3.6 y la sección 7.
-- [ ] Actualizar la sección 7 y la tabla de cifras si se corrige alguna cifra al incorporar el diagnóstico a la memoria.
+- [ ] Actualizar la sección 7, la guía (sección 8) y la tabla de cifras si se corrige alguna cifra al incorporar el diagnóstico a la memoria.
+- [ ] Hacer commit de los análisis `--anclaje-contenido` y `--referencia` y de sus JSON; después, retirar la advertencia «aún sin commit» de la sección 8.
+- [x] Clasificación manual de los 24 sin diff contrastada y corregida en `docs/downstream-patch-diagnostics.md` (sección 2, 2026-11-12). Pendiente solo: pasarla a un script si se quiere reproducible.
 - [ ] Contrastar las cifras con la versión final de la memoria (los números cambiarán si se repite el experimento).
 - [ ] Comprobar si el director espera que la memoria final recoja estos hallazgos.
 - [ ] Actualizar la memoria (sección 6.5, "113 de los 141") a 117, con 24 sin diff, y mantener las preguntas 1.6 y 4.6 coherentes con lo que finalmente figure en ella.

@@ -60,11 +60,17 @@ Los 9 parches aplicables (7 + 2) llegaron a la evaluación funcional oficial. Lo
 | Contexto no coincide | 24 | `error: patch failed: src/transformers/generation/configuration_utils.py:N` |
 | Fragmento sin cabecera | 7 | `error: patch fragment without header at line N: @@ -N,N +N,N @@` |
 
-- **[CONFIRMADO]** Los 24 "sin diff válido" son respuestas de texto del modelo. Ejemplos revisados
-  (`instance_ansible__ansible-39bd8b99…` semantic; `instance_internetarchive__openlibrary-e1e50298…` bm25):
-  el modelo declara que el contexto recuperado no contiene el código necesario y no produce parche.
-- **[HIPÓTESIS]** Esos 24 son fallos de recuperación (contexto insuficiente), no de formato. No se ha
-  comprobado contra el gold context.
+- **[CONFIRMADO, corregido el 2026-11-12]** Los 24 "sin diff válido" **no son todos iguales**. Lectura manual de los 24
+  textos (`logs/downstream/*/patch.diff`; clasificación orientativa que **no está en un script**): **8** son un rechazo
+  explícito («I cannot… porque el contexto recuperado no contiene…», p. ej. `instance_ansible__ansible-39bd8b99…` semantic
+  e `instance_internetarchive__openlibrary-e1e50298…` bm25), **3** son explicaciones largas que argumentan que falta
+  contexto, **2** son mensajes de error del propio proceso («Failed to generate patch. No context files available…»),
+  **7** contienen solo las dos líneas de cabecera de fichero (`---` y `+++`) sin ningún hunk, es decir, un parche vacío, y
+  **4** son otro texto o razonamiento sin diff. *(Redacción anterior, sustituida: «Los 24 son respuestas de texto del modelo
+  que declaran que el contexto no contiene el código necesario», basada en dos ejemplos revisados.)*
+- **[HIPÓTESIS]** Que los casos que mencionan falta de contexto (unos 13: 8 + 3 + 2) sean fallos de recuperación no se ha
+  comprobado contra el gold context. Los 7 con solo cabeceras son parches vacíos, y no hay base para atribuirlos a la
+  recuperación.
 - **[CONFIRMADO]** Los 7 + 2 parches aplicables tienen cabeceras `--- a/…`; ninguno de los parches aplicables
   carece de prefijo (ver sección 3).
 - **[CONFIRMADO]** Estructura de parche reconocible: **117 de 141** (83 %) según Git, de los cuales **112** tienen
@@ -357,7 +363,8 @@ y `logs/run_evaluation/`.
   cuya sección 6.5 ("113 de los 141…") deberá actualizarse a 117, con 24 sin diff, y el texto asociado
   ("no garantiza…") se mantiene.
 - **Formulación propuesta para la memoria:** "De los 141 parches no aplicables, 117 (83 %) contienen una estructura
-  de parche reconocible por Git y 24 (17 %) son respuestas sin diff. Que un parche tenga un formato identificable no
+  de parche reconocible por Git y 24 (17 %) no contienen diff (respuestas de texto, mensajes de error o solo cabeceras de
+  fichero sin hunks). Que un parche tenga un formato identificable no
   garantiza que pueda aplicarse."
 
 ## 12. Fase 2: influencia de los finales de línea y de los prefijos de ruta (diseño propuesto)
@@ -779,7 +786,7 @@ aceptación del evaluador oficial.
   réplica; el listado de configuración visible para `git apply` está vacío. El manifest (esquema 2) no contiene el remoto
   ni datos de usuario; la cadena `.git/config` solo aparece en la nota que explica el fallo de registro del esquema 1.
 - **Controles:** línea base **150/150** (resultado y mensaje originales de `git apply --check`); los 9 aplicables
-  originales aplican; las 24 respuestas sin diff no aplican en ninguna celda; 0 celdas no evaluables.
+  originales aplican; las 24 salidas sin diff no aplican en ninguna celda; 0 celdas no evaluables.
 - **Control 4 (celdas con `-p` cruzado deben fallar):** 528 celdas, 524 fallan. Las **4 que aplican** son un único parche
   (`instance_ansible__ansible-7e1a3476…` · RRF, `not_resolved`) cuyas cabeceras son `--- /dev/null` y
   `+++ b/lib/…`: solo **crea un fichero nuevo**, no hay fichero previo que buscar y `-p0` y `-p1` lo aceptan. No es un
@@ -949,9 +956,12 @@ repitieron con `autocrlf=false`, así que el efecto de `autocrlf` sobre ellos no
   originales (141/7/2) como resultado del experimento.
 - **Decisión pendiente:** si se acomete la Fase 2 del plan (formato de edición alternativo del LLM). Los datos dicen que
   arreglar rutas y finales de línea apenas recupera parches y que el resto falla por discrepancias de contexto o de
-  estructura del diff, de origen no determinado. Un formato de edición podría ayudar en los casos en que el modelo sí vio los
-  ficheros (50 de los 96), pero no en aquellos en que no los vio (46 de 96), que apuntan más bien a la recuperación y al
-  procedimiento. **Ambas son hipótesis** y exigirían nuevas generaciones, fuera del plazo del diagnóstico.
+  estructura del diff, de origen no determinado. **Aclaración (2026-11-12) sobre "50 de 96" y "46 de 96":** 50 de los 96
+  indica que **todos** los ficheros que el parche edita estaban en el contexto proporcionado al modelo, y 46 de los 96 que
+  intentaban modificar **al menos un fichero ausente** del contexto. Son cifras de **visibilidad de ficheros**, no de la
+  posibilidad de convertir los parches mediante otro formato: ni "50" es un techo de lo que un formato de edición podría
+  arreglar ni "46" un suelo. La convertibilidad se analiza por anclaje de contenido en la sección 15.2. Que un formato
+  de edición ayude, y hasta dónde, **es una hipótesis** y exigiría nuevas generaciones, fuera del plazo del diagnóstico.
 
 ### D-004 · 2026-11-12 · Ejecución de la matriz completa
 
@@ -1015,3 +1025,260 @@ evaluador tolerante o acometer la Fase 2 del plan (nuevas generaciones), que que
 8. **Figuras y tablas:** una tabla nueva (aplicabilidad por condición); una figura opcional de barras CC/LC/CL/LL.
 
 - **Actualización de D-004 (2026-11-12):** cerrado tras esta revisión de consistencia.
+
+## 15. Análisis de viabilidad de un piloto de formato de edición y protocolo propuesto (2026-11-12)
+
+> **ESTADO: PROPUESTA. EL EXPERIMENTO NO ESTÁ APROBADO NI EJECUTADO.** No se ha hecho ninguna generación nueva ni
+> se ha modificado el generador. Esta sección documenta el análisis y un protocolo para revisión; **no autoriza**
+> ejecutar nada. Los resultados originales (141 `invalid_patch`, 7 `not_resolved`, 2 `resolved`) no cambian.
+
+Etiquetas: **[CONFIRMADO]** dato comprobado con los datos y scripts versionados; **[HIPÓTESIS]** no verificada;
+**[PROPUESTA]** diseño pendiente de aprobación.
+
+### 15.1 Hallazgos comprobados
+
+**Recuento de los 11 `invalid_patch` que pasan `git apply --check` con su `-p` natural. [CONFIRMADO]**
+- Los 11 parches corresponden a **9 tareas distintas** (`requests-1142` y `requests-5414` aportan 2 parches cada una) en
+  **7 repositorios** (ansible, transformers, keras, requests, pylint, scikit-learn, yt-dlp). Por fuente: 6 Verified,
+  3 Poly, 2 Pro; por estrategia: BM25 4, UniXcoder 1, RRF 6.
+- Los 9 controles (aplicables originales) corresponden a **8 tareas distintas** (`sympy-17655` aporta 2 parches). Las
+  "ocho tareas" de un recuento comunicado antes correspondían a los controles, no a los 11 parches.
+- **3 de las 9 tareas** de los 11 ya tienen un control evaluado (`keras-19201`, `requests-5414`, `scikit-learn-14087`) y
+  **6 son nuevas**. Con los 11, las tareas evaluadas funcionalmente pasarían de 8 a 14 y los repositorios de 8 a 11.
+
+**Transformaciones mínimas de esos 11 para pasar el filtro original con `-p1`. [CONFIRMADO, de la matriz]**
+
+| Transformación | Parches | Naturaleza |
+|---|---|---|
+| Solo prefijos (`a/` y `b/`, equivalente a `-p0`) | 9 | Mecánica; no toca hunks ni contenido |
+| Prefijos y finales de línea | 2 (`transformers-26752` RRF, `requests-1142` RRF) | Mecánica; el pipeline ya entrega el parche en LF al evaluador, pero el filtro lo juzga en CRLF |
+| Cambios de contenido | 0 necesarios para pasar el filtro | — |
+
+Que reescribir los prefijos y pasar con `-p1` sea equivalente a `-p0` es una equivalencia estándar de `git apply`; **no se ha
+ejecutado todavía** la reescritura sobre los parches reales. Que pasen el filtro **no implica** que resuelvan la tarea.
+
+**Plausibilidad frente a la solución de referencia (no dada al modelo). [CONFIRMADO, exploratorio]** Los 11 editan el mismo
+fichero que la referencia y 6 de ellos solapan con alguna región de ella; entre los 9 controles, 6 editan el mismo
+fichero (2 solapan; los 2 `resolved` son `requests-5414`, con solape, y `pytest-5809`, sin solape). Por tanto el indicador
+**no predice** la resolución. La tasa de los controles (2 de 9) solo da un orden de magnitud, no una predicción para los 11.
+
+**Generador. [CONFIRMADO, `src/downstream/generation.py`]**
+- Instrucciones: "usa solo el contexto recuperado", "no asumas acceso a otros ficheros", "devuelve solo un unified diff",
+  "sin bloques Markdown", "sin explicaciones". No hay ejemplo de formato ni convención de rutas.
+- Cada fragmento se presenta con `File:`, `Lines: a-b` y `Symbol:`, pero el código **no lleva números de línea**. Un unified
+  diff exige conteos de hunk y líneas de contexto exactas, y las líneas situadas fuera del fragmento no son visibles.
+- Configuración: `gemini-3.5-flash-lite`, K = 10, 4096 tokens de salida y razonamiento `minimal`. En 150 generaciones la
+  salida mediana es 180 tokens y solo 1 alcanza el límite (una respuesta sin diff), de modo que el límite no explica los
+  `corrupt`. *(Calculado en línea a partir de `result.json`; no está en los scripts conservados.)*
+- **Los bloques Markdown incumplen la instrucción:** 60 de los 150 `patch.diff` (55 de 141 `invalid_patch` y 5 de 9
+  aplicables) contienen líneas que empiezan por tres acentos graves. El filtro los tolera (5 de los 9 aplicables los llevan),
+  así que no es una causa de rechazo, pero muestra que el modelo no siempre cumple las instrucciones de formato.
+
+**Visibilidad del código, anclaje por contenido y referencia en los 96 fallos de contexto o corrupt. [CONFIRMADO]**
+- **Visibilidad de ficheros:** en 46 de los 96 el parche edita al menos un fichero que no estaba en el contexto recuperado
+  (41 ninguno y 5 parcialmente) y en 50 todos sus ficheros sí estaban.
+- **Referencia:** 85 de los 96 editan el mismo fichero que la solución de referencia. De ellos, **38 lo editan sin que ese
+  fichero estuviera (todo o en parte) en el contexto recuperado** (33 + 5); 47 lo editan y lo habían visto.
+- **Anclaje por contenido** (el bloque antiguo de cada hunk, contexto más líneas eliminadas, ¿aparece contiguo en el fichero
+  del `base_commit`, ignorando los números de línea?). Es la condición que necesitaría un formato SEARCH/REPLACE aplicado
+  sobre el texto real:
+
+| Anclaje de los 96 | Parches |
+|---|---|
+| **Todos los hunks anclan** (17 con el bloque completo exacto, 3 al menos por sus líneas eliminadas) | **20** |
+| Anclan algunos hunks | 24 |
+| **Ningún hunk ancla** | **51** |
+| Solo añaden líneas, sin bloque antiguo (no verificable) | 1 |
+
+| Visibilidad × anclaje | Todos anclan | Algunos | Ninguno | No verificable |
+|---|---|---|---|---|
+| Todos sus ficheros en el contexto (50) | 17 | 18 | 15 | 0 |
+| Ninguno en el contexto (41) | 3 | 2 | 35 | 1 |
+| Parcialmente (5) | 0 | 4 | 1 | 0 |
+
+**Validación del anclaje:** los 11 parches recuperables anclan al 100 % (11 de 11) y 8 de los 9 controles también (el noveno
+solo crea un fichero y no es analizable); no hay falsos negativos entre los parches que ya se sabe que aplican. (Una primera
+versión del análisis trataba el cierre de un bloque Markdown como línea de contexto y daba dos falsos negativos; está corregida.)
+
+**Reproducción:** `python -I diagnostics/downstream-patches/scripts/analyze_eol_prefix_matrix.py <carpeta> --ficheros-contexto`
+(visibilidad), `... --anclaje-contenido` (anclaje y bloques Markdown) y, con el Python del entorno virtual (`datasets`, sin red),
+`... --referencia` (fuente y solución de referencia), sobre una copia de
+`diagnostics/downstream-patches/data/matriz_completa_20261112T000024Z/` sin los `analisis_*` correspondientes (el script no
+sobrescribe). Los resultados están en `analisis_ficheros_contexto.json`, `analisis_anclaje_contenido.json` y
+`analisis_referencia.json` de esa carpeta.
+
+### 15.2 Revisión de la afirmación "un formato alternativo solo podría ayudar en 50 de los 96"
+
+Esa frase (sección 14.13 y respuestas de defensa) **queda matizada por esta sección**: el 50 es un recuento de *visibilidad de
+ficheros*, no de *convertibilidad*. Hay que separar dos cosas:
+
+1. **Validez sintáctica del parche:** que la intención de edición del modelo se convierta en un parche que pase el filtro.
+   Un formato de edición resuelve lo mecánico (prefijos, cabeceras, conteos y numeración de hunks, finales de línea, bloques
+   Markdown) pero **no** que el texto citado exista en el fichero. El anclaje por contenido mide justo eso: de los 96,
+   **20 anclan todos sus hunks** (17 con ficheros visibles y 3 con ficheros no visibles), 24 solo algunos y 51 ninguno. Es decir,
+   incluso viendo los ficheros (50), solo 17 anclan del todo y 15 no anclan en absoluto: ahí el fallo es el **contenido
+   citado**, no el formato.
+2. **Resolver una tarea con contexto insuficiente:** un parche sintácticamente perfecto sobre un fichero que el modelo no vio no
+   cabe esperar que sea una corrección acertada. 38 de los 96 editan el fichero de referencia sin haberlo visto: es un fallo de
+   **recuperación**, ortogonal al formato.
+
+Por tanto, "50" no es ni techo ni suelo: 3 parches con ficheros no visibles sí anclan (el modelo reprodujo el código de
+memoria) y 1 de los 11 que aplican no tenía ningún fichero en el contexto; y entre los 50 visibles, 33 no anclan del todo.
+**La cota exploratoria de lo que podría convertir un formato anclado por contenido sobre las salidas existentes es del orden de
+20 de 96 (21 %), o 44 de 96 (46 %) contando los parches en los que anclan algunos hunks.** Para generaciones nuevas es
+desconocida: el modelo podría citar el texto con más cuidado cuando se le pide copiarlo literalmente **[HIPÓTESIS]**.
+
+### 15.3 Hipótesis (no verificadas)
+
+- **H-A:** pedir bloques de edición literales aumenta la proporción de generaciones que pasan el filtro, porque elimina los
+  fallos mecánicos (prefijos, conteos, finales de línea, numeración).
+- **H-B:** el aumento está limitado por la visibilidad del código: donde el modelo no vio el fichero, el formato no ayuda.
+- **H-C:** parte de los fallos de contexto con ficheros visibles se debe a transcripción imperfecta del código (sangrado,
+  líneas omitidas) y un formato que exige citar literalmente puede reducirla o dejarla igual.
+- **H-D:** convertir las salidas con un normalizador mecánico (prefijos) ya captura una parte del beneficio del formato (la
+  del 7,8 % de los 141); la comparación justa del formato es contra las salidas originales **normalizadas**.
+
+### 15.4 Protocolo propuesto P1 (borrador, NO aprobado)
+
+**Pregunta primaria. [PROPUESTA]** Con el mismo modelo, contexto y configuración, y una generación por condición, ¿un formato de
+edición (EDIT-v1) aumenta, frente al formato original con las normalizaciones mecánicas, la proporción de condiciones cuya salida
+se convierte en un parche que pasa el filtro de aplicabilidad? Secundarias: embudo de conversión, resolución funcional entre los
+que llegan y causas de fallo según visibilidad y anclaje.
+
+**Selección reproducible de tareas.** 12 tareas de `results/final_tasks.csv` (50), estratificadas por fuente de forma
+proporcional (Verified 29, Poly 12 y Pro 9 → 7, 3 y 2). Dentro de cada fuente, las tareas se ordenan por el SHA-256 de
+`"42:<original_inst_id>"` y se toman las primeras *n*. Lista resultante (36 condiciones = 12 tareas × 3 estrategias; hash de
+la lista, `sha256` de los identificadores unidos por saltos de línea y truncado a 16 caracteres: `6dbd0c9f9365690c`):
+
+| Fuente | Tareas |
+|---|---|
+| Verified (7) | `scikit-learn-13439`, `pytest-5809`, `xarray-6992`, `pytest-5262`, `matplotlib-24177`, `matplotlib-24627`, `sympy-19637` |
+| Poly (3) | `transformers-29675`, `yt-dlp-4841`, `keras-18871` |
+| Pro (2) | `qutebrowser-16de0540…` (instancia completa en `final_tasks.csv`), `ansible-7e1a3476…` (ídem) |
+
+Tres de ellas ya tienen un parche aplicable original (`pytest-5809`, `matplotlib-24177`, `ansible-7e1a…`). La lista se congela
+con su hash antes de generar nada; no se sustituyen tareas según resultados.
+
+**Brazos y comparación pareada** (la unidad es la condición = tarea × estrategia; todos los brazos sobre las mismas 36):
+
+| Brazo | Qué es | Papel |
+|---|---|---|
+| `O0` | Resultados originales ya existentes (no se regeneran) | Referencia histórica |
+| `O1` | Nueva generación con el prompt original, sin tocar | Control de **re-muestreo** |
+| `O1n` | Las mismas salidas de `O1` con el normalizador N (añadir `a/` y `b/` si faltan) | Control **mecánico** |
+| `E1` | Generación con el formato de edición EDIT-v1, convertida por el aplicador determinista | Tratamiento |
+
+Comparación **primaria: `E1` frente a `O1n`**, pareada por condición, con recuentos de discordantes (aplica solo con E1, solo
+con O1n). Secundarias: `O1n` frente a `O1` (efecto de N), `O1` frente a `O0` (ruido de re-muestreo; para comparar con `O0` se
+aplica N también a los originales) y `E1` frente a `O1`. Es descriptivo; no hay contrastes de significación.
+
+**Mismo modelo, contexto y configuración.** `gemini-3.5-flash-lite`, K = 10, mismos fragmentos (la parte "ISSUE y RETRIEVED
+CONTEXT" del prompt es idéntica byte a byte a la del `prompt.txt` original; solo cambia el bloque INSTRUCTIONS), 4096 tokens
+de salida, razonamiento `minimal` y parámetros por defecto como en el original. Se registran el identificador del modelo, la
+fecha y el hash del prompt de cada brazo. Los pares (`O1`, `E1`) de una condición se generan consecutivamente para reducir la
+deriva temporal.
+
+**Formato EDIT-v1 (una única variante, una única iteración del prompt).** Se mantienen las frases de información del original
+("usa solo la descripción y el contexto", "no asumas acceso a otros ficheros", "cambio mínimo") y se sustituye "devuelve solo un
+unified diff" por: bloques `FILE: <ruta tal como aparece en una línea File:>` seguidos de
+`<<<<<<< SEARCH` / texto literal copiado del contexto / `=======` / texto de reemplazo / `>>>>>>> REPLACE`; el SEARCH debe
+coincidir exactamente y ser lo más corto posible pero único; sin bloques Markdown ni explicaciones. El texto exacto se versiona
+y se fija por hash antes de ejecutar. Variantes (función completa reescrita, etc.) quedan fuera del piloto.
+
+**Aplicador determinista (versionado y probado antes, sin LLM).** Para cada bloque: leer el fichero del `base_commit` con
+`git cat-file` (finales de línea LF), exigir que el SEARCH coincida **una sola vez** (nivel 1: líneas exactas ignorando espacios
+finales; nivel 2: ignorando sangrado, solo si es único; sin ninguna coincidencia aproximada más). Estados: `parse_error`,
+`file_not_found`, `search_not_found`, `ambiguous_match`, `patch_ready`. Con los reemplazos se genera un unified diff (3 líneas
+de contexto, `a/` y `b/`, LF) que se pasa por el mismo filtro que `O1n`. Para ficheros nuevos solo se admite SEARCH vacío si el
+fichero no existe.
+
+**Filtro común.** `git apply --check -p1` con parche LF contra un árbol LF reconstruido del `base_commit`, estricto, igual para
+`O1n` y `E1`. Es una prueba de sensibilidad, **no** equivale a la aceptación del evaluador oficial.
+
+**Una generación por condición y brazo, sin reintentos.** Una salida inválida es el resultado de esa condición. Solo se repiten
+los errores transitorios de la API (429 y 503), como en el protocolo original, y se registran. No se regenera según calidad.
+
+**Métricas.**
+1. *Conversión (`E1`):* salidas parseables, ficheros existentes, SEARCH hallado y único (por bloque y por condición),
+   `patch_ready`, nivel de coincidencia usado.
+2. *Aplicabilidad (primaria):* condiciones que pasan el filtro por brazo, por estrategia, por fuente y por visibilidad de
+   ficheros (todos, parcial, ninguno) y anclaje.
+3. *Resolución:* evaluación funcional oficial de todos los parches que pasan el filtro en `O1n` y en `E1`, con los mismos
+   evaluadores; resultados resolved, not_resolved e infrastructure_error por brazo, solo descriptivos.
+4. *Cumplimiento de formato:* proporción de salidas con bloques Markdown o sin edición, y tokens y latencia.
+5. *Plausibilidad (descriptiva, sin decidir con ella):* mismo fichero que la referencia.
+
+**Criterios de éxito y de abandono (fijados antes de ejecutar; reglas de decisión, no contrastes).** Con 36 condiciones por
+brazo y una base esperable de unos 5 de 36 (13 %, la de los originales normalizados), el recuento tiene una desviación típica de
+≈ 2 y la de una diferencia pareada ≈ 3 (si fueran independientes). Se propone:
+- **Éxito** (valorar ampliar a un P2 con las 50 tareas, que requeriría protocolo y autorización propios): `E1` supera a `O1n` en
+  **≥ 6 condiciones**, `E1` ≥ **10 de 36** (28 %), la diferencia no es negativa en ninguna estrategia y es positiva en al menos
+  dos, y ≥ 80 % de las salidas de `E1` son parseables.
+- **Abandono:** `E1` supera a `O1n` en **≤ 2 condiciones**, o `E1` < **6 de 36** (17 %), o < 60 % de las salidas de `E1`
+  son parseables. Además, pausa si más del 25 % de los parches que pasan el filtro dan `infrastructure_error`.
+- **Inconcluyente** (resto): no ampliar; documentar y dejarlo como trabajo futuro.
+- La resolución funcional **no** tiene criterio de éxito ni de abandono: con tan pocos parches solo se describe.
+
+**Riesgos y limitaciones de una muestra pequeña.** 12 tareas y 36 condiciones: una diferencia de 5 o 6 condiciones es del orden del
+ruido; las condiciones de una tarea no son independientes; una sola muestra por condición (de ahí `O1`); el modelo remoto puede
+cambiar entre fechas (se registra); un solo prompt y una sola variante de formato, sin ajuste posterior; el piloto no puede
+establecer significación ni extrapolar a las 50 tareas, a otros modelos o a un evaluador tolerante; la resolución funcional
+quedará con muy pocos casos; los parches de `E1` los construye el pipeline, no el modelo (se declara como corrección del formato
+de salida y se aplica igual a las tres estrategias); el formato no ayuda donde el modelo no vio el código (H-B).
+
+**Separación de los resultados originales.** Salidas en `results/downstream_pilot_p1/` y `logs/downstream_pilot_p1/`, nunca en
+`downstream_results_final.jsonl` ni en `logs/downstream/`; campo `arm` en cada fila; tablas aparte en la memoria (nunca en la
+Tabla 6); lista blanca de rutas de escritura, directorio de salida nuevo con apertura exclusiva y hashes de los 150 parches, de
+los resultados y de los repositorios antes y después; un tag de Git sobre el commit de los resultados originales; congelar el
+protocolo (hash del prompt, lista de tareas, código del aplicador) en un commit propio antes de cualquier generación.
+
+### 15.5 Análisis secundario S1: recuperación mecánica de los 11 (propuesta)
+
+**Conviene incluirlo, pero solo como análisis secundario y después de cerrar el análisis primario de P1.**
+- *Qué es:* aplicar el normalizador N a las salidas **originales** (`O0`) de los 150 parches (no solo a los 11, y de forma
+  idempotente), pasar el filtro y evaluar funcionalmente los que lo superen y no tuvieran evaluación. Brazo `O0n`.
+- *Por qué incluirlo:* coste marginal bajo (la infraestructura de evaluación ya está montada para P1) y amplía la muestra con
+  evaluación funcional del protocolo original de 9 parches (8 tareas) a hasta 20 (14 tareas).
+- *Cómo no mezclarlo con P1:* brazo y carpeta propios (`results/downstream_s1_o0n/`), tabla propia, **fuera de los
+  denominadores y de las comparaciones de P1** (solo se usa como referencia descriptiva), nunca sumado a la Tabla 6, y declarado
+  como "salidas originales normalizadas, no salidas originales". Se fijan de antemano la definición de N, el filtro y el
+  orden de ejecución (P1 primero).
+- *Riesgos:* reparación posterior de salidas del modelo; sesgo (solo cuentan los casi correctos); n muy pequeño; no ataca los
+  130 restantes; infraestructura de evaluación (Windows y Podman).
+
+### 15.6 Calendario propuesto (no aprobado)
+
+Fechas del plan: semana sin disponibilidad del 16 al 22/11; análisis estadístico y experimentos el 23–25/11; reestructuración de
+la memoria el 26/11–6/12; **entrega el 07/12/2026**; **predepósito el 03/02/2027**. El director pidió resolverlo "antes de la
+entrega final", no antes de la del 7/12.
+
+| Fechas | Actividad |
+|---|---|
+| 12–15/11 | Solo documentación y revisión del protocolo; sin ejecutar nada |
+| 16–22/11 | Sin disponibilidad |
+| 23–25/11 | Análisis estadístico pareado (prioridad del plan); no se inicia el piloto |
+| 26/11–6/12 | Reestructuración y revisión del Word (tiempo protegido) |
+| **7/12** | **Entrega**: diagnóstico D-004 y P1 como propuesta, marcado como no ejecutado |
+| 8–12/12 | Implementar P1 (≈ 1,5 días), probar el aplicador sin LLM sobre las salidas existentes y congelar el protocolo |
+| 14–18/12 | Ejecutar P1 (generación ≈ 1 h; filtro; evaluadores ≈ 1–2 días) y analizar |
+| **≈ 20/12** | **Decisión**: éxito, inconcluyente o abandono. Si abandono o inconcluyente, documentar y cerrar hacia el 22/12 |
+| 5–16/1 (solo si éxito) | P2 con las 50 tareas, con protocolo y autorización propios |
+| 26/1–2/2 | Integrar en la memoria; **3/2: predepósito** |
+
+Las vacaciones de finales de diciembre y principios de enero se tratan como colchón. Esfuerzo estimado de P1: 12–16 h;
+de S1: 8–10 h con riesgo de infraestructura. No se recomienda ejecutar P1 antes del 7/12: no cabe en la ventana del 13–15/11 y
+quitaría tiempo a la revisión del Word.
+
+### 15.7 Decisiones pendientes
+
+- Aprobar o modificar el protocolo P1 (formato, selección, brazos y umbrales) y, si se aprueba, congelarlo.
+- Decidir si se incluye S1 y su orden.
+- Aprobar el calendario propuesto o ajustarlo, y si se comenta antes con el director.
+- Decidir el tag de Git de los resultados originales.
+
+### D-005 · 2026-11-12 · Preparar el protocolo de un piloto de formato de edición
+
+- **Decisión:** preparar y documentar el protocolo P1 (esta sección). **No autoriza ejecutar el piloto**; el experimento no está
+  aprobado y no se ha generado nada.
+- **Alcance:** no cambia ningún estado original, parche, resultado ni el generador.
+- **Pendiente:** revisión y aprobación explícitas antes de cualquier ejecución.

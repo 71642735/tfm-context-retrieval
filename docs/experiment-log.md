@@ -1830,3 +1830,12 @@ downstream del experimento sigue siendo el original (141 `invalid_patch`, 7 `not
 se describen como "no aplicables según el filtro `git apply --check` del TFM", **no** como "rechazados por el evaluador
 oficial" ni como "errores del modelo". El diagnóstico se da por cerrado y no se repite la generación con el LLM. Detalle y
 limitaciones: `docs/downstream-patch-diagnostics.md` (secciones 12-14).
+
+
+---
+
+## Decisión (2026-11-12): preparar el protocolo de un piloto de formato de edición (D-005)
+
+Se decide **preparar y documentar** el protocolo P1 de un piloto de formato de edición (`docs/downstream-patch-diagnostics.md`,
+sección 15). **Esta entrada no autoriza ejecutar el piloto**: el experimento no está aprobado, no se ha generado nada y no se
+ha modificado el generador. Los resultados originales no cambian. La ejecución requiere una aprobación explícita posterior.

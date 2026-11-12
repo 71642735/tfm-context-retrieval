@@ -1,0 +1,1384 @@
+{
+ "nota": "Cota exploratoria: ancla por contenido, ignorando numeros de linea; no genera ni aplica parches, no mide resolucion.",
+ "origen": "matriz_completa_20261112T000024Z",
+ "resumen": {
+  "96_contexto_o_corrupt": {
+   "ningun_hunk_ancla": 51,
+   "anclan_algunos_hunks": 24,
+   "todos_los_hunks_anclan_con_su_bloque_completo": 17,
+   "todos_anclan_al_menos_por_sus_lineas_eliminadas": 3,
+   "incluye_hunks_solo_anade_no_verificables": 1
+  },
+  "11_recuperables": {
+   "todos_los_hunks_anclan_con_su_bloque_completo": 11
+  },
+  "9_controles": {
+   "sin_hunks_analizables": 1,
+   "todos_los_hunks_anclan_con_su_bloque_completo": 8
+  }
+ },
+ "parches_con_bloque_markdown_```_de_los_150": {
+  "invalid_patch_con": 55,
+  "invalid_patch_sin": 86,
+  "aplicables_con": 5,
+  "aplicables_sin": 4
+ },
+ "cruce_96_visibilidad_x_anclaje": {
+  "ninguno en contexto|anclan_algunos_hunks": 2,
+  "ninguno en contexto|incluye_hunks_solo_anade_no_verificables": 1,
+  "ninguno en contexto|ningun_hunk_ancla": 35,
+  "ninguno en contexto|todos_anclan_al_menos_por_sus_lineas_eliminadas": 1,
+  "ninguno en contexto|todos_los_hunks_anclan_con_su_bloque_completo": 2,
+  "parcial|anclan_algunos_hunks": 4,
+  "parcial|ningun_hunk_ancla": 1,
+  "todos en contexto|anclan_algunos_hunks": 18,
+  "todos en contexto|ningun_hunk_ancla": 15,
+  "todos en contexto|todos_anclan_al_menos_por_sus_lineas_eliminadas": 2,
+  "todos en contexto|todos_los_hunks_anclan_con_su_bloque_completo": 15
+ },
+ "detalle_96_contexto_o_corrupt": [
+  {
+   "task_id": "Significant-Gravitas__AutoGPT-4652",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "astropy__astropy-13398",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "solo_lineas_eliminadas_exactas",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "astropy__astropy-13398",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla",
+    "no_ancla",
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_sin_indentacion"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "astropy__astropy-14309",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "bloque_completo_sin_indentacion"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "astropy__astropy-14598",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "astropy__astropy-14598",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "solo_lineas_eliminadas_exactas"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "solo_lineas_eliminadas_exactas"
+   ],
+   "resultado": "todos_anclan_al_menos_por_sus_lineas_eliminadas"
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "django__django-10880",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "solo_lineas_eliminadas_exactas",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "django__django-14373",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "django__django-14373",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "parcial",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto",
+    "bloque_completo_exacto",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "huggingface__transformers-29675",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "huggingface__transformers-29675",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "no_ancla",
+    "no_ancla",
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "solo_anade_sin_bloque_antiguo"
+   ],
+   "resultado": "incluye_hunks_solo_anade_no_verificables"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-60725705782832a2cb22e17c49697948a42a9d03-v298a7a812ceed28c4c18355a091f1b268fe56d86",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-16de05407111ddd82fa12e54389d532362489da9-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "fichero_no_existe",
+    "fichero_no_existe",
+    "fichero_no_existe"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "parcial",
+   "hunks": [
+    "bloque_completo_exacto",
+    "no_ancla",
+    "no_ancla",
+    "no_ancla",
+    "fichero_no_existe",
+    "fichero_no_existe",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-3fd8e12949b8feda401930574facf09dd4180bba",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "instance_qutebrowser__qutebrowser-473a15f7908f2bb6d670b0e908ab34a28d8cf7e2-v363c8a7e5ccdf6968fc7ab84a2053ac78036691d",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "parcial",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto",
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "solo_lineas_eliminadas_exactas"
+   ],
+   "resultado": "todos_anclan_al_menos_por_sus_lineas_eliminadas"
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "keras-team__keras-18871",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "solo_lineas_eliminadas_exactas",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_anclan_al_menos_por_sus_lineas_eliminadas"
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "keras-team__keras-19863",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4579",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "langchain-ai__langchain-4646",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "langchain-ai__langchain-5609",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "langchain-ai__langchain-5609",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "parcial",
+   "hunks": [
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24627",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-26208",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "mwaskom__seaborn-3069",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "pallets__flask-5014",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pallets__flask-5014",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "psf__requests-2931",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "psf__requests-2931",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pydata__xarray-4075",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "solo_lineas_eliminadas_exactas",
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "pydata__xarray-6992",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "solo_lineas_eliminadas_exactas",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "pylint-dev__pylint-4970",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "pylint-dev__pylint-8898",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pylint-dev__pylint-8898",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pytest-dev__pytest-10081",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5262",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5262",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "parcial",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-13439",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-26323",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-26323",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-8721",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-8721",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9461",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla",
+    "solo_lineas_eliminadas_exactas",
+    "no_ancla"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "no_ancla",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "hybrid",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "bloque_completo_sin_indentacion"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "sphinx-doc__sphinx-9711",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla",
+    "solo_lineas_eliminadas_exactas"
+   ],
+   "resultado": "anclan_algunos_hunks"
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "bm25",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "hybrid",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "sympy__sympy-16886",
+   "estrategia": "semantic",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "sympy__sympy-19637",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "todos en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-5933",
+   "estrategia": "bm25",
+   "categoria_LL": "contexto_no_coincide",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-9862",
+   "estrategia": "semantic",
+   "categoria_LL": "corrupt_patch",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": "ninguno en contexto",
+   "hunks": [
+    "no_ancla",
+    "no_ancla"
+   ],
+   "resultado": "ningun_hunk_ancla"
+  }
+ ],
+ "detalle_11_recuperables": [
+  {
+   "task_id": "huggingface__transformers-26752",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "instance_ansible__ansible-39bd8b99ec8c6624207bf3556ac7f9626dad9173-v1055803c3a812189a1133297f7f5468579283f86",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "instance_ansible__ansible-8127abbc298cabf04aaa89a478fc5e5e3432a6fc-v30a923fb5c164d6cd18280c02422f75e611e8fb2",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto",
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "psf__requests-1142",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "semantic",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "pylint-dev__pylint-4970",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "hybrid",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "yt-dlp__yt-dlp-9862",
+   "estrategia": "bm25",
+   "categoria_LL": "aplica",
+   "estado_original": "invalid_patch",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  }
+ ],
+ "detalle_9_controles": [
+  {
+   "task_id": "instance_ansible__ansible-7e1a347695c7987ae56ef1b6919156d9254010ad-v390e508d27db7a51eece36bb6d9698b63a5b638a",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [],
+   "resultado": "sin_hunks_analizables"
+  },
+  {
+   "task_id": "instance_internetarchive__openlibrary-e1e502986a3b003899a8347ac8a7ff7b08cbfc39-v08d8e8889ec945ab821fb156c04c7d2e2810debb",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "keras-team__keras-19201",
+   "estrategia": "semantic",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto",
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "matplotlib__matplotlib-24177",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "psf__requests-5414",
+   "estrategia": "bm25",
+   "categoria_LL": null,
+   "estado_original": "resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "pytest-dev__pytest-5809",
+   "estrategia": "bm25",
+   "categoria_LL": null,
+   "estado_original": "resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto",
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "scikit-learn__scikit-learn-14087",
+   "estrategia": "bm25",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "sympy__sympy-17655",
+   "estrategia": "hybrid",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  },
+  {
+   "task_id": "sympy__sympy-17655",
+   "estrategia": "semantic",
+   "categoria_LL": null,
+   "estado_original": "not_resolved",
+   "visibilidad_de_ficheros": null,
+   "hunks": [
+    "bloque_completo_exacto"
+   ],
+   "resultado": "todos_los_hunks_anclan_con_su_bloque_completo"
+  }
+ ]
+}
